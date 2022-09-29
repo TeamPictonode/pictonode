@@ -1,0 +1,14 @@
+{
+  "name": "libnode",
+  "version": "0.0.1",
+  "description": "Library that provides strongly and weakly typed node physics.",
+  "main": "src/index.ts",
+  "repository": "https://github.com/notgull/pictonode",
+  "author": "John Nunley",
+  "private": true,
+  "devDependencies": {
+    "@types/node": "^18.7.23",
+    "ts-loader": "^9.4.1",
+    "typescript": "^4.8.4"
+  }
+}
