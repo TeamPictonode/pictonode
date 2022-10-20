@@ -9,9 +9,27 @@ Pictonode is an image editor using a revolutionary node-based system that allows
 
 ## Intended Project Structure
 
-The overall project is written in Typescript. It is similar to Javascript and is able to be compiled to Javascript easily, for use in browser and plugin applications. However, it also provides type-checking utilities that allow one to avoid the usual footguns that pop up when programming in Javascript. Feel free to write files in Javascript if they contain concepts too difficult to express in Typescript.
+The overall project is written in [Typescript](https://www.typescriptlang.org/). It is similar to Javascript and is able to be compiled to Javascript easily, for use in browser and plugin applications. However, it also provides type-checking utilities that allow one to avoid the usual footguns that pop up when programming in Javascript. Feel free to write files in Javascript if they contain concepts too difficult to express in Typescript.
 
-"Pure" Typescript indicates that the module should not contain code that relies on the DOM or Node.JS primitives being present.
+"Pure" Typescript indicates that the module should not contain code that relies on the [DOM](https://developer.mozilla.org/en-US/docs/Web/API/Document_Object_Model) or [Node.JS](https://nodejs.org/en/) primitives being present.
+
+This entire repository is set up as a [Yarn](https://yarnpkg.com/) workspace. This ensures that packages can easily depend on eachother and share dependencies. It also allows us to easily run tests across the entire project.
+
+The overall folders are as follows:
+
+- `libraries/` contains the core libraries that are used by the application. These are written in Typescript and are "pure".
+- `frontend/` contains the code for the website. This is written in Typescript and is intended to be run on a web environment.
+- `backend/` contains the code for the backend. This is written in Typescript and is intended to be run on a Node.JS environment.
+- `photostop/` TODO
+
+Each individual package is set up as follows:
+
+- `package.json` describes the package, its dependencies, and its scripts.
+- `tsconfig.json` describes the Typescript configuration used for testing.
+- `src/` contains the source code for the package.
+- `test/` contains the tests for the package using the [Mocha](https://mochajs.org/)/[Chai](https://www.chaijs.com/) testing framework.
+
+In order to run all tests, run the command `yarn workspaces run test`.
 
 ### libnode
 

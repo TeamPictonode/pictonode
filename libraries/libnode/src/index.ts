@@ -65,6 +65,12 @@ interface NodeBase<E> {
     hydrate(): Result<boolean, E>;
 }
 
+class EmptyNode<E> implements NodeBase<E> {
+    hydrate(): Result<boolean, E> {
+        return Ok(false);
+    }
+}
+
 
 /**
  * A link from one node to another.
@@ -73,7 +79,7 @@ interface NodeBase<E> {
  */
 export class Link<T, E> {
     // The inner value, if it exists.
-    private value: Option<T>;
+    protected value: Option<T>;
 
     // The node that the input side of this link is connected to.
     private input: NodeBase<E>;
@@ -119,21 +125,28 @@ export class Link<T, E> {
     }
 };
 
+export class DefaultLink<T, E> extends Link<T, E> {
+    public constructor(value: T) {
+        super(new EmptyNode());
+        this.setValue(value);
+    }
+};
+
 
 type InputSpigots<List extends [...any[]], E> = {
-    [Key in keyof List]: Spigot<List[Key], E>;
+    [Key in keyof List]: Link<List[Key], E>;
 } & { length: List["length"] };
 
 
 type OutputSinks<List extends [...any[]], E> = {
-    [Key in keyof List]: Sink<List[Key], E>;
+    [Key in keyof List]: Link<List[Key], E>;
 } & { length: List["length"] };
 
 
 /**
  * A node that can be used to create a graph.
  */
-export abstract class Node<Inputs extends [...any[]], Outputs extends [...any[]], E> {
+export abstract class Node<Inputs extends [...any[]], Outputs extends [...any[]], E> implements NodeBase<E> {
     // The input spigots we receive value from.
     private inputs: InputSpigots<Inputs, E>;
 
@@ -143,14 +156,20 @@ export abstract class Node<Inputs extends [...any[]], Outputs extends [...any[]]
     // Convert the set of inputs into the set of outputs.
     protected abstract convert(inputs: Inputs): Result<Outputs, E>;
 
-    protected constructor(numInputs: number, numOutputs: number) {
+    protected constructor(numInputs: number, numOutputs: number, defaults: Inputs) {
+        let inputs: any[] = [];
+        let outputs: any[] = [];
+
         for (let i = 0; i < numInputs; i++) {
-            this.inputs[i] = new Spigot(this);
+            inputs.push(new DefaultLink(defaults[i]));
         }
 
         for (let i = 0; i < numOutputs; i++) {
-            this.outputs[i] = new Sink(this);
+            outputs.push(new Link(this));
         }
+
+        this.inputs = inputs as InputSpigots<Inputs, E>;
+        this.outputs = outputs as OutputSinks<Outputs, E>;
     }
 
     // Get the list of input spigots.
@@ -171,6 +190,28 @@ export abstract class Node<Inputs extends [...any[]], Outputs extends [...any[]]
     // Get the output value at the given index.
     public getOutput(index: number): Result<Outputs[number], E> {
         return map_res(this.outputs[index]!.getValue(), value => value[0]);
+    }
+
+    // Link the output of the node at the given index to the input of the node at the given index.
+    public link<
+        ThisInputKey extends keyof Inputs,
+        OtherOutputKey extends keyof OtherOutputs,
+        OtherInputs extends [...any[]],
+        OtherOutputs extends {
+            [Key in OtherOutputKey]: Inputs[ThisInputKey];
+        } & [...any[]],
+    >(
+        thisInputKey: ThisInputKey,
+        otherOutputKey: OtherOutputKey,
+        otherNode: Node<OtherInputs, OtherOutputs, E>,
+    ): Result<Unit, E> {
+        const otherLink: Link<any, E> = otherNode.getOutputs()[otherOutputKey];
+        // TODO: Type this better.
+        // @ts-ignore
+        this.inputs[thisInputKey] = otherLink;
+
+        // Hydrate ourselves using our new node.
+        return map_res(this.hydrate(), _ => ({}));
     }
 
     // Hydrate this node, checking the inputs for updated and propagating them
@@ -198,7 +239,7 @@ export abstract class Node<Inputs extends [...any[]], Outputs extends [...any[]]
         }
 
         // inputs is now a valid array of type Inputs.
-        const inputs: Inputs = <Inputs> input_values;
+        const inputs: Inputs = input_values as Inputs;
 
         // Convert the inputs into outputs.
         const output_results = this.convert(inputs);
@@ -226,7 +267,7 @@ export class SourceNode<T, E> extends Node<[], [T], E> {
     private value: T;
 
     constructor(value: T) {
-        super(0, 1);
+        super(0, 1, []);
         this.value = value;
     }
 
@@ -246,24 +287,14 @@ export class SinkNode<T, E> extends Node<[T], [], E> {
 
     private value: T;
 
-    constructor() {
-        super(1, 0);
+    constructor(defaultValue: T) {
+        super(1, 0, [defaultValue]);
     }
 
     public getValue(): T {
         return this.value;
     }
 };
-
-
-export class NodeLink<T, E> extends Link<T, E> {};
-
-
-export class Spigot<T, E> extends NodeLink<T, E> {};
-
-
-export class Sink<T, E> extends NodeLink<T, E> {};
-
 
 // Map the array to a new array.
 function map<Type, Result>(list: Type[], mapper: (value: Type) => Result): Result[] {

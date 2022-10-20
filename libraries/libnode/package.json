@@ -7,8 +7,20 @@
   "author": "John Nunley",
   "private": true,
   "devDependencies": {
-    "@types/node": "^18.7.23",
-    "ts-loader": "^9.4.1",
+    "@types/chai": "^4.3.3",
+    "@types/mocha": "^10.0.0",
+    "@types/node": "^18.11.3",
+    "@types/supertest": "^2.0.12",
+    "chai": "^4.3.6",
+    "mocha": "^10.1.0",
+    "nodemon": "^2.0.20",
+    "supertest": "^6.3.0",
+    "ts-node": "^10.9.1",
+    "tsconfig-paths": "^4.1.0",
     "typescript": "^4.8.4"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test": "mocha --require ts-node/register --require tsconfig-paths/register --recursive 'test/**/*.test.ts'"
   }
 }
