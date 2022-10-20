@@ -1,6 +1,6 @@
 // No Implied Warranty
 
-import { SourceNode, SinkNode } from "../src";
+import { SourceNode, SinkNode, Ok } from "../src";
 
 import { expect } from "chai";
 
@@ -18,6 +18,6 @@ describe("Basic Tests", () => {
     });
 
     it("should transmit the value", () => {
-        expect(sinkNode.getValue()).to.deep.equal(42);
+        expect(sinkNode.getValue()).to.deep.equal(Ok(42));
     });
 });

@@ -22,5 +22,8 @@
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "test": "mocha --require ts-node/register --require tsconfig-paths/register --recursive 'test/**/*.test.ts'"
+  },
+  "dependencies": {
+    "loglevel": "^1.8.0"
   }
 }

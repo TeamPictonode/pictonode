@@ -1,5 +1,7 @@
 // No Implied Warranty
 
+import logger from "loglevel";
+
 /**
  * An empty object.
  */
@@ -11,12 +13,12 @@ export type Unit = Record<string, never>;
 export type Result<T, E> = { ok: true, value: T } | { ok: false, error: E };
 
 
-function Ok<T, E>(value: T): Result<T, E> {
+export function Ok<T, E>(value: T): Result<T, E> {
     return { ok: true, value };
 }
 
 
-function Err<T, E>(error: E): Result<T, E> {
+export function Err<T, E>(error: E): Result<T, E> {
     return { ok: false, error };
 }
 
@@ -62,14 +64,23 @@ interface NodeBase<E> {
     // Hydrate this node.
     // 
     // Returns "true" if the node was changed during hydration.
-    hydrate(): Result<boolean, E>;
+    hydrate(force: boolean): Result<boolean, E>;
 }
 
 class EmptyNode<E> implements NodeBase<E> {
-    hydrate(): Result<boolean, E> {
-        return Ok(false);
+    private firstTime: boolean = true;
+
+    hydrate(force: boolean): Result<boolean, E> {
+        if (force || this.firstTime) {
+            this.firstTime = false;
+            return Ok(true);
+        } else {
+            return Ok(force);
+        }
     }
 }
+
+let GLOBAL_ID = 1;
 
 
 /**
@@ -78,6 +89,9 @@ class EmptyNode<E> implements NodeBase<E> {
  * Essentially a channel with only one item.
  */
 export class Link<T, E> {
+    // The ID of this link, for debugging purposes.
+    private readonly id = GLOBAL_ID++;
+
     // The inner value, if it exists.
     protected value: Option<T>;
 
@@ -109,7 +123,14 @@ export class Link<T, E> {
         // Hydrate the input node.
         // 
         // setValue() will be called as a result of hydration.
-        return map_res(this.input.hydrate(), hydrated => hydrated || this.updated);
+        logger.trace("Hydrating link", this.id);
+        const result = this.input.hydrate(false);
+
+        if (result.ok) {
+            return Ok(this.updated || result.value);
+        } else {
+            return result;
+        }
     }
 
     // Get the value stored in this link.
@@ -119,9 +140,13 @@ export class Link<T, E> {
         // Hydrate ourselves first if necessary.
         // 
         // After a hydration, the value will be set.
-        return map_res(this.hydrate(), hydrated => {
-            return [unwrap_opt(this.value), hydrated];
-        });
+        const hydrated = this.hydrate();
+
+        if (hydrated.ok) {
+            return Ok([unwrap_opt(this.value), hydrated.value]);
+        } else {
+            return hydrated;
+        }
     }
 };
 
@@ -142,11 +167,13 @@ type OutputSinks<List extends [...any[]], E> = {
     [Key in keyof List]: Link<List[Key], E>;
 } & { length: List["length"] };
 
-
 /**
  * A node that can be used to create a graph.
  */
 export abstract class Node<Inputs extends [...any[]], Outputs extends [...any[]], E> implements NodeBase<E> {
+    // ID assigned to this node for debugging purposes.
+    private readonly id = GLOBAL_ID++;
+
     // The input spigots we receive value from.
     private inputs: InputSpigots<Inputs, E>;
 
@@ -170,6 +197,8 @@ export abstract class Node<Inputs extends [...any[]], Outputs extends [...any[]]
 
         this.inputs = inputs as InputSpigots<Inputs, E>;
         this.outputs = outputs as OutputSinks<Outputs, E>;
+
+        logger.trace("Created node", this.id);
     }
 
     // Get the list of input spigots.
@@ -211,12 +240,14 @@ export abstract class Node<Inputs extends [...any[]], Outputs extends [...any[]]
         this.inputs[thisInputKey] = otherLink;
 
         // Hydrate ourselves using our new node.
-        return map_res(this.hydrate(), _ => ({}));
+        return map_res(this.hydrate(true), _ => ({}));
     }
 
     // Hydrate this node, checking the inputs for updated and propagating them
     // to the outputs.
-    hydrate(): Result<boolean, E> {
+    hydrate(force: boolean): Result<boolean, E> {
+        logger.trace("Hydrating node", this.id);
+    
         // Check if any of the inputs have been updated.
         const input_results = map(this.inputs, input => input.getValue());
         let needs_hydration = false;
@@ -234,7 +265,7 @@ export abstract class Node<Inputs extends [...any[]], Outputs extends [...any[]]
             }
         }
 
-        if (!needs_hydration) {
+        if (!needs_hydration && !force) {
             return Ok(false);
         }
 
@@ -259,40 +290,33 @@ export abstract class Node<Inputs extends [...any[]], Outputs extends [...any[]]
 
 
 // Convenience source node for a single value.
-export class SourceNode<T, E> extends Node<[], [T], E> {
-    protected convert(_inputs: []): Result<[T], E> {
-        return Ok([this.value]);
+export class SourceNode<T, E> extends Node<[T], [T], E> {
+    protected convert(inputs: [T]): Result<[T], E> {
+        return Ok(inputs);
     }
 
-    private value: T;
-
     constructor(value: T) {
-        super(0, 1, []);
-        this.value = value;
+        super(1, 1, [value]);
     }
 
     public setValue(value: T): void {
-        this.value = value;
         this.getOutputs()[0].setValue(value);
     }
 };
 
 
 // Convenience sink node for a single value.
-export class SinkNode<T, E> extends Node<[T], [], E> {
-    protected convert(inputs: [T]): Result<[], E> {
-        this.value = inputs[0];
-        return Ok([]);
+export class SinkNode<T, E> extends Node<[T], [T], E> {
+    protected convert(inputs: [T]): Result<[T], E> {
+        return Ok(inputs);
     }
-
-    private value: T;
 
     constructor(defaultValue: T) {
-        super(1, 0, [defaultValue]);
+        super(1, 1, [defaultValue]);
     }
 
-    public getValue(): T {
-        return this.value;
+    public getValue(): Result<T, E> {
+        return this.getOutput(0);
     }
 };
 
