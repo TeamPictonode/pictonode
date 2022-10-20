@@ -28,23 +28,60 @@ The general model for this library is as follows:
 
 /**
  * An empty object.
+ *
+ * The "export" keyword indicates that a user of this module should be able to
+ * use this function. In this case, a user should be able to use this type alias.
+ * A "Record" is a mapping/dictionary between two types. In other languages, this
+ * is akin to a "Map".
+ *
+ * Record<string, never> is a map between strings and the never type. However,
+ * the "never" type cannot actually exist. Therefore, this type is always an
+ * empty map, which we use as a general placeholder for a lack of value.
+ *
  */
-export type Unit = Record<string, never>;
+export type Unit = Record<string, never>
 
 /**
  * A result type that can be either a success or a failure.
+ *
+ * This is a sum type, or a type whose fields depend on the value of a discriminant.
+ * In this case, the "ok" field is used as the discriminant. If it is true, then
+ * the Result is a successfully-computed value. This computed value is stored in the
+ * "value" field. Otherwise, "ok" is assumed to be false, and the error is in the
+ * "error" field.
+ *
+ * This is useful to represent operations that are capable of failing. If we don't
+ * want to have a failing operation, we can use this type as `Result<T, never>`.
+ * Because never has no real values, this would result in an OK value that cannot fail.
  */
-export type Result<T, E> = { ok: true; value: T } | { ok: false; error: E };
+export type Result<T, E> = { ok: true, value: T } | { ok: false, error: E }
 
-export function Ok<T, E>(value: T): Result<T, E> {
+/**
+ * A convenience function that makes a successful result.
+ * @param value The value to be successful.
+ * @returns A successful result.
+ */
+export function Ok<T, E> (value: T): Result<T, E> {
   return { ok: true, value };
 }
 
-export function Err<T, E>(error: E): Result<T, E> {
+/**
+ * A convenience function that makes a failed result.
+ * @param error The type of error encountered.
+ * @returns A failed result.
+ */
+export function Err<T, E> (error: E): Result<T, E> {
   return { ok: false, error };
 }
 
-function map_res<T, U, E>(
+/**
+ * Maps a result of one type to another type. Does not run the provided function if
+ * the result is already an error.
+ * @param result A Result to be mapped.
+ * @param func A mapping function.
+ * @returns An OK Result if the given Result was OK, and was successfully mapped.
+ */
+function mapResult<T, U, E> (
   result: Result<T, E>,
   func: (value: T) => U
 ): Result<U, E> {
@@ -57,27 +94,37 @@ function map_res<T, U, E>(
 
 /**
  * An optional type that can either be a value or defined.
+ *
+ * This is similar to a `Result` but without an error type. It represents a value which
+ * _may or may not_ exist. Note that the prevailing convention for JavaScript is to
+ * use null or undefined, but I like to avoid those to be able to use the `defined`
+ * field as a discriminant.
  */
-type Option<T> = { defined: true; value: T } | { defined: false };
+type Option<T> = { defined: true, value: T } | { defined: false }
 
-function Some<T>(value: T): Option<T> {
-  return { defined: true, value };
+function Some<T> (value: T): Option<T> {
+  return { defined: true, value }
 }
 
-function None<T>(): Option<T> {
-  return { defined: false };
+function None<T> (): Option<T> {
+  return { defined: false }
 }
 
 function unwrap_opt<T>(option: Option<T>): T {
   if (option.defined) {
     return option.value;
   } else {
+    // Raise an error that can take down the program.
     throw new Error("Option is not defined");
   }
 }
 
 /**
  *  Interface for a type-erased node.
+ * 
+ *  Interfaces are wrappers over types that can provide a set of fields or functions.
+ *  In this case, we only use functions. In order to satisfy the interface, Node and
+ *  EmptyNode must both have these functions, so we proceed to define them below.
  */
 interface NodeBase<E> {
   // Hydrate this node.
@@ -86,6 +133,13 @@ interface NodeBase<E> {
   hydrate(force: boolean): Result<boolean, E>;
 }
 
+/**
+ * An empty placeholder node.
+ * 
+ * Links without associated nodes must have something to hydrate off of. This is instead
+ * used to indicate that the link's value will not change after the first time it is
+ * hydrated.
+ */
 class EmptyNode<E> implements NodeBase<E> {
   private firstTime: boolean = true;
 
@@ -132,7 +186,7 @@ export class Link<T, E> {
   }
 
   // Hydrate this link.
-  public hydrate(): Result<boolean, E> {
+  private hydrate(): Result<boolean, E> {
     // Hydrate the input node.
     //
     // setValue() will be called as a result of hydration.
@@ -162,6 +216,9 @@ export class Link<T, E> {
   }
 }
 
+/**
+ * The default link type. Simply gives a single value out.
+ */
 export class DefaultLink<T, E> extends Link<T, E> {
   public constructor(value: T) {
     super(new EmptyNode());
@@ -169,10 +226,28 @@ export class DefaultLink<T, E> extends Link<T, E> {
   }
 }
 
+/**
+ * A list of links with specific values.
+ * 
+ * This type is marginally complicated, but the general essence is as follows:
+ * 
+ * - If the user passes in the tuple [a, b, c], the result type is
+ *   [Link<a>, Link<b>, Link<c>]
+ * - If the user passes in an a[], the result type is Link<a>[].
+ * 
+ * Basically, it just maps the tuple or array to its link equivalents. Saying
+ * "extends [...any[]]" lets us use both tuples and arrays as the generic input while
+ * also maintaining our typing.
+ */
 type InputSpigots<List extends [...any[]], E> = {
   [Key in keyof List]: Link<List[Key], E>;
 } & { length: List["length"] };
 
+/**
+ * Same as above, but for the output.
+ * 
+ * TODO: This may be able to be the same type.
+ */
 type OutputSinks<List extends [...any[]], E> = {
   [Key in keyof List]: Link<List[Key], E>;
 } & { length: List["length"] };
@@ -193,6 +268,8 @@ export abstract class Node<
   private outputs: OutputSinks<Outputs, E>;
 
   // Convert the set of inputs into the set of outputs.
+  // 
+  // This abstract function is meant to be implemented by subclasses of Node.
   protected abstract convert(inputs: Inputs): Result<Outputs, E>;
 
   protected constructor(
@@ -232,10 +309,11 @@ export abstract class Node<
 
   // Get the output value at the given index.
   public getOutput(index: number): Result<Outputs[number], E> {
-    return map_res(this.outputs[index]!.getValue(), (value) => value[0]);
+    return mapResult(this.outputs[index]!.getValue(), (value) => value[0]);
   }
 
-  // Link the output of the node at the given index to the input of the node at the given index.
+  // Link the output of the node at the given index to the input of the node at the 
+  // given index.
   public link<
     ThisInputKey extends keyof Inputs,
     OtherOutputKey extends keyof OtherOutputs,
@@ -254,7 +332,7 @@ export abstract class Node<
     this.inputs[thisInputKey] = otherLink;
 
     // Hydrate ourselves using our new node.
-    return map_res(this.hydrate(true), (_) => ({}));
+    return mapResult(this.hydrate(true), (_) => ({}));
   }
 
   // Hydrate this node, checking the inputs for updated and propagating them

@@ -1,5 +1,11 @@
 // No Implied Warranty
 
+/*
+A basic set of tests for libnode. We use two packages here:
+ - mocha, which provides "describe" and "it" for overarching structure.
+ - chai, an assertion library, which provides "expect" for assertions.
+*/
+
 import { SourceNode, SinkNode, IdentityNode, Ok, CallbackNode } from "../src";
 import { expect } from "chai";
 
