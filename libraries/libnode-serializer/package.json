@@ -1,0 +1,18 @@
+{
+  "name": "libnode-serializer",
+  "version": "0.0.1",
+  "description": "Serialize libnode graphs to/from text",
+  "main": "src/index.ts",
+  "author": "John Nunley",
+  "license": "N/A",
+  "private": true,
+  "dependencies": {
+    "libnode": "*"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
+    "lint": "eslint \"src/**/*.ts\"",
+    "test": "mocha --require ts-node/register --require tsconfig-paths/register --recursive 'test/**/*.test.ts'"
+  }
+}

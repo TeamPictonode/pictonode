@@ -1,19 +1,21 @@
 {
-  "name": "libnode",
+  "name": "pictotypes",
   "version": "0.0.1",
-  "description": "Library that provides strongly and weakly typed node physics.",
+  "description": "Basic types intended to be used throughout the code",
   "main": "src/index.ts",
-  "repository": "https://github.com/notgull/pictonode",
   "author": "John Nunley",
+  "license": "N/A",
   "private": true,
-  "workspaceDependencies": {
-    "pictotypes": "0.0.1"
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
+    "lint": "eslint \"src/**/*.ts\"",
+    "test": "mocha --require ts-node/register --require tsconfig-paths/register --recursive 'test/**/*.test.ts'"
   },
   "devDependencies": {
     "@types/chai": "^4.3.3",
     "@types/mocha": "^10.0.0",
     "@types/node": "^18.11.3",
-    "@types/supertest": "^2.0.12",
     "@typescript-eslint/eslint-plugin": "^5.0.0",
     "chai": "^4.3.6",
     "eslint": "^8.0.1",
@@ -22,17 +24,9 @@
     "eslint-plugin-n": "^15.0.0",
     "eslint-plugin-promise": "^6.0.0",
     "mocha": "^10.1.0",
-    "nodemon": "^2.0.20",
     "prettier": "^2.7.1",
-    "supertest": "^6.3.0",
     "ts-node": "^10.9.1",
     "tsconfig-paths": "^4.1.0",
     "typescript": "*"
-  },
-  "scripts": {
-    "build": "tsc -p tsconfig.json",
-    "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
-    "lint": "eslint \"src/**/*.ts\"",
-    "test": "mocha --require ts-node/register --require tsconfig-paths/register --recursive 'test/**/*.test.ts'"
   }
 }
