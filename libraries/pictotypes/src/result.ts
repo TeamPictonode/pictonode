@@ -173,6 +173,26 @@ export class Result<T, E> {
   }
 
   /**
+   * Get the value or return undefined.
+   */
+  public get(): T | undefined {
+    return this.match(
+      value => value,
+      _ => undefined
+    );
+  }
+
+  /**
+   * Get the error or return undefined.
+   */
+  public getErr(): E | undefined {
+    return this.match(
+      _ => undefined,
+      error => error
+    );
+  }
+
+  /**
    * Discard the error information and return an option.
    * @returns The option.
    */

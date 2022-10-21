@@ -6,7 +6,7 @@
   "repository": "https://github.com/notgull/pictonode",
   "author": "John Nunley",
   "private": true,
-  "workspaceDependencies": {
+  "dependencies": {
     "pictotypes": "0.0.1"
   },
   "devDependencies": {

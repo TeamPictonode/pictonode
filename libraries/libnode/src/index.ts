@@ -114,13 +114,7 @@ export class Link<T, E> {
     // Hydrate the input node.
     //
     // setValue() will be called as a result of hydration.
-    const result = this.input.hydrate(false);
-
-    if (result.ok) {
-      return Ok(this.updated || result.value);
-    } else {
-      return result;
-    }
+    return this.input.hydrate(false).map((changed) => changed || this.updated);
   }
 
   // Get the value stored in this link.
@@ -130,13 +124,7 @@ export class Link<T, E> {
     // Hydrate ourselves first if necessary.
     //
     // After a hydration, the value will be set.
-    const hydrated = this.hydrate();
-
-    if (hydrated.ok) {
-      return Ok([unwrap_opt(this.value), hydrated.value]);
-    } else {
-      return hydrated;
-    }
+    return this.hydrate().map((hydrated) => ([this.value.unwrap(), hydrated]));
   }
 }
 
@@ -233,7 +221,7 @@ export abstract class Node<
 
   // Get the output value at the given index.
   public getOutput(index: number): Result<Outputs[number], E> {
-    return mapResult(this.outputs[index]!.getValue(), (value) => value[0]);
+    return this.outputs[index]!.getValue().map((value) => value[0]);
   }
 
   // Link the output of the node at the given index to the input of the node at the
@@ -256,7 +244,7 @@ export abstract class Node<
     this.inputs[thisInputKey] = otherLink;
 
     // Hydrate ourselves using our new node.
-    return mapResult(this.hydrate(true), (_) => ({}));
+    return this.hydrate(true).map(_ => ({}));
   }
 
   // Hydrate this node, checking the inputs for updated and propagating them
@@ -270,12 +258,21 @@ export abstract class Node<
     for (let i = 0; i < input_results.length; i++) {
       const result = input_results[i]!;
 
-      if (!result.ok) {
-        return Err(result.error);
-      } else {
-        const [value, hydrated] = result.value;
-        needs_hydration = needs_hydration || hydrated;
-        input_values.push(value);
+      let error: E | undefined;
+      const errored = result.match(
+        ([value, hydrated]) => {
+          needs_hydration = needs_hydration || hydrated;
+          input_values.push(value);
+          return false;
+        },
+        (err) => {
+          error = err;
+          return true;
+        }
+      );
+
+      if (errored) {
+        return Err(error!);
       }
     }
 
@@ -288,13 +285,14 @@ export abstract class Node<
 
     // Convert the inputs into outputs.
     const output_results = this.convert(inputs);
-    if (!output_results.ok) {
-      return Err(output_results.error);
+    if (!output_results.isOk()) {
+      return Err(output_results.getErr()!);
     }
 
     // Set output value of links.
-    for (let i = 0; i < output_results.value.length; i++) {
-      const result = output_results.value[i];
+    const out_results = output_results.get()!;
+    for (let i = 0; i < out_results.length; i++) {
+      const result = out_results[i];
       this.outputs[i]!.setValue(result);
     }
 
