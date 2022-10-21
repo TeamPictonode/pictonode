@@ -26,22 +26,7 @@ The general model for this library is as follows:
   called when inputs change. Recursion!
 */
 
-import { Result, Ok, Err, Option, Some, None } from "pictotypes"
-
-/**
- * An empty object.
- *
- * The "export" keyword indicates that a user of this module should be able to
- * use this function. In this case, a user should be able to use this type alias.
- * A "Record" is a mapping/dictionary between two types. In other languages, this
- * is akin to a "Map".
- *
- * Record<string, never> is a map between strings and the never type. However,
- * the "never" type cannot actually exist. Therefore, this type is always an
- * empty map, which we use as a general placeholder for a lack of value.
- *
- */
-export type Unit = Record<string, never>;
+import { Unit, Result, Ok, Err, Option, Some, None } from "pictotypes";
 
 /**
  *  Interface for a type-erased node.
@@ -54,7 +39,7 @@ interface NodeBase<E> {
   // Hydrate this node.
   //
   // Returns "true" if the node was changed during hydration.
-  hydrate(force: boolean): Result<boolean, E>;
+  hydrate: (force: boolean) => Result<boolean, E>;
 }
 
 /**
@@ -87,7 +72,7 @@ export class Link<T, E> {
   protected value: Option<T>;
 
   // The node that the input side of this link is connected to.
-  private input: NodeBase<E>;
+  private readonly input: NodeBase<E>;
 
   // Whether this link has been updated since the last hydration.
   private updated: boolean;
@@ -124,7 +109,7 @@ export class Link<T, E> {
     // Hydrate ourselves first if necessary.
     //
     // After a hydration, the value will be set.
-    return this.hydrate().map((hydrated) => ([this.value.unwrap(), hydrated]));
+    return this.hydrate().map((hydrated) => [this.value.unwrap(), hydrated]);
   }
 }
 
@@ -177,7 +162,7 @@ export abstract class Node<
   private inputs: InputSpigots<Inputs, E>;
 
   // The output sinks we send values to.
-  private outputs: OutputSinks<Outputs, E>;
+  private readonly outputs: OutputSinks<Outputs, E>;
 
   // Convert the set of inputs into the set of outputs.
   //
@@ -189,8 +174,8 @@ export abstract class Node<
     numOutputs: number,
     defaults: Inputs
   ) {
-    let inputs: any[] = [];
-    let outputs: any[] = [];
+    const inputs: any[] = [];
+    const outputs: any[] = [];
 
     for (let i = 0; i < numInputs; i++) {
       inputs.push(new DefaultLink(defaults[i]));
@@ -240,29 +225,29 @@ export abstract class Node<
   ): Result<Unit, E> {
     const otherLink: Link<any, E> = otherNode.getOutputs()[otherOutputKey];
     // TODO: Type this better.
-    // @ts-ignore
+    // @ts-expect-error
     this.inputs[thisInputKey] = otherLink;
 
     // Hydrate ourselves using our new node.
-    return this.hydrate(true).map(_ => ({}));
+    return this.hydrate(true).map((_) => ({}));
   }
 
   // Hydrate this node, checking the inputs for updated and propagating them
   // to the outputs.
   hydrate(force: boolean): Result<boolean, E> {
     // Check if any of the inputs have been updated.
-    const input_results = map(this.inputs, (input) => input.getValue());
-    let needs_hydration = false;
-    const input_values: any[] = [];
+    const inputResults = map(this.inputs, (input) => input.getValue());
+    let needsHydration = false;
+    const inputValues: any[] = [];
 
-    for (let i = 0; i < input_results.length; i++) {
-      const result = input_results[i]!;
+    for (let i = 0; i < inputResults.length; i++) {
+      const result = inputResults[i]!;
 
       let error: E | undefined;
       const errored = result.match(
         ([value, hydrated]) => {
-          needs_hydration = needs_hydration || hydrated;
-          input_values.push(value);
+          needsHydration = needsHydration || hydrated;
+          inputValues.push(value);
           return false;
         },
         (err) => {
@@ -276,23 +261,23 @@ export abstract class Node<
       }
     }
 
-    if (!needs_hydration && !force) {
+    if (!needsHydration && !force) {
       return Ok(false);
     }
 
     // inputs is now a valid array of type Inputs.
-    const inputs: Inputs = input_values as Inputs;
+    const inputs: Inputs = inputValues as Inputs;
 
     // Convert the inputs into outputs.
-    const output_results = this.convert(inputs);
-    if (!output_results.isOk()) {
-      return Err(output_results.getErr()!);
+    const outputResults = this.convert(inputs);
+    if (!outputResults.isOk()) {
+      return Err(outputResults.getErr()!);
     }
 
     // Set output value of links.
-    const out_results = output_results.get()!;
-    for (let i = 0; i < out_results.length; i++) {
-      const result = out_results[i];
+    const outResults = outputResults.get()!;
+    for (let i = 0; i < outResults.length; i++) {
+      const result = outResults[i];
       this.outputs[i]!.setValue(result);
     }
 

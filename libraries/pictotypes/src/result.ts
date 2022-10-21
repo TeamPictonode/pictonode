@@ -61,8 +61,8 @@ export class Result<T, E> {
   public unwrap(): T {
     return this.match(
       (value) => value,
-      (error) => {
-        throw error;
+      (_) => {
+        throw new Error("Unwrapped a Result on error");
       }
     );
   }
@@ -177,8 +177,8 @@ export class Result<T, E> {
    */
   public get(): T | undefined {
     return this.match(
-      value => value,
-      _ => undefined
+      (value) => value,
+      (_) => undefined
     );
   }
 
@@ -187,8 +187,8 @@ export class Result<T, E> {
    */
   public getErr(): E | undefined {
     return this.match(
-      _ => undefined,
-      error => error
+      (_) => undefined,
+      (error) => error
     );
   }
 
@@ -244,5 +244,6 @@ export const Err = Result.err;
 /**
  * Shorthand for new NestedResult
  */
-export const NestedRes = <T, E>(result: Result<Result<T, E>, E>) =>
-  new NestedResult(result);
+export const NestedRes = <T, E>(
+  result: Result<Result<T, E>, E>
+): NestedResult<T, E> => new NestedResult(result);
