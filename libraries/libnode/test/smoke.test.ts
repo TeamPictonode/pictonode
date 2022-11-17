@@ -6,7 +6,8 @@ A basic set of tests for libnode. We use two packages here:
  - chai, an assertion library, which provides "expect" for assertions.
 */
 
-import { SourceNode, SinkNode, IdentityNode, Ok, CallbackNode } from "../src";
+import { Ok } from "pictotypes";
+import { SourceNode, SinkNode, IdentityNode, CallbackNode } from "../src";
 import { expect } from "chai";
 
 describe("Basic Tests", () => {

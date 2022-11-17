@@ -7,7 +7,8 @@
   "license": "N/A",
   "private": true,
   "dependencies": {
-    "libnode": "*"
+    "libnode": "0.0.1",
+    "pictotype": "0.0.1"
   },
   "scripts": {
     "build": "tsc -p tsconfig.json",

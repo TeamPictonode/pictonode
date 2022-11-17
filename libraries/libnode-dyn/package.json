@@ -1,0 +1,12 @@
+{
+  "name": "libnode-dyn",
+  "version": "0.0.1",
+  "main": "src/index.ts",
+  "author": "John Nunley",
+  "license": "N/A",
+  "private": true,
+  "dependencies": {
+    "pictotypes": "0.0.1",
+    "libnode": "0.0.1"
+  }
+}

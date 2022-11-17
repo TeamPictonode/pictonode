@@ -77,16 +77,23 @@ export class Link<T, E> {
   // Whether this link has been updated since the last hydration.
   private updated: boolean;
 
+  // A callback to run before setting `value`.
+  private callback: (value: T) => Result<T, E>;
+
   constructor(nb: NodeBase<E>) {
     this.value = None();
     this.input = nb;
     this.updated = false;
+    this.callback = (value: T) => Ok(value);
   }
 
   // Store a value in this link.
-  public setValue(value: T): void {
-    this.value = Some(value);
-    this.updated = true;
+  public setValue(value: T): Result<Unit, E> {
+    return this.callback(value).map(value => {
+      this.value = Some(value);
+      this.updated = true;
+      return ({});
+    });
   }
 
   // Whether this link is in need of hydration.
@@ -111,6 +118,11 @@ export class Link<T, E> {
     // After a hydration, the value will be set.
     return this.hydrate().map((hydrated) => [this.value.unwrap(), hydrated]);
   }
+
+  // Set the callback associated with this link.
+  public setCallback(callback: (value: T) => Result<T, E>) {
+    this.callback = callback;
+  }
 }
 
 /**
@@ -119,7 +131,7 @@ export class Link<T, E> {
 export class DefaultLink<T, E> extends Link<T, E> {
   public constructor(value: T) {
     super(new EmptyNode());
-    this.setValue(value);
+    this.setValue(value).unwrap();
   }
 }
 
@@ -200,8 +212,8 @@ export abstract class Node<
   }
 
   // Set the input value at the given index.
-  public setInput(index: number, value: Inputs[number]): void {
-    this.inputs[index]!.setValue(value);
+  public setInput<T extends keyof Inputs>(index: T, value: Inputs[T]): Result<Unit, E> {
+    return this.inputs[index]!.setValue(value);
   }
 
   // Get the output value at the given index.
