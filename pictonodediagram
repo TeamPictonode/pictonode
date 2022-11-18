@@ -1,1 +1,61 @@
-<mxfile host="app.diagrams.net" modified="2022-11-18T04:21:08.140Z" agent="5.0 (X11)" version="20.5.3" etag="l4gPoNzG06GnG3vY9l3o" type="github"><diagram id="-7YkDzP8lQwZR6P_oYBr">UzV2zq1wL0osyPDNT0nNUTV2VTV2LsrPL4GwciucU3NyVI0MMlNUjV1UjYwMgFjVyA2HrCFY1qAgsSg1rwSLBiADYTaQg2Y1AA==</diagram></mxfile>
+<mxfile host="app.diagrams.net" modified="2022-11-18T04:33:59.771Z" agent="5.0 (X11)" etag="0to5iw8PelI428y7O1l5" version="20.5.3" type="github">
+  <diagram id="-7YkDzP8lQwZR6P_oYBr" name="Page-1">
+    <mxGraphModel dx="60" dy="101" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="-o7QJbnCqUI7RfTzz9yR-2" value="&lt;div&gt;User wants the &lt;br&gt;&lt;/div&gt;&lt;div&gt;result of a &lt;br&gt;&lt;/div&gt;&lt;div&gt;node tree.&lt;/div&gt;" style="html=1;" vertex="1" parent="1">
+          <mxGeometry x="130" y="60" width="110" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="-o7QJbnCqUI7RfTzz9yR-3" value="&lt;div&gt;Get the value &lt;br&gt;&lt;/div&gt;&lt;div&gt;of a link.&lt;/div&gt;" style="html=1;" vertex="1" parent="1">
+          <mxGeometry x="130" y="190" width="110" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="-o7QJbnCqUI7RfTzz9yR-4" value="&lt;div&gt;Retrieve the value&lt;/div&gt;&lt;div&gt;stored in the &lt;br&gt;&lt;/div&gt;&lt;div&gt;input link.&lt;br&gt;&lt;/div&gt;" style="html=1;" vertex="1" parent="1">
+          <mxGeometry x="460" y="190" width="110" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="-o7QJbnCqUI7RfTzz9yR-5" value="&lt;div&gt;Call the hydration&lt;/div&gt;&lt;div&gt;function on the&lt;/div&gt;&lt;div&gt;link&#39;s parent node.&lt;br&gt;&lt;/div&gt;" style="html=1;" vertex="1" parent="1">
+          <mxGeometry x="130" y="410" width="110" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="-o7QJbnCqUI7RfTzz9yR-6" value="&lt;div&gt;Parent node stores&lt;/div&gt;&lt;div&gt;function result in&lt;/div&gt;&lt;div&gt;the link.&lt;br&gt;&lt;/div&gt;" style="html=1;" vertex="1" parent="1">
+          <mxGeometry x="360" y="410" width="110" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="-o7QJbnCqUI7RfTzz9yR-7" value="&lt;div&gt;Node checks the&lt;/div&gt;&lt;div&gt;value of its&lt;/div&gt;&lt;div&gt;input links.&lt;/div&gt;" style="html=1;" vertex="1" parent="1">
+          <mxGeometry x="130" y="530" width="110" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="-o7QJbnCqUI7RfTzz9yR-8" value="&lt;div&gt;Get the value from the pure&lt;/div&gt;&lt;div&gt;output link.&lt;/div&gt;" style="html=1;verticalAlign=bottom;endArrow=block;rounded=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;" edge="1" parent="1" source="-o7QJbnCqUI7RfTzz9yR-2" target="-o7QJbnCqUI7RfTzz9yR-3">
+          <mxGeometry width="80" relative="1" as="geometry">
+            <mxPoint x="170" y="110" as="sourcePoint" />
+            <mxPoint x="250" y="110" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="-o7QJbnCqUI7RfTzz9yR-11" value="&lt;div&gt;Link is not a pure&lt;/div&gt;&lt;div&gt;input link.&lt;br&gt;&lt;/div&gt;" style="html=1;verticalAlign=bottom;endArrow=block;rounded=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" target="-o7QJbnCqUI7RfTzz9yR-5">
+          <mxGeometry width="80" relative="1" as="geometry">
+            <mxPoint x="185" y="300" as="sourcePoint" />
+            <mxPoint x="390" y="290" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="-o7QJbnCqUI7RfTzz9yR-12" value="&lt;div&gt;Link is a pure&lt;/div&gt;&lt;div&gt;input link&lt;br&gt;&lt;/div&gt;" style="html=1;verticalAlign=bottom;endArrow=block;rounded=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" target="-o7QJbnCqUI7RfTzz9yR-4">
+          <mxGeometry width="80" relative="1" as="geometry">
+            <mxPoint x="330" y="215" as="sourcePoint" />
+            <mxPoint x="330" y="280" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="-o7QJbnCqUI7RfTzz9yR-13" value="" style="ellipse;html=1;shape=endState;fillColor=#000000;strokeColor=#ff0000;" vertex="1" parent="1">
+          <mxGeometry x="170" y="10" width="30" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="-o7QJbnCqUI7RfTzz9yR-14" value="" style="html=1;verticalAlign=bottom;endArrow=block;rounded=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="-o7QJbnCqUI7RfTzz9yR-13" target="-o7QJbnCqUI7RfTzz9yR-2">
+          <mxGeometry width="80" relative="1" as="geometry">
+            <mxPoint x="220" y="140" as="sourcePoint" />
+            <mxPoint x="300" y="140" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="-o7QJbnCqUI7RfTzz9yR-17" value="" style="endArrow=open;html=1;endSize=12;startArrow=diamondThin;startSize=14;startFill=0;edgeStyle=orthogonalEdgeStyle;align=left;verticalAlign=bottom;rounded=0;" edge="1" parent="1">
+          <mxGeometry x="-1" y="3" relative="1" as="geometry">
+            <mxPoint x="170" y="290" as="sourcePoint" />
+            <mxPoint x="340" y="290" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
