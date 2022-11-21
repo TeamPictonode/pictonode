@@ -1,382 +1,520 @@
-// No Implied Warranty
+// AGPL v3 License
 
-/*
-This library aims to model the logical behavior of a node tree and the output it is able
-to produce. It is programmed in pure TypeScript with no dependencies. In addition to
-underpinning the basics for a node tree, I'm also writing it with the intent to act as an
-explanation for TypeScript.
+export type ComputeFunction<T, M> = (inputs: Array<Link<T, M>>) => Array<T>;
 
-The general model for this library is as follows:
+export class ComputeFunctionTable<T, M> {
+  private table: Map<string, ComputeFunction<T, M>>;
 
-- A node is a function that takes in a set of inputs and produces a set of outputs.
-- Nodes have input and outputs, which are represented through "links". Links hold a single
-  value and transmit it down the node tree. Their design is inspired by channels; those
-  unfamiliar with channels should see this resource: https://gobyexample.com/channels
-- When a new value is placed into a link, the link marks itself as "updated".
-- The real process starts when the value of a link (most often, the leaf node's output link)
-  is requested. At this point, the output link has a node associated with it. The link
-  begins a process called "hydration". The link's node examines each of its linked inputs
-  and sees if any of them are updated. If none of them are updated, the node can be assured
-  that the output value is the intended result of all of the inputs. If at least one is
-  updated, or if running a hydration on the input link updates it, then the node should
-  update its output links accordingly.
-- The initial node calls hydration on the input links, which calls hydration on their
-  inputs, and so on and so forth, thus propagated to every node up the tree. This system
-  also ensures that no unnecessary calculations are run, since the function is only
-  called when inputs change. Recursion!
-*/
+  public constructor() {
+    this.table = new Map();
+  }
 
-import { Unit, Result, Ok, Err, Option, Some, None } from "pictotypes";
+  // Add a compute function to the table
+  public add(name: string, computeFunction: ComputeFunction<T, M>) {
+    this.table.set(name, computeFunction);
+  }
 
-/**
- *  Interface for a type-erased node.
- *
- *  Interfaces are wrappers over types that can provide a set of fields or functions.
- *  In this case, we only use functions. In order to satisfy the interface, Node and
- *  EmptyNode must both have these functions, so we proceed to define them below.
- */
-interface NodeBase<E> {
-  // Hydrate this node.
-  //
-  // Returns "true" if the node was changed during hydration.
-  hydrate: (force: boolean) => Result<boolean, E>;
-}
+  // Get a compute function from the table
+  public get(name: string): ComputeFunction<T, M> {
+    const func = this.table.get(name);
 
-/**
- * An empty placeholder node.
- *
- * Links without associated nodes must have something to hydrate off of. This is instead
- * used to indicate that the link's value will not change after the first time it is
- * hydrated.
- */
-class EmptyNode<E> implements NodeBase<E> {
-  private firstTime: boolean = true;
-
-  hydrate(force: boolean): Result<boolean, E> {
-    if (force || this.firstTime) {
-      this.firstTime = false;
-      return Ok(true);
-    } else {
-      return Ok(force);
+    if (func === undefined) {
+      throw new Error(`Compute function ${name} does not exist`);
     }
+
+    return func;
   }
 }
 
-/**
- * A link from one node to another.
- *
- * Essentially a channel with only one item.
- */
-export class Link<T, E> {
-  // The inner value, if it exists.
-  protected value: Option<T>;
+let ID = 0;
 
-  // The node that the input side of this link is connected to.
-  private readonly input: NodeBase<E>;
+export class Node<T, M> implements HydrateTarget {
+  // Unique ID for this node.
+  private readonly id = ID++;
 
-  // Whether this link has been updated since the last hydration.
-  private updated: boolean;
+  // The input links to this node. We hydrate from these links.
+  private readonly inputLinks: Array<Link<T, M>>;
 
-  // A callback to run before setting `value`.
-  private callback: (value: T) => Result<T, E>;
+  // Reference to the original input links.
+  private readonly originalInputLinks: Array<Link<T, M>>;
 
-  constructor(nb: NodeBase<E>) {
-    this.value = None();
-    this.input = nb;
-    this.updated = false;
-    this.callback = (value: T) => Ok(value);
-  }
+  // The output links from this node. We hydrate to these links.
+  private readonly outputLinks: Array<Link<T, M>>;
 
-  // Store a value in this link.
-  public setValue(value: T): Result<Unit, E> {
-    return this.callback(value).map(value => {
-      this.value = Some(value);
-      this.updated = true;
-      return ({});
+  // Reference to the original output links.
+  private readonly originalOutputLinks: Array<Link<T, M>>;
+
+  // The compute function table for this node.
+  private readonly compute_table: ComputeFunctionTable<T, M>;
+
+  // The name of the compute function we use.
+  private readonly compute_name: string;
+
+  // Metadata for this node.
+  private readonly metadata: M;
+
+  public constructor(
+    inputLinks: Array<Link<T, M>>,
+    outputLinks: Array<Link<T, M>>,
+    compute_table: ComputeFunctionTable<T, M>,
+    compute_name: string,
+    metadata: M
+  ) {
+    if (inputLinks.length !== outputLinks.length) {
+      throw new Error(
+        `Input and output link counts do not match: ${inputLinks.length} !== ${outputLinks.length}`
+      );
+    }
+
+    this.inputLinks = inputLinks;
+    this.originalInputLinks = inputLinks;
+    this.outputLinks = outputLinks;
+    this.compute_table = compute_table;
+    this.compute_name = compute_name;
+    this.metadata = metadata;
+
+    forEach(this.inputLinks, (link, i) => {
+      link.__setToNode(this, i);
+    });
+
+    forEach(this.outputLinks, (link, i) => {
+      link.__setFromNode(this, i);
     });
   }
 
-  // Whether this link is in need of hydration.
-  public needsHydration(): boolean {
-    return this.updated;
+  // Get an array of the input links to this node.
+  public getInputs(): Array<Link<T, M>> {
+    return this.inputLinks;
   }
 
-  // Hydrate this link.
-  private hydrate(): Result<boolean, E> {
-    // Hydrate the input node.
-    //
-    // setValue() will be called as a result of hydration.
-    return this.input.hydrate(false).map((changed) => changed || this.updated);
+  // Get an array of the output links from this node.
+  public getOutputs(): Array<Link<T, M>> {
+    return this.outputLinks;
   }
 
-  // Get the value stored in this link.
-  //
-  // Returns true if the value was hydrated.
-  public getValue(): Result<[T, boolean], E> {
-    // Hydrate ourselves first if necessary.
-    //
-    // After a hydration, the value will be set.
-    return this.hydrate().map((hydrated) => [this.value.unwrap(), hydrated]);
+  public getComputeName(): string {
+    return this.compute_name;
   }
 
-  // Set the callback associated with this link.
-  public setCallback(callback: (value: T) => Result<T, E>) {
-    this.callback = callback;
+  __hydrate(): void {
+    // Are any of the links dirty?
+    const dirty = any(this.inputLinks, (link) => link.isDirty());
+
+    if (!dirty) {
+      // We are not dirty, so we don't need to recompute.
+      return;
+    }
+
+    // Compute the outputs.
+    const compute_func = this.compute_table.get(this.compute_name);
+    const outputs = compute_func(this.inputLinks);
+
+    // Set the outputs.
+    forEach(this.outputLinks, (link, index) => {
+      link.set(outputs[index]!);
+    });
+  }
+
+  // Get the metadata for this node.
+  public getMetadata(): M {
+    return this.metadata;
+  }
+
+  // Get the ID for this node.
+  public getID(): number {
+    return this.id;
+  }
+
+  __setInputLink(index: number, link: Link<T, M>): void {
+    this.inputLinks[index] = link;
+  }
+
+  __setOutputLink(index: number, link: Link<T, M>): void {
+    this.outputLinks[index] = link;
+  }
+
+  __restoreInputLink(index: number): void {
+    this.inputLinks[index] = this.originalInputLinks[index]!;
   }
 }
 
-/**
- * The default link type. Simply gives a single value out.
- */
-export class DefaultLink<T, E> extends Link<T, E> {
-  public constructor(value: T) {
-    super(new EmptyNode());
-    this.setValue(value).unwrap();
+export class Link<T, M> {
+  // A unique ID for this link.
+  private readonly id = ID++;
+
+  // The value of the link.
+  private value: T;
+
+  // Metadata about the link.
+  private metadata: M;
+
+  // The node that this link hydrates from.
+  private fromNode: HydrateTarget;
+
+  // The index of this link in the output array of the from node.
+  private outputIndex: number;
+
+  // The node that this link hydrates to.
+  private toNode: HydrateTarget;
+
+  // The index of this link in the input array of the to node.
+  private inputIndex: number;
+
+  // A string describing the type of the link.
+  private type: string;
+
+  // Has our value been changed since the last hydration?
+  private dirty: boolean;
+
+  public constructor(defaultValue: T, metadata: M, type: string) {
+    this.value = defaultValue;
+    this.metadata = metadata;
+    this.type = type;
+    this.dirty = true;
+    this.fromNode = NO_NODE;
+    this.toNode = NO_NODE;
+    this.inputIndex = -1;
+    this.outputIndex = -1;
+  }
+
+  __setFromNode(node: HydrateTarget, index: number) {
+    this.fromNode = node;
+    this.outputIndex = index;
+  }
+
+  __setToNode(node: HydrateTarget, index: number) {
+    this.toNode = node;
+    this.inputIndex = index;
+  }
+
+  __inputIndex(): number {
+    return this.inputIndex;
+  }
+
+  __outputIndex(): number {
+    return this.outputIndex;
+  }
+
+  // Hydrate and set the value of this link.
+  private __hydrate() {
+    this.fromNode.__hydrate();
+    this.dirty = false;
+  }
+
+  // Get the value of this link.
+  public get(): T {
+    this.__hydrate();
+    return this.value;
+  }
+
+  // Set the value of this link.
+  public set(value: T) {
+    this.value = value;
+    this.dirty = true;
+  }
+
+  // Get the metadata of this link.
+  public getMetadata(): M {
+    return this.metadata;
+  }
+
+  // Is this link dirty?
+  public isDirty(): boolean {
+    return this.dirty;
+  }
+
+  // Get the type of this link.
+  public getType(): string {
+    return this.type;
+  }
+
+  // Do we have a node that this link hydrates from?
+  public hasFromNode(): boolean {
+    return this.fromNode !== NO_NODE;
+  }
+
+  // Do we have a node that this link hydrates to?
+  public hasToNode(): boolean {
+    return this.toNode !== NO_NODE;
+  }
+
+  // Get the node that this link hydrates from.
+  public getFromNode(): Node<T, M> {
+    const node = this.fromNode;
+
+    if (node === NO_NODE) {
+      throw new Error("Link has no from node");
+    }
+
+    return node as Node<T, M>;
+  }
+
+  // Get the node that this link hydrates to.
+  public getToNode(): Node<T, M> {
+    const node = this.toNode;
+
+    if (node === NO_NODE) {
+      throw new Error("Link has no to node");
+    }
+
+    return node as Node<T, M>;
+  }
+
+  // Get the ID for this link.
+  public getID(): number {
+    return this.id;
   }
 }
 
-/**
- * A list of links with specific values.
- *
- * This type is marginally complicated, but the general essence is as follows:
- *
- * - If the user passes in the tuple [a, b, c], the result type is
- *   [Link<a>, Link<b>, Link<c>]
- * - If the user passes in an a[], the result type is Link<a>[].
- *
- * Basically, it just maps the tuple or array to its link equivalents. Saying
- * "extends [...any[]]" lets us use both tuples and arrays as the generic input while
- * also maintaining our typing.
- */
-type InputSpigots<List extends [...any[]], E> = {
-  [Key in keyof List]: Link<List[Key], E>;
-} & { length: List["length"] };
+export class Pipeline<T, M> {
+  // Every node in the pipeline.
+  private allNodes: Array<Node<T, M>>;
 
-/**
- * Same as above, but for the output.
- *
- * TODO: This may be able to be the same type.
- */
-type OutputSinks<List extends [...any[]], E> = {
-  [Key in keyof List]: Link<List[Key], E>;
-} & { length: List["length"] };
+  // Every link in the pipeline.
+  private allLinks: Array<Link<T, M>>;
 
-/**
- * A node that can be used to create a graph.
- */
-export abstract class Node<
-  Inputs extends [...any[]],
-  Outputs extends [...any[]],
-  E
-> implements NodeBase<E>
-{
-  // The input spigots we receive value from.
-  private inputs: InputSpigots<Inputs, E>;
+  // Metadata for this pipeline.
+  private metadata: M;
 
-  // The output sinks we send values to.
-  private readonly outputs: OutputSinks<Outputs, E>;
+  // The output links that we care about.
+  private outputLinks: Array<Link<T, M>>;
 
-  // Convert the set of inputs into the set of outputs.
-  //
-  // This abstract function is meant to be implemented by subclasses of Node.
-  protected abstract convert(inputs: Inputs): Result<Outputs, E>;
+  public constructor(metadata: M) {
+    this.allLinks = [];
+    this.allNodes = [];
+    this.metadata = metadata;
+  }
 
-  protected constructor(
-    numInputs: number,
-    numOutputs: number,
-    defaults: Inputs
+  // Add a node to this pipeline.
+  public addNode(node: Node<T, M>) {
+    this.allNodes.push(node);
+    this.allLinks.push(...node.getInputs());
+    this.allLinks.push(...node.getOutputs());
+  }
+
+  // Connect one node to another.
+  public connectNodes(
+    fromNode: Node<T, M>,
+    fromIndex: number,
+    toNode: Node<T, M>,
+    toIndex: number
   ) {
-    const inputs: any[] = [];
-    const outputs: any[] = [];
-
-    for (let i = 0; i < numInputs; i++) {
-      inputs.push(new DefaultLink(defaults[i]));
-    }
-
-    for (let i = 0; i < numOutputs; i++) {
-      outputs.push(new Link(this));
-    }
-
-    this.inputs = inputs as InputSpigots<Inputs, E>;
-    this.outputs = outputs as OutputSinks<Outputs, E>;
+    const outputLink = fromNode.getOutputs()[fromIndex]!;
+    outputLink.__setToNode(toNode, toIndex);
+    toNode.__setOutputLink(toIndex, outputLink);
   }
 
-  // Get the list of input spigots.
-  public getInputs(): InputSpigots<Inputs, E> {
-    return this.inputs;
+  // Disconnect one node from another.
+  public disconnectNodes(
+    fromNode: Node<T, M>,
+    fromIndex: number,
+    toNode: Node<T, M>,
+    toIndex: number
+  ) {
+    const outputLink = fromNode.getOutputs()[fromIndex]!;
+    outputLink.__setToNode(NO_NODE, -1);
+    toNode.__restoreInputLink(toIndex);
   }
 
-  // Get the list of output sinks.
-  public getOutputs(): OutputSinks<Outputs, E> {
-    return this.outputs;
-  }
+  // Delete a node from this pipeline.
+  public deleteNode(node: Node<T, M>) {
+    const linkIds: number[] = [];
 
-  // Set the input value at the given index.
-  public setInput<T extends keyof Inputs>(index: T, value: Inputs[T]): Result<Unit, E> {
-    return this.inputs[index]!.setValue(value);
-  }
-
-  // Get the output value at the given index.
-  public getOutput(index: number): Result<Outputs[number], E> {
-    return this.outputs[index]!.getValue().map((value) => value[0]);
-  }
-
-  // Link the output of the node at the given index to the input of the node at the
-  // given index.
-  public link<
-    ThisInputKey extends keyof Inputs,
-    OtherOutputKey extends keyof OtherOutputs,
-    OtherInputs extends [...any[]],
-    OtherOutputs extends {
-      [Key in OtherOutputKey]: Inputs[ThisInputKey];
-    } & [...any[]]
-  >(
-    thisInputKey: ThisInputKey,
-    otherOutputKey: OtherOutputKey,
-    otherNode: Node<OtherInputs, OtherOutputs, E>
-  ): Result<Unit, E> {
-    const otherLink: Link<any, E> = otherNode.getOutputs()[otherOutputKey];
-    // TODO: Type this better.
-    // @ts-expect-error
-    this.inputs[thisInputKey] = otherLink;
-
-    // Hydrate ourselves using our new node.
-    return this.hydrate(true).map((_) => ({}));
-  }
-
-  // Hydrate this node, checking the inputs for updated and propagating them
-  // to the outputs.
-  hydrate(force: boolean): Result<boolean, E> {
-    // Check if any of the inputs have been updated.
-    const inputResults = map(this.inputs, (input) => input.getValue());
-    let needsHydration = false;
-    const inputValues: any[] = [];
-
-    for (let i = 0; i < inputResults.length; i++) {
-      const result = inputResults[i]!;
-
-      let error: E | undefined;
-      const errored = result.match(
-        ([value, hydrated]) => {
-          needsHydration = needsHydration || hydrated;
-          inputValues.push(value);
-          return false;
-        },
-        (err) => {
-          error = err;
-          return true;
-        }
-      );
-
-      if (errored) {
-        return Err(error!);
+    forEach(node.getInputs(), (link, i) => {
+      if (link.hasFromNode()) {
+        this.disconnectNodes(link.getFromNode(), link.__outputIndex(), node, i);
       }
+
+      linkIds.push(link.getID());
+    });
+
+    forEach(node.getOutputs(), (link, i) => {
+      if (link.hasToNode()) {
+        this.disconnectNodes(node, i, link.getToNode(), link.__inputIndex());
+      }
+
+      linkIds.push(link.getID());
+    });
+
+    this.allNodes = filter(this.allNodes, (n) => n.getID() !== node.getID());
+    this.allLinks = filter(
+      this.allLinks,
+      (l) => linkIds.indexOf(l.getID()) === -1
+    );
+  }
+
+  // Serialize this pipeline into a JSON form.
+  // 
+  // Assumes that `M` is already a valid JSON object.
+  public serialize(): PipelineJSON<T, M> {
+    const nodes: NodeJSON<T, M>[] = map(this.allNodes, (node) => ({
+      id: node.getID(),
+      metadata: node.getMetadata(),
+      compute_name: node.getComputeName(),
+    }));
+
+    const links: LinkJSON<T, M>[] = map(this.allLinks, (link) => ({
+      id: link.getID(),
+      type: link.getType(),
+      metadata: link.getMetadata(),
+      fromNode: link.hasFromNode() ? link.getFromNode().getID() : undefined,
+      toNode: link.hasToNode() ? link.getToNode().getID() : undefined,
+      fromIndex: link.hasFromNode() ? link.__outputIndex() : -1,
+      toIndex: link.hasToNode() ? link.__inputIndex() : -1,
+    }));
+
+    return {
+      nodes,
+      links,
+      metadata: this.metadata,
+    };
+  }
+
+  // Get the current outputs for this workflow.
+  public getOutputs(): Array<T> {
+    return map(this.outputLinks, (link) => link.get());
+  }
+
+  // Set the output links for this pipeline.
+  public setOutputs(outputLinks: Array<Link<T, M>>) {
+    this.outputLinks = outputLinks;
+  }
+
+  // Get the metadata for this pipeline.
+  public getMetadata(): M {
+    return this.metadata;
+  }
+}
+
+// Deserialize a pipeline from JSON.
+// 
+// Assumes that M is a JSON object.
+export function deserializePipeline<T, M>(
+    json: PipelineJSON<T, M>,
+    compute: ComputeFunctionTable<T, M>
+): Pipeline<T, M> {
+    throw new Error("todo");
+}
+
+export interface PipelineJSON<T, M> {
+  nodes: Array<NodeJSON<T, M>>;
+  links: Array<LinkJSON<T, M>>;
+  metadata: M;
+}
+
+export interface NodeJSON<T, M> {
+  id: number;
+  metadata: M;
+  compute_name: string;
+}
+
+export interface LinkJSON<T, M> {
+  id: number;
+  type: string;
+  metadata: M;
+  fromNode: number | undefined;
+  fromIndex: number;
+  toNode: number | undefined;
+  toIndex: number;
+}
+
+export interface OriginalLinkJSON<T, M> {
+  id: number;
+  type: string;
+  metadata: M;
+  default_value: T;
+};
+
+interface HydrateTarget {
+  // Hydrate this node.
+  __hydrate(): void;
+}
+
+const NO_NODE: HydrateTarget = {
+  __hydrate: () => {},
+};
+
+// Iterate over every element in an array and run a function on it.
+const forEach: <T>(
+  array: Array<T>,
+  fn: (item: T, index: number) => void
+) => void = (() => {
+  if (typeof Array.prototype.forEach === "function") {
+    return (array, fn) => array.forEach(fn);
+  }
+
+  return (array, fn) => {
+    for (let i = 0; i < array.length; i++) {
+      fn(array[i]!, i);
     }
+  };
+})();
 
-    if (!needsHydration && !force) {
-      return Ok(false);
-    }
-
-    // inputs is now a valid array of type Inputs.
-    const inputs: Inputs = inputValues as Inputs;
-
-    // Convert the inputs into outputs.
-    const outputResults = this.convert(inputs);
-    if (!outputResults.isOk()) {
-      return Err(outputResults.getErr()!);
-    }
-
-    // Set output value of links.
-    const outResults = outputResults.get()!;
-    for (let i = 0; i < outResults.length; i++) {
-      const result = outResults[i];
-      this.outputs[i]!.setValue(result);
-    }
-
-    return Ok(true);
-  }
-}
-
-// Convenience source node for a single value.
-export class SourceNode<T, E> extends Node<[T], [T], E> {
-  protected convert(inputs: [T]): Result<[T], E> {
-    return Ok(inputs);
-  }
-
-  constructor(value: T) {
-    super(1, 1, [value]);
-  }
-
-  public setValue(value: T): void {
-    this.getInputs()[0].setValue(value);
-  }
-}
-
-// Convenience sink node for a single value.
-export class SinkNode<T, E> extends Node<[T], [T], E> {
-  protected convert(inputs: [T]): Result<[T], E> {
-    return Ok(inputs);
-  }
-
-  constructor(defaultValue: T) {
-    super(1, 1, [defaultValue]);
-  }
-
-  public getValue(): Result<T, E> {
-    return this.getOutput(0);
-  }
-}
-
-// Convenience node that re-transmits its values.
-export class IdentityNode<T extends [...any[]], E> extends Node<T, T, E> {
-  protected convert(inputs: T): Result<T, E> {
-    return Ok(inputs);
-  }
-
-  public constructor(numValues: number, defaults: T) {
-    super(numValues, numValues, defaults);
-  }
-}
-
-// Convenience class that just runs a callback when it is hydrated.
-export class CallbackNode<
-  Inputs extends [...any[]],
-  Outputs extends [...any[]],
-  E
-> extends Node<Inputs, Outputs, E> {
-  private readonly callback: (inputs: Inputs) => Result<Outputs, E>;
-
-  protected convert(inputs: Inputs): Result<Outputs, E> {
-    return this.callback(inputs);
-  }
-
-  public constructor(
-    numInputs: number,
-    numOutputs: number,
-    defaults: Inputs,
-    callback: (inputs: Inputs) => Result<Outputs, E>
-  ) {
-    super(numInputs, numOutputs, defaults);
-    this.callback = callback;
-  }
-}
-
-// Map the array to a new array.
-function map<Type, Result>(
-  list: Type[],
-  mapper: (value: Type) => Result
-): Result[] {
-  // Some JS environments provide an optimized version of map.
+// Iterate over an array, get each element, map it, and return an array of all values.
+const map: <T, U>(array: Array<T>, fn: (item: T) => U) => Array<U> = (() => {
   if (typeof Array.prototype.map === "function") {
-    return list.map(mapper);
+    return (array, fn) => array.map(fn);
   }
 
-  // Otherwise, we have to do it ourselves.
-  const result: Result[] = [];
+  return <T, U>(array: Array<T>, fn: (item: T) => U) => {
+    const result: Array<U> = [];
 
-  for (const value of list) {
-    result.push(mapper(value));
+    for (const item of array) {
+      result.push(fn(item));
+    }
+
+    return result;
+  };
+})();
+
+// Reduce the array to a single value.
+const reduce: <T, U>(
+  array: Array<T>,
+  fn: (acc: U, item: T) => U,
+  initial: U
+) => U = (() => {
+  if (typeof Array.prototype.reduce === "function") {
+    return (array, fn, initial) => array.reduce(fn, initial);
   }
 
-  return result;
-}
+  return <T, U>(array: Array<T>, fn: (acc: U, item: T) => U, initial: U) => {
+    let acc = initial;
+
+    for (const item of array) {
+      acc = fn(acc, item);
+    }
+
+    return acc;
+  };
+})();
+
+// Are any of the boolean values produced by a closure true?
+const any: <T>(array: Array<T>, fn: (item: T) => boolean) => boolean = (() => {
+  if (typeof Array.prototype.some === "function") {
+    return (array, fn) => array.some(fn);
+  }
+
+  return <T>(array: Array<T>, fn: (item: T) => boolean) => {
+    return reduce(array, (acc, item) => acc || fn(item), false);
+  };
+})();
+
+// Filter a list of items.
+const filter: <T>(array: Array<T>, fn: (item: T) => boolean) => Array<T> =
+  (() => {
+    if (typeof Array.prototype.filter === "function") {
+      return (array, fn) => array.filter(fn);
+    }
+
+    return <T>(array: Array<T>, fn: (item: T) => boolean) => {
+      const result: Array<T> = [];
+
+      for (const item of array) {
+        if (fn(item)) {
+          result.push(item);
+        }
+      }
+
+      return result;
+    };
+  })();

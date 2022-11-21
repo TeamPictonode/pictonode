@@ -2,7 +2,6 @@
   "private": true,
   "workspaces": [
     "frontend/pictonode-web-frontend",
-    "libraries/libnode",
     "libraries/pictotypes"
   ]
 }
