@@ -10,5 +10,5 @@ With GIMP 2.99+, plugins must exist inside of their own subdirectory within any 
 
 ```
 C:\Program Files\GIMP 2.99\lib\gimp\2.99\plug-ins
-C:\Users\<user>\AppData\Roaming\GIMP\2.99\plug-ins
+C:\Users\%username%\AppData\Roaming\GIMP\2.99\plug-ins
 ```

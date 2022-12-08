@@ -12,6 +12,9 @@ from gi.repository import GLib
 from gi.repository import Gio
 import sys
 
+#Plugin impl
+from client import *
+
 def N_(message): return message
 def _(message): return GLib.dgettext(None, message)
 
@@ -38,7 +41,7 @@ class Pictonode (Gimp.PlugIn):
                                      _("Launches Pictonode plugin"),
                                      name)
         procedure.set_menu_label(_("Launch"))
-        procedure.set_attribution("Stephen Foster",
+        procedure.set_attribution("Stephen Foster, Parker Nelms",
                                   "Team Picto",
                                   "2022")
         procedure.add_menu_path ("<Image>/Pictonode")
@@ -83,7 +86,8 @@ class Pictonode (Gimp.PlugIn):
             image_path = image.get_file().get_path()
             image_display.set_from_file(image_path)
 
-            button = Gtk.Button(label="Button 1")
+            button = Gtk.Button(label="Send To Controller")
+            button.connect('clicked', send_message_to_controller_callback, "drawable.get_buffer()")
 
             grid.attach(button, 0, 2, 20, 10)
             grid.attach(image_display, 0, 1, 1000, 500)
