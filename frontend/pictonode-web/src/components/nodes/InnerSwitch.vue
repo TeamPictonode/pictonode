@@ -1,20 +1,20 @@
 <!-- GNU AGPL v3 License -->
 
 <script lang="ts">
-import { defineComponent } from 'vue';
-import { Node, SpecialNodeType, MetadataType, NodeDataType } from './NodeTree';
+import { defineComponent } from "vue";
+import { Node, SpecialNodeType, MetadataType, NodeDataType } from "./NodeTree";
 
 export default defineComponent({
   props: {
     node: {
-        type:Object as () => Node,
-        required: true,
+      type: Object as () => Node,
+      required: true,
     },
   },
   data: () => ({
-    SpecialNodeType
+    SpecialNodeType,
   }),
-  emits: ['input-update'],
+  emits: ["input-update"],
   methods: {
     onImageInputUpdate() {
       console.log("Input updated");
@@ -22,22 +22,22 @@ export default defineComponent({
       // Get the image blob.
       // @ts-ignore
       const imageBlob = this.$refs.imageInput.files[0];
-      
+
       // Convert it to a canvas.
       const reader = new FileReader();
       reader.readAsDataURL(imageBlob);
-      reader.onload = e => {
+      reader.onload = (e) => {
         const img = new Image();
         img.onload = () => {
           // Create a canvas.
-          const canvas = document.createElement('canvas');
+          const canvas = document.createElement("canvas");
           canvas.width = img.width;
           canvas.height = img.height;
 
           // Draw the image on the canvas.
-          const ctx = canvas.getContext('2d');
+          const ctx = canvas.getContext("2d");
           if (!ctx) {
-            throw new Error('Could not get canvas context');
+            throw new Error("Could not get canvas context");
           }
 
           ctx.drawImage(img, 0, 0);
@@ -46,7 +46,7 @@ export default defineComponent({
             type: NodeDataType.Image,
             canvas,
           });
-          this.$emit('input-update');
+          this.$emit("input-update");
         };
 
         // @ts-ignore
@@ -54,20 +54,23 @@ export default defineComponent({
       };
     },
     getSpecialType(): SpecialNodeType {
-        const metadata = this.node.getTemplateTable().getTemplate(this.node.getTemplate()).getMetadata();
+      const metadata = this.node
+        .getTemplateTable()
+        .getTemplate(this.node.getTemplate())
+        .getMetadata();
 
-        if (metadata.metatype !== MetadataType.NodeTemplate) {
-            throw new Error('Node metadata is not of type NodeTemplate');
-        }
+      if (metadata.metatype !== MetadataType.NodeTemplate) {
+        throw new Error("Node metadata is not of type NodeTemplate");
+      }
 
-        return metadata.special;
-    }
+      return metadata.special;
+    },
   },
 });
 </script>
 
 <template>
-  <v-file-input 
+  <v-file-input
     v-if="getSpecialType() === SpecialNodeType.ImageInput"
     ref="imageInput"
     @change="onImageInputUpdate"

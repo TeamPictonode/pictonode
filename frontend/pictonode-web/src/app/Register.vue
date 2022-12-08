@@ -1,11 +1,11 @@
 <!-- GNU AGPL v3 License -->
 
 <script lang="ts">
-  import { defineComponent } from "vue";
+import { defineComponent } from "vue";
 
-  export default defineComponent({
-    name: "Register",
-  });
+export default defineComponent({
+  name: "Register",
+});
 </script>
 
 <template>
@@ -52,7 +52,7 @@
 
 <style scoped lang="scss">
 #register {
-    padding: 1rem;
-    margin: 1rem;
+  padding: 1rem;
+  margin: 1rem;
 }
 </style>

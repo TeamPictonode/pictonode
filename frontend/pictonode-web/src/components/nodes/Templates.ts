@@ -1,172 +1,173 @@
 // GNU AGPL v3 License
 
 import { NodeTemplate, LinkTemplate, TemplateTable, Link } from "libnode";
-import { Color, NodeData, NodeDataType, NodeMetadata, MetadataType, SpecialNodeType } from "./NodeTree";
+import {
+  Color,
+  NodeData,
+  NodeDataType,
+  NodeMetadata,
+  MetadataType,
+  SpecialNodeType,
+} from "./NodeTree";
 
 const TEMPLATES = new TemplateTable<NodeData, NodeMetadata>();
 let initialized = false;
 
 export default function getTemplates(): TemplateTable<NodeData, NodeMetadata> {
-    if (!initialized) {
-        initialized = true;
-        initializeTemplates();
-    }
-    return TEMPLATES;
+  if (!initialized) {
+    initialized = true;
+    initializeTemplates();
+  }
+  return TEMPLATES;
 }
 
 function initializeTemplates() {
-    // Final output node; used as a marker.
-    const outputNode = new NodeTemplate<NodeData, NodeMetadata>(
-        _ => ([]),
-        [new LinkTemplate(
-            ltMeta("Viewport", NodeDataType.Image),
-            noOutputImage(),
-        )],
-        [],
-        ntMeta("Output", SpecialNodeType.OutputNode),
-    );
-    
-    // Composite two images together.
-    const compositeNode = new NodeTemplate<NodeData, NodeMetadata>(
-        composite,
-        [
-            new LinkTemplate(
-                ltMeta("Top Image", NodeDataType.Image),
-                defaultImage(),
-            ),
-            new LinkTemplate(
-                ltMeta("Bottom Image", NodeDataType.Image),
-                defaultImage(),
-            ),
-        ],
-        [
-            new LinkTemplate(
-                ltMeta("Composite Image", NodeDataType.Image),
-                defaultImage(),
-            ),
-        ],
-        ntMeta("Composite", SpecialNodeType.PureFunction),
-    );
+  // Final output node; used as a marker.
+  const outputNode = new NodeTemplate<NodeData, NodeMetadata>(
+    (_) => [],
+    [new LinkTemplate(ltMeta("Viewport", NodeDataType.Image), noOutputImage())],
+    [],
+    ntMeta("Output", SpecialNodeType.OutputNode)
+  );
 
-    // Image input node.
-    const inputNode = new NodeTemplate<NodeData, NodeMetadata>(
-        _ => ([{ type: NodeDataType.Invalid }]),
-        [],
-        [
-            new LinkTemplate(
-                ltMeta("Input Image", NodeDataType.Image),
-                defaultImage(),
-            ),
-        ],
-        ntMeta("Image Input", SpecialNodeType.ImageInput),
-    );
+  // Composite two images together.
+  const compositeNode = new NodeTemplate<NodeData, NodeMetadata>(
+    composite,
+    [
+      new LinkTemplate(ltMeta("Top Image", NodeDataType.Image), defaultImage()),
+      new LinkTemplate(
+        ltMeta("Bottom Image", NodeDataType.Image),
+        defaultImage()
+      ),
+    ],
+    [
+      new LinkTemplate(
+        ltMeta("Composite Image", NodeDataType.Image),
+        defaultImage()
+      ),
+    ],
+    ntMeta("Composite", SpecialNodeType.PureFunction)
+  );
 
-    // Color input node.
-    const colorInputNode = new NodeTemplate<NodeData, NodeMetadata>(
-        _ => ([{ type: NodeDataType.Invalid }]),
-        [],
-        [
-            new LinkTemplate(
-                ltMeta("Input Color", NodeDataType.Color),
-                { type: NodeDataType.Color, color: "#FF00FF" },
-            ),
-        ],
-        ntMeta("Image Input", SpecialNodeType.ColorInput),
-    );
+  // Image input node.
+  const inputNode = new NodeTemplate<NodeData, NodeMetadata>(
+    (_) => [{ type: NodeDataType.Invalid }],
+    [],
+    [
+      new LinkTemplate(
+        ltMeta("Input Image", NodeDataType.Image),
+        defaultImage()
+      ),
+    ],
+    ntMeta("Image Input", SpecialNodeType.ImageInput)
+  );
 
-    // Add all of the nodes.
-    TEMPLATES.addTemplate("output", outputNode);
-    TEMPLATES.addTemplate("composite", compositeNode);
-    TEMPLATES.addTemplate("input", inputNode);
-    TEMPLATES.addTemplate("color-input", colorInputNode);
+  // Color input node.
+  const colorInputNode = new NodeTemplate<NodeData, NodeMetadata>(
+    (_) => [{ type: NodeDataType.Invalid }],
+    [],
+    [
+      new LinkTemplate(ltMeta("Input Color", NodeDataType.Color), {
+        type: NodeDataType.Color,
+        color: "#FF00FF",
+      }),
+    ],
+    ntMeta("Image Input", SpecialNodeType.ColorInput)
+  );
+
+  // Add all of the nodes.
+  TEMPLATES.addTemplate("output", outputNode);
+  TEMPLATES.addTemplate("composite", compositeNode);
+  TEMPLATES.addTemplate("input", inputNode);
+  TEMPLATES.addTemplate("color-input", colorInputNode);
 }
 
 type Link2 = Link<NodeData, NodeMetadata>;
 
 function composite(input: Array<Link2>): Array<NodeData> {
-    // Check both inputs.
-    if (input.length != 2) {
-        throw new Error("Composite node must have two inputs.");
-    }
+  // Check both inputs.
+  if (input.length != 2) {
+    throw new Error("Composite node must have two inputs.");
+  }
 
-    const data1 = input[0].get();
-    const data2 = input[1].get();
+  const data1 = input[0].get();
+  const data2 = input[1].get();
 
-    // Convert both to images.
-    const image1 = transformToImage(data1);
-    const image2 = transformToImage(data2);
+  // Convert both to images.
+  const image1 = transformToImage(data1);
+  const image2 = transformToImage(data2);
 
-    // Get the minimum width and height.
-    const width = Math.min(image1.width, image2.width);
-    const height = Math.min(image1.height, image2.height);
+  // Get the minimum width and height.
+  const width = Math.min(image1.width, image2.width);
+  const height = Math.min(image1.height, image2.height);
 
-    // Create a new canvas.
-    const canvas = document.createElement("canvas");
-    canvas.width = width;
-    canvas.height = height;
+  // Create a new canvas.
+  const canvas = document.createElement("canvas");
+  canvas.width = width;
+  canvas.height = height;
 
-    // Get the context.
-    const ctx = canvas.getContext("2d")!;
+  // Get the context.
+  const ctx = canvas.getContext("2d")!;
 
-    // Composite the images.
-    ctx.drawImage(image2, 0, 0, width, height);
-    ctx.drawImage(image1, 0, 0, width, height);
+  // Composite the images.
+  ctx.drawImage(image2, 0, 0, width, height);
+  ctx.drawImage(image1, 0, 0, width, height);
 
-    // Return the new image.
-    return [{ type: NodeDataType.Image, canvas }];
+  // Return the new image.
+  return [{ type: NodeDataType.Image, canvas }];
 }
 
 function transformToImage(data: NodeData): HTMLCanvasElement {
-    switch (data.type) {
-        case NodeDataType.Image:
-            return data.canvas;
-        case NodeDataType.Color:
-            const width = 100;
-            const height = 100;
-            const canvas = document.createElement("canvas");
-            canvas.width = width;
-            canvas.height = height;
-            const ctx = canvas.getContext("2d")!;
-            ctx.fillStyle = data.color;
-            ctx.fillRect(0, 0, width, height);
-            return canvas;
-        default:
-            throw new Error("Unknown node data type.");
-    }
+  switch (data.type) {
+    case NodeDataType.Image:
+      return data.canvas;
+    case NodeDataType.Color:
+      const width = 100;
+      const height = 100;
+      const canvas = document.createElement("canvas");
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext("2d")!;
+      ctx.fillStyle = data.color;
+      ctx.fillRect(0, 0, width, height);
+      return canvas;
+    default:
+      throw new Error("Unknown node data type.");
+  }
 }
 
 function ntMeta(name: string, special: SpecialNodeType): NodeMetadata {
-    return {
-        metatype: MetadataType.NodeTemplate,
-        name,
-        special,
-    };
+  return {
+    metatype: MetadataType.NodeTemplate,
+    name,
+    special,
+  };
 }
 
 function ltMeta(title: string, type: NodeDataType): NodeMetadata {
-    return {
-        metatype: MetadataType.LinkTemplate,
-        title,
-        type,
-    }
+  return {
+    metatype: MetadataType.LinkTemplate,
+    title,
+    type,
+  };
 }
 
 function defaultImage(): NodeData {
-    const canvas = document.createElement("canvas");
-    canvas.width = 100;
-    canvas.height = 100;
-    const ctx = canvas.getContext("2d")!;
-    ctx.fillStyle = "#3344FF";
-    ctx.fillRect(0, 0, 100, 100);
-    return { type: NodeDataType.Image, canvas };
+  const canvas = document.createElement("canvas");
+  canvas.width = 100;
+  canvas.height = 100;
+  const ctx = canvas.getContext("2d")!;
+  ctx.fillStyle = "#3344FF";
+  ctx.fillRect(0, 0, 100, 100);
+  return { type: NodeDataType.Image, canvas };
 }
 
 function noOutputImage(): NodeData {
-    const canvas = document.createElement("canvas");
-    canvas.width = 100;
-    canvas.height = 100;
-    const ctx = canvas.getContext("2d")!;
-    ctx.fillStyle = "#FF0000";
-    ctx.fillRect(0, 0, 100, 100);
-    return { type: NodeDataType.Image, canvas };
+  const canvas = document.createElement("canvas");
+  canvas.width = 100;
+  canvas.height = 100;
+  const ctx = canvas.getContext("2d")!;
+  ctx.fillStyle = "#FF0000";
+  ctx.fillRect(0, 0, 100, 100);
+  return { type: NodeDataType.Image, canvas };
 }

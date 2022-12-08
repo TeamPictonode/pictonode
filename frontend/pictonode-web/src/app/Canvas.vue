@@ -1,25 +1,25 @@
 <!-- GNU AGPL v3 License -->
 <script lang="ts">
-  import { defineComponent } from 'vue';
-  import NodeView from "../components/nodes/Flow.vue";
-  import RenderedView from "./RenderedView.vue";
-  import Topbar from "./Topbar.vue";
-  import Widgets from "./Widgets.vue";
+import { defineComponent } from "vue";
+import NodeView from "../components/nodes/Flow.vue";
+import RenderedView from "./RenderedView.vue";
+import Topbar from "./Topbar.vue";
+import Widgets from "./Widgets.vue";
 
-  export default defineComponent({
-    components: { NodeView, RenderedView, Topbar, Widgets },
-    data: () => ({
-      img: undefined as HTMLCanvasElement | undefined,
-      ticks: 0,
-    }),
-    methods: {
-      onCanvasUpdate(canvas: HTMLCanvasElement) {
-        console.log("updated img canvas");
-        this.img = canvas;
-        this.ticks += 1;
-      },
-    }
-  });
+export default defineComponent({
+  components: { NodeView, RenderedView, Topbar, Widgets },
+  data: () => ({
+    img: undefined as HTMLCanvasElement | undefined,
+    ticks: 0,
+  }),
+  methods: {
+    onCanvasUpdate(canvas: HTMLCanvasElement) {
+      console.log("updated img canvas");
+      this.img = canvas;
+      this.ticks += 1;
+    },
+  },
+});
 </script>
 
 <template>
