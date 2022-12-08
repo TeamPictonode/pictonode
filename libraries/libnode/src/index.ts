@@ -23,7 +23,7 @@ export class ComputeFunctionTable<T, M> {
     }
 
     return func;
-  }
+  } 
 }
 
 let ID = 0;
@@ -69,6 +69,7 @@ export class Node<T, M> implements HydrateTarget {
     this.inputLinks = inputLinks;
     this.originalInputLinks = inputLinks;
     this.outputLinks = outputLinks;
+    this.originalOutputLinks = outputLinks;
     this.compute_table = compute_table;
     this.compute_name = compute_name;
     this.metadata = metadata;
@@ -283,6 +284,16 @@ export class Pipeline<T, M> {
     this.allLinks = [];
     this.allNodes = [];
     this.metadata = metadata;
+  }
+
+  // Get every node in the pipeline.
+  public getNodes(): Array<Node<T, M>> {
+    return this.allNodes;
+  }
+
+  // Get every link in the pipeline.
+  public getLinks(): Array<Link<T, M>> {
+    return this.allLinks;
   }
 
   // Add a node to this pipeline.
