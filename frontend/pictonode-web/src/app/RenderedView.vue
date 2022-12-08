@@ -2,17 +2,15 @@
 <script lang="ts">
 import { defineComponent } from "vue";
 
-function update(canvas: HTMLCanvasElement, img: HTMLImageElement | undefined) {
+function update(canvas: HTMLCanvasElement, img: HTMLCanvasElement | undefined) {
     const ctx = canvas.getContext("2d");
     if (ctx) {
         console.log(`got img: ${img}`);
         if (img) {
             console.log('drawing image');
-            img.onload = () => {
-                canvas.width = img.width;
-                canvas.height = img.height;
-                ctx.drawImage(img, 0, 0);
-            };
+            canvas.width = img.width;
+            canvas.height = img.height;
+            ctx.drawImage(img, 0, 0);
         } else {
             ctx.fillStyle = "red";
             ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -21,13 +19,19 @@ function update(canvas: HTMLCanvasElement, img: HTMLImageElement | undefined) {
 }
 
 export default defineComponent({
-    props: ["img"],
+    props: ["img", "ticks"],
     mounted() {
         // @ts-ignore
         update(this.$refs.inner, this.img);
     },
     watch: {
         img() {
+            // @ts-ignore
+            update(this.$refs.inner, this.img);
+        },
+        ticks() {
+            // This is a bogus hack, please fix!
+
             // @ts-ignore
             update(this.$refs.inner, this.img);
         }

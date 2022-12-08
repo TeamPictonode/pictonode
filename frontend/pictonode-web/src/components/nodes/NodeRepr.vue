@@ -4,12 +4,13 @@
 import { Handle, Position } from "@vue-flow/core";
 import { defineComponent } from "vue";
 
-import { Node as GraphNode } from "./NodeTree";
+import { Node as GraphNode, metadataTitle } from "../nodes/NodeTree";
+import InnerSwitch from "./InnerSwitch.vue";
 
 export default defineComponent({
-    components: { Handle },
+    components: { Handle, InnerSwitch },
     data: () => ({
-        Position,
+        Position, metadataTitle,
 
         inputHandleStyle(index: number) {
             return {
@@ -23,10 +24,17 @@ export default defineComponent({
             };
         },
     }),
+    emits: ["needs-reprocess", "updateNodeInternals"],
     props: {
-        node: {
-            type: Object as () => GraphNode,
+        data: {
+            type: Object as () => { node: GraphNode },
             required: true,
+        },
+    },
+    methods: {
+        onNeedsReprocess() {
+            console.log("needs reprocess");
+            this.$emit("needs-reprocess");
         },
     }
 });
@@ -34,27 +42,30 @@ export default defineComponent({
 
 <template>
   <Handle
-      v-for="(inputLink, index) in node.getInputs()"
+      v-for="(inputLink, index) in data.node.getInputs()"
       type="target"
       :id="`input-${index}`"
       :position="Position.Left"
       :style="inputHandleStyle(index)"
       >
-    {{ inputLink.getMetadata().title || `Input ${index}` }}
   </Handle>
 
   <div class="nodeStyle">
-    <p>{{ node.getMetadata().title || `Unnamed Node` }}</p>
+    <p>{{ metadataTitle(data.node.getMetadata()) || `Unnamed Node` }}</p>
+    <InnerSwitch :node="data.node" @input-update="onNeedsReprocess" />
   </div>
 
   <Handle
-        v-for="(outputLink, index) in node.getOutputs()"
+        v-for="(outputLink, index) in data.node.getOutputs()"
         type="source"
         :id="`output-${index}`"
         :position="Position.Right"
         :style="outputHandleStyle(index)"
       >
-    {{ outputLink.getMetadata().title || `Output ${index}` }}
+    {{ metadataTitle(outputLink.getMetadata()) || `Output ${index}` }}
+    <div v-if="!outputLink.getFrom()">
+      {{ metadataTitle(outputLink.getMetadata()) }}
+    </div>
   </Handle>
 </template>
 

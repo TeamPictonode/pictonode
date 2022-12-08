@@ -1,119 +1,69 @@
 // AGPL v3 License
 
-export type ComputeFunction<T, M> = (inputs: Array<Link<T, M>>) => Array<T>;
+// More nodes than we'll probably ever use (about 16 million).
+const MAX_NODES: number = 1 << 24;
 
-export class ComputeFunctionTable<T, M> {
-  private table: Map<string, ComputeFunction<T, M>>;
-
+// A table made up of node templates.
+export class TemplateTable<T, M> {
+  private table: Map<string, NodeTemplate<T, M>>;
+  
   public constructor() {
     this.table = new Map();
   }
 
-  // Add a compute function to the table
-  public add(name: string, computeFunction: ComputeFunction<T, M>) {
-    this.table.set(name, computeFunction);
+  public addTemplate(name: string, template: NodeTemplate<T, M>): void {
+    this.table.set(name, template);
   }
 
-  // Get a compute function from the table
-  public get(name: string): ComputeFunction<T, M> {
-    const func = this.table.get(name);
+  public getTemplate(name: string): NodeTemplate<T, M> {
+    const template = this.table.get(name);
 
-    if (func === undefined) {
-      throw new Error(`Compute function ${name} does not exist`);
+    if (template === undefined) {
+      throw new Error(`Template "${name}" does not exist.`);
     }
 
-    return func;
-  } 
-}
+    return template;
+  }
+};
 
-let ID = 0;
+// Template for creating a node.
+export class NodeTemplate<T, M> {
+  // Callback for when the node's data is processed.
+  private onProcess: (data: Array<Link<T, M>>) => Array<T>;
 
-export class Node<T, M> implements HydrateTarget {
-  // Unique ID for this node.
-  private readonly id = ID++;
+  // Inputs for this node.
+  private inputs: Array<LinkTemplate<T, M>>;
 
-  // The input links to this node. We hydrate from these links.
-  private readonly inputLinks: Array<Link<T, M>>;
+  // Outputs for this node.
+  private outputs: Array<LinkTemplate<T, M>>;
 
-  // Reference to the original input links.
-  private readonly originalInputLinks: Array<Link<T, M>>;
-
-  // The output links from this node. We hydrate to these links.
-  private readonly outputLinks: Array<Link<T, M>>;
-
-  // Reference to the original output links.
-  private readonly originalOutputLinks: Array<Link<T, M>>;
-
-  // The compute function table for this node.
-  private readonly compute_table: ComputeFunctionTable<T, M>;
-
-  // The name of the compute function we use.
-  private readonly compute_name: string;
-
-  // Metadata for this node.
-  private readonly metadata: M;
+  // Metadata
+  private metadata: M;
 
   public constructor(
-    inputLinks: Array<Link<T, M>>,
-    outputLinks: Array<Link<T, M>>,
-    compute_table: ComputeFunctionTable<T, M>,
-    compute_name: string,
-    metadata: M
+    // Callback for when the node's data is processed.
+    onProcess: (data: Array<Link<T, M>>) => Array<T>,
+    // Default inputs for this node.
+    inputs: Array<LinkTemplate<T, M>>,
+    // Default outputs for this node.
+    outputs: Array<LinkTemplate<T, M>>,
+    // Metadata
+    metadata: M,
   ) {
-    if (inputLinks.length !== outputLinks.length) {
-      throw new Error(
-        `Input and output link counts do not match: ${inputLinks.length} !== ${outputLinks.length}`
-      );
-    }
-
-    this.inputLinks = inputLinks;
-    this.originalInputLinks = inputLinks;
-    this.outputLinks = outputLinks;
-    this.originalOutputLinks = outputLinks;
-    this.compute_table = compute_table;
-    this.compute_name = compute_name;
+    this.onProcess = onProcess;
+    this.inputs = inputs;
+    this.outputs = outputs;
     this.metadata = metadata;
-
-    forEach(this.inputLinks, (link, i) => {
-      link.__setToNode(this, i);
-    });
-
-    forEach(this.outputLinks, (link, i) => {
-      link.__setFromNode(this, i);
-    });
   }
 
-  // Get an array of the input links to this node.
-  public getInputs(): Array<Link<T, M>> {
-    return this.inputLinks;
+  // Get the inputs for this node.
+  public getInputs(): Array<LinkTemplate<T, M>> {
+    return this.inputs;
   }
 
-  // Get an array of the output links from this node.
-  public getOutputs(): Array<Link<T, M>> {
-    return this.outputLinks;
-  }
-
-  public getComputeName(): string {
-    return this.compute_name;
-  }
-
-  __hydrate(): void {
-    // Are any of the links dirty?
-    const dirty = any(this.inputLinks, (link) => link.isDirty());
-
-    if (!dirty) {
-      // We are not dirty, so we don't need to recompute.
-      return;
-    }
-
-    // Compute the outputs.
-    const compute_func = this.compute_table.get(this.compute_name);
-    const outputs = compute_func(this.inputLinks);
-
-    // Set the outputs.
-    forEach(this.outputLinks, (link, index) => {
-      link.set(outputs[index]!);
-    });
+  // Get the outputs for this node.
+  public getOutputs(): Array<LinkTemplate<T, M>> {
+    return this.outputs;
   }
 
   // Get the metadata for this node.
@@ -121,320 +71,304 @@ export class Node<T, M> implements HydrateTarget {
     return this.metadata;
   }
 
-  // Get the ID for this node.
-  public getID(): number {
+  // PRIVATE: Process the node's data.
+  __process(data: Array<Link<T, M>>): Array<T> {
+    return this.onProcess(data);
+  }
+};
+
+// Template for creating a link.
+export class LinkTemplate<T, M> {
+  private metadata: M;
+  private defaultValue: T;
+
+  public constructor(metadata: M, defaultValue: T) {
+    this.metadata = metadata;
+    this.defaultValue = defaultValue;
+  }
+
+  public getMetadata(): M {
+    return this.metadata;
+  }
+
+  public getDefaultValue(): T {
+    return this.defaultValue;
+  }
+};
+
+// A node in the graph.
+export class Node<T, M> implements HydrateTarget {
+  // The template table this node uses.
+  private templateTable: TemplateTable<T, M>;
+
+  // The template this node uses.
+  private template: string;
+
+  // The metadata for this node.
+  private metadata: M;
+
+  // The links coming into this node.
+  private inputs: Array<Link<T, M>>;
+
+  // The links coming out of this node.
+  private outputs: Array<Link<T, M>>;
+
+  // The ID of this node.
+  private readonly id: number;
+
+  public constructor(
+    // The template this node uses.
+    templateTable: TemplateTable<T, M>,
+    template: string,
+    // The metadata for this node.
+    metadata: M,
+    // The ID of this node.
+    id: number,
+  ) {
+    this.templateTable = templateTable;
+    this.template = template;
+    this.metadata = metadata;
+    this.id = id;
+
+    const realTemplate = templateTable.getTemplate(template);
+    let lastLinkId = id + MAX_NODES;
+
+    this.inputs = map(realTemplate.getInputs(), (inputTemplate, index) => {
+      const link = new Link(inputTemplate, inputTemplate.getMetadata(), lastLinkId);
+      link.__setTo(this, index);
+      lastLinkId += MAX_NODES;
+      return link;
+    });
+
+    this.outputs = map(realTemplate.getOutputs(), (outputTemplate, index) => {
+      const link = new Link(outputTemplate, outputTemplate.getMetadata(), lastLinkId);
+      link.__setFrom(this, index);
+      lastLinkId += MAX_NODES;
+      return link;
+    });
+  }
+
+  public getTemplateTable(): TemplateTable<T, M> {
+    return this.templateTable;
+  }
+
+  public getTemplate(): string {
+    return this.template;
+  }
+
+  public getId(): number {
     return this.id;
   }
 
-  __setInputLink(index: number, link: Link<T, M>): void {
-    this.inputLinks[index] = link;
+  public getMetadata(): M {
+    return this.metadata;
   }
 
-  __setOutputLink(index: number, link: Link<T, M>): void {
-    this.outputLinks[index] = link;
+  public getInputs(): Array<Link<T, M>> {
+    return this.inputs;
   }
 
-  __restoreInputLink(index: number): void {
-    this.inputLinks[index] = this.originalInputLinks[index]!;
+  public getOutputs(): Array<Link<T, M>> {
+    return this.outputs;
   }
-}
 
+  __hydrate(): void {
+    const isDirty = any(this.inputs, (input) => input.isDirty());
+
+    // If this node is dirty, process it.
+    if (!isDirty) {
+      return;
+    }
+
+    // Process the node.
+    const template = this.templateTable.getTemplate(this.template);
+    const outputs = template.__process(this.inputs);
+
+    // Set the outputs.
+    forEach(this.outputs, (output, index) => {
+      output.set(outputs[index]!);
+    });
+  }
+
+  // PRIVATE: Set an output link.
+  __setOutputLink(link: Link<T, M>, index: number): void {
+    this.outputs[index] = link;
+  }
+
+  // PRIVATE: Replace the link at the given index.
+  __replaceLink(index: number, input: boolean, id: number): void {
+    const template = this.templateTable.getTemplate(this.template);
+    if (input) {
+      const inputTemplate = template.getInputs()[index]!;
+      this.inputs[index] = new Link(inputTemplate, inputTemplate.getMetadata(), id);
+    } else {
+      const outputTemplate = template.getOutputs()[index]!;
+      this.outputs[index] = new Link(outputTemplate, outputTemplate.getMetadata(), id);
+    }
+  }
+
+  // PRIVATE: As the "to" node, link this node to a "from" node.
+  __linkFrom(from: Node<T, M>, fromIndex: number, toIndex: number): Link<T, M> {
+    from.outputs[fromIndex] = this.inputs[toIndex]!;
+    this.inputs[toIndex]!.__setFrom(from, fromIndex);
+    return this.inputs[toIndex]!;
+  }
+
+  // PRIVATE: As the "to" node, remove the link from a "from" node.
+  __unlinkFrom(from: Node<T, M>, fromIndex: number, toIndex: number, id: number): void {
+    from.__replaceLink(fromIndex, false, id);
+    this.inputs[toIndex]!.__clearFrom();
+  }
+
+  // PRIVATE: Unlink all links coming into this node.
+  __unlinkAll(): void {
+    for (let i = this.inputs.length - 1; i > 0; i--) {
+      this.__unlinkFrom(this.inputs[i]!.getFrom()!, this.inputs[i]!.getFromIndex()!, i, this.inputs[i]!.getId());
+    }
+
+    throw new Error("TODO");
+  }
+};
+
+// A link between two nodes.
 export class Link<T, M> {
-  // A unique ID for this link.
-  private readonly id = ID++;
+  private template: LinkTemplate<T, M>;
 
-  // The value of the link.
-  private value: T;
+  private readonly id: number;
 
-  // Metadata about the link.
+  // The node this link is coming from.
+  private from: HydrateTarget;
+
+  // The index of the link in the 'from' node's outputs.
+  private fromIndex: number;
+
+  // The node this link is going to.
+  private to: HydrateTarget;
+
+  // The index of the link in the 'to' node's inputs.
+  private toIndex: number;
+
+  // The metadata for this link.
   private metadata: M;
 
-  // The node that this link hydrates from.
-  private fromNode: HydrateTarget;
-
-  // The index of this link in the output array of the from node.
-  private outputIndex: number;
-
-  // The node that this link hydrates to.
-  private toNode: HydrateTarget;
-
-  // The index of this link in the input array of the to node.
-  private inputIndex: number;
-
-  // A string describing the type of the link.
-  private type: string;
-
-  // Has our value been changed since the last hydration?
+  // Whether this link needs to be hydrated.
   private dirty: boolean;
 
-  public constructor(defaultValue: T, metadata: M, type: string) {
-    this.value = defaultValue;
+  // The current value of this link.
+  private value: T;
+
+  // Is this link using a default value not belonging to the template?
+  private customDefault: boolean;
+
+  public constructor(
+    // The link template this link uses.
+    template: LinkTemplate<T, M>,
+    // Metadata for this link.
+    metadata: M,
+    // The ID of this link.
+    id: number,
+  ) {
+    this.template = template;
+    this.from = NO_NODE;
+    this.fromIndex = -1;
+    this.to = NO_NODE;
+    this.toIndex = -1;
     this.metadata = metadata;
-    this.type = type;
     this.dirty = true;
-    this.fromNode = NO_NODE;
-    this.toNode = NO_NODE;
-    this.inputIndex = -1;
-    this.outputIndex = -1;
+    this.value = template.getDefaultValue();
+    this.customDefault = false;
+    this.id = id;
   }
 
-  __setFromNode(node: HydrateTarget, index: number) {
-    this.fromNode = node;
-    this.outputIndex = index;
+  public getId(): number {
+    return this.id;
   }
 
-  __setToNode(node: HydrateTarget, index: number) {
-    this.toNode = node;
-    this.inputIndex = index;
+  // PRIVATE: Set the "from" node of this link.
+  __setFrom(from: HydrateTarget, fromIndex: number): void {
+    this.from = from;
+    this.fromIndex = fromIndex;
   }
 
-  __inputIndex(): number {
-    return this.inputIndex;
+  // PRIVATE: Clear the "from" node of this link.
+  __clearFrom(): void {
+    this.from = NO_NODE;
+    this.fromIndex = -1;
   }
 
-  __outputIndex(): number {
-    return this.outputIndex;
+  // PRIVATE: Set the "to" node of this link.
+  __setTo(to: HydrateTarget, toIndex: number): void {
+    this.to = to;
+    this.toIndex = toIndex;
   }
 
-  // Hydrate and set the value of this link.
-  private __hydrate() {
-    this.fromNode.__hydrate();
+  // PRIVATE: Clear the "to" node of this link.
+  __clearTo(): void {
+    this.to = NO_NODE;
+    this.toIndex = -1;
+  }
+
+  // Is this link currently dirty?
+  public isDirty(): boolean {
+    return this.dirty;
+  }
+
+  // Hydrate this link.
+  public hydrate(): void {
+    this.from.__hydrate();
     this.dirty = false;
   }
 
   // Get the value of this link.
   public get(): T {
-    this.__hydrate();
+    this.hydrate();
     return this.value;
   }
 
   // Set the value of this link.
-  public set(value: T) {
+  public set(value: T): void {
     this.value = value;
     this.dirty = true;
+    this.customDefault = true;
   }
 
-  // Get the metadata of this link.
-  public getMetadata(): M {
-    return this.metadata;
-  }
+  // Get the 'from' node of this link.
+  public getFrom(): Node<T, M> | undefined {
+    const from = this.from;
 
-  // Is this link dirty?
-  public isDirty(): boolean {
-    return this.dirty;
-  }
-
-  // Get the type of this link.
-  public getType(): string {
-    return this.type;
-  }
-
-  // Do we have a node that this link hydrates from?
-  public hasFromNode(): boolean {
-    return this.fromNode !== NO_NODE;
-  }
-
-  // Do we have a node that this link hydrates to?
-  public hasToNode(): boolean {
-    return this.toNode !== NO_NODE;
-  }
-
-  // Get the node that this link hydrates from.
-  public getFromNode(): Node<T, M> {
-    const node = this.fromNode;
-
-    if (node === NO_NODE) {
-      throw new Error("Link has no from node");
+    if (from === NO_NODE) {
+      return undefined;
     }
 
-    return node as Node<T, M>;
+    return from as Node<T, M>;
   }
 
-  // Get the node that this link hydrates to.
-  public getToNode(): Node<T, M> {
-    const node = this.toNode;
+  /// Get the index of this link in the 'from' node's outputs.
+  public getFromIndex(): number {
+    return this.fromIndex;
+  }
 
-    if (node === NO_NODE) {
-      throw new Error("Link has no to node");
+  // Get the 'to' node of this link.
+  public getTo(): Node<T, M> | undefined {
+    const to = this.to;
+
+    if (to === NO_NODE) {
+      return undefined;
     }
 
-    return node as Node<T, M>;
+    return to as Node<T, M>;
   }
 
-  // Get the ID for this link.
-  public getID(): number {
-    return this.id;
-  }
-}
-
-export class Pipeline<T, M> {
-  // Every node in the pipeline.
-  private allNodes: Array<Node<T, M>>;
-
-  // Every link in the pipeline.
-  private allLinks: Array<Link<T, M>>;
-
-  // Metadata for this pipeline.
-  private metadata: M;
-
-  // The output links that we care about.
-  private outputLinks: Array<Link<T, M>>;
-
-  public constructor(metadata: M) {
-    this.allLinks = [];
-    this.allNodes = [];
-    this.metadata = metadata;
+  // Get the index of this link in the 'to' node's inputs.
+  public getToIndex(): number {
+    return this.toIndex;
   }
 
-  // Get every node in the pipeline.
-  public getNodes(): Array<Node<T, M>> {
-    return this.allNodes;
-  }
-
-  // Get every link in the pipeline.
-  public getLinks(): Array<Link<T, M>> {
-    return this.allLinks;
-  }
-
-  // Add a node to this pipeline.
-  public addNode(node: Node<T, M>) {
-    this.allNodes.push(node);
-    this.allLinks.push(...node.getInputs());
-    this.allLinks.push(...node.getOutputs());
-  }
-
-  // Connect one node to another.
-  public connectNodes(
-    fromNode: Node<T, M>,
-    fromIndex: number,
-    toNode: Node<T, M>,
-    toIndex: number
-  ) {
-    const outputLink = fromNode.getOutputs()[fromIndex]!;
-    outputLink.__setToNode(toNode, toIndex);
-    toNode.__setOutputLink(toIndex, outputLink);
-  }
-
-  // Disconnect one node from another.
-  public disconnectNodes(
-    fromNode: Node<T, M>,
-    fromIndex: number,
-    toNode: Node<T, M>,
-    toIndex: number
-  ) {
-    const outputLink = fromNode.getOutputs()[fromIndex]!;
-    outputLink.__setToNode(NO_NODE, -1);
-    toNode.__restoreInputLink(toIndex);
-  }
-
-  // Delete a node from this pipeline.
-  public deleteNode(node: Node<T, M>) {
-    const linkIds: number[] = [];
-
-    forEach(node.getInputs(), (link, i) => {
-      if (link.hasFromNode()) {
-        this.disconnectNodes(link.getFromNode(), link.__outputIndex(), node, i);
-      }
-
-      linkIds.push(link.getID());
-    });
-
-    forEach(node.getOutputs(), (link, i) => {
-      if (link.hasToNode()) {
-        this.disconnectNodes(node, i, link.getToNode(), link.__inputIndex());
-      }
-
-      linkIds.push(link.getID());
-    });
-
-    this.allNodes = filter(this.allNodes, (n) => n.getID() !== node.getID());
-    this.allLinks = filter(
-      this.allLinks,
-      (l) => linkIds.indexOf(l.getID()) === -1
-    );
-  }
-
-  // Serialize this pipeline into a JSON form.
-  // 
-  // Assumes that `M` is already a valid JSON object.
-  public serialize(): PipelineJSON<T, M> {
-    const nodes: NodeJSON<T, M>[] = map(this.allNodes, (node) => ({
-      id: node.getID(),
-      metadata: node.getMetadata(),
-      compute_name: node.getComputeName(),
-    }));
-
-    const links: LinkJSON<T, M>[] = map(this.allLinks, (link) => ({
-      id: link.getID(),
-      type: link.getType(),
-      metadata: link.getMetadata(),
-      fromNode: link.hasFromNode() ? link.getFromNode().getID() : undefined,
-      toNode: link.hasToNode() ? link.getToNode().getID() : undefined,
-      fromIndex: link.hasFromNode() ? link.__outputIndex() : -1,
-      toIndex: link.hasToNode() ? link.__inputIndex() : -1,
-    }));
-
-    return {
-      nodes,
-      links,
-      metadata: this.metadata,
-    };
-  }
-
-  // Get the current outputs for this workflow.
-  public getOutputs(): Array<T> {
-    return map(this.outputLinks, (link) => link.get());
-  }
-
-  // Set the output links for this pipeline.
-  public setOutputs(outputLinks: Array<Link<T, M>>) {
-    this.outputLinks = outputLinks;
-  }
-
-  // Get the metadata for this pipeline.
+  // Get the metadata for this link.
   public getMetadata(): M {
     return this.metadata;
   }
 }
-
-// Deserialize a pipeline from JSON.
-// 
-// Assumes that M is a JSON object.
-export function deserializePipeline<T, M>(
-    json: PipelineJSON<T, M>,
-    compute: ComputeFunctionTable<T, M>
-): Pipeline<T, M> {
-    throw new Error("todo");
-}
-
-export interface PipelineJSON<T, M> {
-  nodes: Array<NodeJSON<T, M>>;
-  links: Array<LinkJSON<T, M>>;
-  metadata: M;
-}
-
-export interface NodeJSON<T, M> {
-  id: number;
-  metadata: M;
-  compute_name: string;
-}
-
-export interface LinkJSON<T, M> {
-  id: number;
-  type: string;
-  metadata: M;
-  fromNode: number | undefined;
-  fromIndex: number;
-  toNode: number | undefined;
-  toIndex: number;
-}
-
-export interface OriginalLinkJSON<T, M> {
-  id: number;
-  type: string;
-  metadata: M;
-  default_value: T;
-};
 
 interface HydrateTarget {
   // Hydrate this node.
@@ -444,6 +378,102 @@ interface HydrateTarget {
 const NO_NODE: HydrateTarget = {
   __hydrate: () => {},
 };
+
+// A pipeline consisting of several nodes.
+export class Pipeline<T, M> {
+  // List of all nodes in the pipeline.
+  private nodes: Map<number, Node<T, M>>;
+
+  // List of all links in the pipeline.
+  private links: Map<number, Link<T, M>>;
+
+  // Table of templates.
+  private templateTable: TemplateTable<T, M>;
+
+  // The ID of the next node to be created.
+  private nextNodeId: number;
+
+  public constructor(templateTable: TemplateTable<T, M>) {
+    this.nodes = new Map();
+    this.links = new Map();
+    this.templateTable = templateTable;
+    this.nextNodeId = 0;
+  }
+
+  // Create a new node in the pipeline.
+  public createNode(template: string, metadata: M): Node<T, M> {
+    const node = new Node(this.templateTable, template, metadata, this.nextNodeId);
+    this.nodes.set(this.nextNodeId, node);
+    this.nextNodeId++;
+    return node;
+  }
+
+  // Link two nodes together at the given index.
+  public link(fromId: number, fromIndex: number, toId: number, toIndex: number): void {
+    const from = this.nodes.get(fromId);
+
+    if (from === undefined) {
+      throw new Error(`Node with ID ${fromId} does not exist.`);
+    }
+
+    const to = this.nodes.get(toId);
+
+    if (to === undefined) {
+      throw new Error(`Node with ID ${toId} does not exist.`);
+    }
+
+    const link = to.__linkFrom(from, fromIndex, toIndex);
+    this.links.set(link.getId(), link);
+  }
+
+  // Unlink two nodes at the given index.
+  public unlink(fromId: number, fromIndex: number, toId: number, toIndex: number): void {
+    const from = this.nodes.get(fromId);
+
+    if (from === undefined) {
+      throw new Error(`Node with ID ${fromId} does not exist.`);
+    }
+
+    const to = this.nodes.get(toId);
+
+    if (to === undefined) {
+      throw new Error(`Node with ID ${toId} does not exist.`);
+    }
+
+    to.__unlinkFrom(from, fromIndex, toIndex, this.nextNodeId);
+    this.nextNodeId++;
+  }
+
+  // Get a node by its ID.
+  public getNode(id: number): Node<T, M> | undefined {
+    return this.nodes.get(id);
+  }
+
+  // Get every node.
+  public getNodes(): Array<Node<T, M>> {
+    return Array.from(this.nodes.values());
+  }
+
+  // Get every link.
+  public getLinks(): Array<Link<T, M>> {
+    return Array.from(this.links.values());
+  }
+
+  // Remove a node.
+  public removeNode(id: number): void {
+    const node = this.nodes.get(id);
+
+    if (node === undefined) {
+      throw new Error(`Node with ID ${id} does not exist.`);
+    }
+
+    node.__unlinkAll();
+    this.nextNodeId++;
+    this.nodes.delete(id);
+  }
+};
+
+// TODO: Serialization/Deserialization
 
 // Iterate over every element in an array and run a function on it.
 const forEach: <T>(
@@ -462,17 +492,17 @@ const forEach: <T>(
 })();
 
 // Iterate over an array, get each element, map it, and return an array of all values.
-const map: <T, U>(array: Array<T>, fn: (item: T) => U) => Array<U> = (() => {
+const map: <T, U>(array: Array<T>, fn: (item: T, index: number) => U) => Array<U> = (() => {
   if (typeof Array.prototype.map === "function") {
     return (array, fn) => array.map(fn);
   }
 
-  return <T, U>(array: Array<T>, fn: (item: T) => U) => {
+  return <T, U>(array: Array<T>, fn: (item: T, index: number) => U) => {
     const result: Array<U> = [];
 
-    for (const item of array) {
-      result.push(fn(item));
-    }
+    forEach(array, (item, index) => {
+      result.push(fn(item, index));
+    });
 
     return result;
   };

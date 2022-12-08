@@ -1,13 +1,12 @@
 <!-- GNU AGPL v3 License -->
 <script lang="ts">
   import { defineComponent } from "vue";
-  import NodeView from "./NodeView.vue";
   import RenderedView from "./RenderedView.vue";
   import Topbar from "./Topbar.vue";
   import Widgets from "./Widgets.vue";
 
   export default defineComponent({
-    components: { NodeView, RenderedView, Topbar, Widgets }
+    components: { RenderedView, Topbar, Widgets }
   });
 </script>
 
