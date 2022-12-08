@@ -27,7 +27,7 @@ function initializeTemplates() {
     (_) => [],
     [new LinkTemplate(ltMeta("Viewport", NodeDataType.Image), noOutputImage())],
     [],
-    ntMeta("Output", SpecialNodeType.OutputNode)
+    ntMeta("Output", "Output", SpecialNodeType.OutputNode)
   );
 
   // Composite two images together.
@@ -46,7 +46,7 @@ function initializeTemplates() {
         defaultImage()
       ),
     ],
-    ntMeta("Composite", SpecialNodeType.PureFunction)
+    ntMeta("Composite", "Composites", SpecialNodeType.PureFunction)
   );
 
   // Image input node.
@@ -59,7 +59,7 @@ function initializeTemplates() {
         defaultImage()
       ),
     ],
-    ntMeta("Image Input", SpecialNodeType.ImageInput)
+    ntMeta("Image Input", "Input", SpecialNodeType.ImageInput)
   );
 
   // Color input node.
@@ -72,7 +72,7 @@ function initializeTemplates() {
         color: "#FF00FF",
       }),
     ],
-    ntMeta("Image Input", SpecialNodeType.ColorInput)
+    ntMeta("Color Input", "Input", SpecialNodeType.ColorInput)
   );
 
   // Add all of the nodes.
@@ -122,8 +122,8 @@ function transformToImage(data: NodeData): HTMLCanvasElement {
     case NodeDataType.Image:
       return data.canvas;
     case NodeDataType.Color:
-      const width = 100;
-      const height = 100;
+      const width = 10000;
+      const height = 10000;
       const canvas = document.createElement("canvas");
       canvas.width = width;
       canvas.height = height;
@@ -136,11 +136,16 @@ function transformToImage(data: NodeData): HTMLCanvasElement {
   }
 }
 
-function ntMeta(name: string, special: SpecialNodeType): NodeMetadata {
+function ntMeta(
+  name: string,
+  category: string,
+  special: SpecialNodeType
+): NodeMetadata {
   return {
     metatype: MetadataType.NodeTemplate,
     name,
     special,
+    category,
   };
 }
 
@@ -164,10 +169,18 @@ function defaultImage(): NodeData {
 
 function noOutputImage(): NodeData {
   const canvas = document.createElement("canvas");
-  canvas.width = 100;
+  canvas.width = 200;
   canvas.height = 100;
   const ctx = canvas.getContext("2d")!;
-  ctx.fillStyle = "#FF0000";
-  ctx.fillRect(0, 0, 100, 100);
+
+  // Black background.
+  ctx.fillStyle = "#000000";
+  ctx.fillRect(0, 0, 200, 100);
+
+  // White text saying "no image selected".
+  ctx.fillStyle = "#FFFFFF";
+  ctx.font = "20px Arial";
+  ctx.fillText("No image selected", 10, 50);
+
   return { type: NodeDataType.Image, canvas };
 }

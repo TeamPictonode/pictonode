@@ -24,6 +24,11 @@ export class TemplateTable<T, M> {
 
     return template;
   }
+
+  // Get a list of every template.
+  public getTemplates(): Array<string> {
+    return Array.from(this.table.keys());
+  }
 };
 
 // Template for creating a node.

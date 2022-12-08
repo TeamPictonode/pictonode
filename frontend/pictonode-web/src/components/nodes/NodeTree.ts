@@ -18,6 +18,7 @@ export type NodeMetadata =
   | {
       metatype: MetadataType.NodeTemplate;
       name: string;
+      category: string;
       special: SpecialNodeType;
     }
   | {
@@ -96,28 +97,32 @@ export function defaultPipeline(): Pipeline {
   return pipeline;
 }
 
+export function nodeToViewFlow(node: Node): any {
+  const metadata = node.getMetadata();
+  if (metadata.metatype !== MetadataType.Node) {
+    throw new Error("Invalid metadata type for node");
+  }
+
+  const x = metadata.x;
+  const y = metadata.y;
+
+  return {
+    id: node.getId().toString(),
+    type: "repr",
+    data: { node },
+    position: {
+      x,
+      y,
+    },
+  };
+}
+
 export function pipelineToVueFlow(pipeline: Pipeline): Array<any> {
   const nodes: Array<any> = [];
 
   // Add the nodes.
   for (const node of pipeline.getNodes()) {
-    const metadata = node.getMetadata();
-    if (metadata.metatype !== MetadataType.Node) {
-      throw new Error("Invalid metadata type for node");
-    }
-
-    const x = metadata.x;
-    const y = metadata.y;
-
-    nodes.push({
-      id: node.getId().toString(),
-      type: "repr",
-      data: { node },
-      position: {
-        x,
-        y,
-      },
-    });
+    nodes.push(nodeToViewFlow(node));
   }
 
   // Add the links.

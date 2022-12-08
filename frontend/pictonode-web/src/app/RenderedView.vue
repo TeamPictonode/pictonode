@@ -8,9 +8,27 @@ function update(canvas: HTMLCanvasElement, img: HTMLCanvasElement | undefined) {
     console.log(`got img: ${img}`);
     if (img) {
       console.log("drawing image");
-      canvas.width = img.width;
-      canvas.height = img.height;
-      ctx.drawImage(img, 0, 0);
+
+      let widthScale = 1;
+      let heightScale = 1;
+
+      // If the width is greater than 500 px, scale down.
+      if (img.width > 500) {
+        widthScale = 500 / img.width;
+      }
+
+      // If the height is greater than 500 px, scale down.
+      if (img.height > 500) {
+        heightScale = 500 / img.height;
+      }
+
+      const scale = Math.min(widthScale, heightScale);
+
+      // Scale down the image.
+      canvas.width = img.width * scale;
+      canvas.height = img.height * scale;
+
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
     } else {
       ctx.fillStyle = "red";
       ctx.fillRect(0, 0, canvas.width, canvas.height);

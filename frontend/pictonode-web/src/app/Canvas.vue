@@ -11,12 +11,16 @@ export default defineComponent({
   data: () => ({
     img: undefined as HTMLCanvasElement | undefined,
     ticks: 0,
+    pendingTemplates: [] as string[],
   }),
   methods: {
     onCanvasUpdate(canvas: HTMLCanvasElement) {
       console.log("updated img canvas");
       this.img = canvas;
       this.ticks += 1;
+    },
+    updatePendingTemplates(pt: string[]) {
+      this.pendingTemplates = pt;
     },
   },
 });
@@ -29,9 +33,15 @@ export default defineComponent({
         <RenderedView :img="img" :ticks="ticks" />
       </v-col>
       <v-col cols="6">
-        <Widgets />
+        <Widgets
+          :pendingTemplates="pendingTemplates"
+          @input="updatePendingTemplates"
+        />
       </v-col>
     </v-row>
   </v-container>
-  <NodeView @canvas-update="onCanvasUpdate" />
+  <NodeView
+    @canvas-update="onCanvasUpdate"
+    :pendingTemplates="pendingTemplates"
+  />
 </template>
