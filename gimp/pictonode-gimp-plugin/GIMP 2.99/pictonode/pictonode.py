@@ -18,6 +18,26 @@ from client import *
 def N_(message): return message
 def _(message): return GLib.dgettext(None, message)
 
+def save_layer_to_png(button, gegl_buffer):
+    STATIC_TARGET = ".\\pictonode-intermediate.png"
+    
+    Gegl.init(None)
+    parent = Gegl.Node()
+
+    buffer_input = Gegl.Node()
+    buffer_input.set_property("operation", "gegl:buffer-source")
+    buffer_input.set_property("buffer", gegl_buffer)
+    parent.add_child(buffer_input)
+
+    buffer_output = Gegl.Node()
+    buffer_output.set_property("operation", "gegl:png-save")
+    buffer_output.set_property("path", STATIC_TARGET)
+    parent.add_child(buffer_output)
+
+    buffer_input.connect_to("output", buffer_output, "input")
+
+    buffer_output.process()
+
 def entry_point(procedure, run_mode, image, n_drawables, drawables, args, data):
     return procedure.new_return_values(Gimp.PDBStatusType.SUCCESS, GLib.Error())
 
@@ -87,7 +107,8 @@ class Pictonode (Gimp.PlugIn):
             image_display.set_from_file(image_path)
 
             button = Gtk.Button(label="Send To Controller")
-            button.connect('clicked', send_message_to_controller_callback, "drawable.get_buffer()")
+            #button.connect('clicked', send_message_to_controller_callback, "drawable.get_buffer()")
+            button.connect('clicked', save_layer_to_png, drawable.get_buffer())
 
             grid.attach(button, 0, 2, 20, 10)
             grid.attach(image_display, 0, 1, 1000, 500)
