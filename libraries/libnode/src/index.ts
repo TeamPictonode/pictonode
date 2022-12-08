@@ -1,382 +1,561 @@
-// No Implied Warranty
+// AGPL v3 License
 
-/*
-This library aims to model the logical behavior of a node tree and the output it is able
-to produce. It is programmed in pure TypeScript with no dependencies. In addition to
-underpinning the basics for a node tree, I'm also writing it with the intent to act as an
-explanation for TypeScript.
+// More nodes than we'll probably ever use (about 16 million).
+const MAX_NODES: number = 1 << 24;
 
-The general model for this library is as follows:
+// A table made up of node templates.
+export class TemplateTable<T, M> {
+  private table: Map<string, NodeTemplate<T, M>>;
+  
+  public constructor() {
+    this.table = new Map();
+  }
 
-- A node is a function that takes in a set of inputs and produces a set of outputs.
-- Nodes have input and outputs, which are represented through "links". Links hold a single
-  value and transmit it down the node tree. Their design is inspired by channels; those
-  unfamiliar with channels should see this resource: https://gobyexample.com/channels
-- When a new value is placed into a link, the link marks itself as "updated".
-- The real process starts when the value of a link (most often, the leaf node's output link)
-  is requested. At this point, the output link has a node associated with it. The link
-  begins a process called "hydration". The link's node examines each of its linked inputs
-  and sees if any of them are updated. If none of them are updated, the node can be assured
-  that the output value is the intended result of all of the inputs. If at least one is
-  updated, or if running a hydration on the input link updates it, then the node should
-  update its output links accordingly.
-- The initial node calls hydration on the input links, which calls hydration on their
-  inputs, and so on and so forth, thus propagated to every node up the tree. This system
-  also ensures that no unnecessary calculations are run, since the function is only
-  called when inputs change. Recursion!
-*/
+  public addTemplate(name: string, template: NodeTemplate<T, M>): void {
+    this.table.set(name, template);
+  }
 
-import { Unit, Result, Ok, Err, Option, Some, None } from "pictotypes";
+  public getTemplate(name: string): NodeTemplate<T, M> {
+    const template = this.table.get(name);
 
-/**
- *  Interface for a type-erased node.
- *
- *  Interfaces are wrappers over types that can provide a set of fields or functions.
- *  In this case, we only use functions. In order to satisfy the interface, Node and
- *  EmptyNode must both have these functions, so we proceed to define them below.
- */
-interface NodeBase<E> {
-  // Hydrate this node.
-  //
-  // Returns "true" if the node was changed during hydration.
-  hydrate: (force: boolean) => Result<boolean, E>;
-}
-
-/**
- * An empty placeholder node.
- *
- * Links without associated nodes must have something to hydrate off of. This is instead
- * used to indicate that the link's value will not change after the first time it is
- * hydrated.
- */
-class EmptyNode<E> implements NodeBase<E> {
-  private firstTime: boolean = true;
-
-  hydrate(force: boolean): Result<boolean, E> {
-    if (force || this.firstTime) {
-      this.firstTime = false;
-      return Ok(true);
-    } else {
-      return Ok(force);
+    if (template === undefined) {
+      throw new Error(`Template "${name}" does not exist.`);
     }
+
+    return template;
   }
-}
+};
 
-/**
- * A link from one node to another.
- *
- * Essentially a channel with only one item.
- */
-export class Link<T, E> {
-  // The inner value, if it exists.
-  protected value: Option<T>;
+// Template for creating a node.
+export class NodeTemplate<T, M> {
+  // Callback for when the node's data is processed.
+  private onProcess: (data: Array<Link<T, M>>) => Array<T>;
 
-  // The node that the input side of this link is connected to.
-  private readonly input: NodeBase<E>;
+  // Inputs for this node.
+  private inputs: Array<LinkTemplate<T, M>>;
 
-  // Whether this link has been updated since the last hydration.
-  private updated: boolean;
+  // Outputs for this node.
+  private outputs: Array<LinkTemplate<T, M>>;
 
-  // A callback to run before setting `value`.
-  private callback: (value: T) => Result<T, E>;
+  // Metadata
+  private metadata: M;
 
-  constructor(nb: NodeBase<E>) {
-    this.value = None();
-    this.input = nb;
-    this.updated = false;
-    this.callback = (value: T) => Ok(value);
-  }
-
-  // Store a value in this link.
-  public setValue(value: T): Result<Unit, E> {
-    return this.callback(value).map(value => {
-      this.value = Some(value);
-      this.updated = true;
-      return ({});
-    });
-  }
-
-  // Whether this link is in need of hydration.
-  public needsHydration(): boolean {
-    return this.updated;
-  }
-
-  // Hydrate this link.
-  private hydrate(): Result<boolean, E> {
-    // Hydrate the input node.
-    //
-    // setValue() will be called as a result of hydration.
-    return this.input.hydrate(false).map((changed) => changed || this.updated);
-  }
-
-  // Get the value stored in this link.
-  //
-  // Returns true if the value was hydrated.
-  public getValue(): Result<[T, boolean], E> {
-    // Hydrate ourselves first if necessary.
-    //
-    // After a hydration, the value will be set.
-    return this.hydrate().map((hydrated) => [this.value.unwrap(), hydrated]);
-  }
-
-  // Set the callback associated with this link.
-  public setCallback(callback: (value: T) => Result<T, E>) {
-    this.callback = callback;
-  }
-}
-
-/**
- * The default link type. Simply gives a single value out.
- */
-export class DefaultLink<T, E> extends Link<T, E> {
-  public constructor(value: T) {
-    super(new EmptyNode());
-    this.setValue(value).unwrap();
-  }
-}
-
-/**
- * A list of links with specific values.
- *
- * This type is marginally complicated, but the general essence is as follows:
- *
- * - If the user passes in the tuple [a, b, c], the result type is
- *   [Link<a>, Link<b>, Link<c>]
- * - If the user passes in an a[], the result type is Link<a>[].
- *
- * Basically, it just maps the tuple or array to its link equivalents. Saying
- * "extends [...any[]]" lets us use both tuples and arrays as the generic input while
- * also maintaining our typing.
- */
-type InputSpigots<List extends [...any[]], E> = {
-  [Key in keyof List]: Link<List[Key], E>;
-} & { length: List["length"] };
-
-/**
- * Same as above, but for the output.
- *
- * TODO: This may be able to be the same type.
- */
-type OutputSinks<List extends [...any[]], E> = {
-  [Key in keyof List]: Link<List[Key], E>;
-} & { length: List["length"] };
-
-/**
- * A node that can be used to create a graph.
- */
-export abstract class Node<
-  Inputs extends [...any[]],
-  Outputs extends [...any[]],
-  E
-> implements NodeBase<E>
-{
-  // The input spigots we receive value from.
-  private inputs: InputSpigots<Inputs, E>;
-
-  // The output sinks we send values to.
-  private readonly outputs: OutputSinks<Outputs, E>;
-
-  // Convert the set of inputs into the set of outputs.
-  //
-  // This abstract function is meant to be implemented by subclasses of Node.
-  protected abstract convert(inputs: Inputs): Result<Outputs, E>;
-
-  protected constructor(
-    numInputs: number,
-    numOutputs: number,
-    defaults: Inputs
+  public constructor(
+    // Callback for when the node's data is processed.
+    onProcess: (data: Array<Link<T, M>>) => Array<T>,
+    // Default inputs for this node.
+    inputs: Array<LinkTemplate<T, M>>,
+    // Default outputs for this node.
+    outputs: Array<LinkTemplate<T, M>>,
+    // Metadata
+    metadata: M,
   ) {
-    const inputs: any[] = [];
-    const outputs: any[] = [];
-
-    for (let i = 0; i < numInputs; i++) {
-      inputs.push(new DefaultLink(defaults[i]));
-    }
-
-    for (let i = 0; i < numOutputs; i++) {
-      outputs.push(new Link(this));
-    }
-
-    this.inputs = inputs as InputSpigots<Inputs, E>;
-    this.outputs = outputs as OutputSinks<Outputs, E>;
+    this.onProcess = onProcess;
+    this.inputs = inputs;
+    this.outputs = outputs;
+    this.metadata = metadata;
   }
 
-  // Get the list of input spigots.
-  public getInputs(): InputSpigots<Inputs, E> {
+  // Get the inputs for this node.
+  public getInputs(): Array<LinkTemplate<T, M>> {
     return this.inputs;
   }
 
-  // Get the list of output sinks.
-  public getOutputs(): OutputSinks<Outputs, E> {
+  // Get the outputs for this node.
+  public getOutputs(): Array<LinkTemplate<T, M>> {
     return this.outputs;
   }
 
-  // Set the input value at the given index.
-  public setInput<T extends keyof Inputs>(index: T, value: Inputs[T]): Result<Unit, E> {
-    return this.inputs[index]!.setValue(value);
+  // Get the metadata for this node.
+  public getMetadata(): M {
+    return this.metadata;
   }
 
-  // Get the output value at the given index.
-  public getOutput(index: number): Result<Outputs[number], E> {
-    return this.outputs[index]!.getValue().map((value) => value[0]);
+  // PRIVATE: Process the node's data.
+  __process(data: Array<Link<T, M>>): Array<T> {
+    return this.onProcess(data);
+  }
+};
+
+// Template for creating a link.
+export class LinkTemplate<T, M> {
+  private metadata: M;
+  private defaultValue: T;
+
+  public constructor(metadata: M, defaultValue: T) {
+    this.metadata = metadata;
+    this.defaultValue = defaultValue;
   }
 
-  // Link the output of the node at the given index to the input of the node at the
-  // given index.
-  public link<
-    ThisInputKey extends keyof Inputs,
-    OtherOutputKey extends keyof OtherOutputs,
-    OtherInputs extends [...any[]],
-    OtherOutputs extends {
-      [Key in OtherOutputKey]: Inputs[ThisInputKey];
-    } & [...any[]]
-  >(
-    thisInputKey: ThisInputKey,
-    otherOutputKey: OtherOutputKey,
-    otherNode: Node<OtherInputs, OtherOutputs, E>
-  ): Result<Unit, E> {
-    const otherLink: Link<any, E> = otherNode.getOutputs()[otherOutputKey];
-    // TODO: Type this better.
-    // @ts-expect-error
-    this.inputs[thisInputKey] = otherLink;
-
-    // Hydrate ourselves using our new node.
-    return this.hydrate(true).map((_) => ({}));
+  public getMetadata(): M {
+    return this.metadata;
   }
 
-  // Hydrate this node, checking the inputs for updated and propagating them
-  // to the outputs.
-  hydrate(force: boolean): Result<boolean, E> {
-    // Check if any of the inputs have been updated.
-    const inputResults = map(this.inputs, (input) => input.getValue());
-    let needsHydration = false;
-    const inputValues: any[] = [];
-
-    for (let i = 0; i < inputResults.length; i++) {
-      const result = inputResults[i]!;
-
-      let error: E | undefined;
-      const errored = result.match(
-        ([value, hydrated]) => {
-          needsHydration = needsHydration || hydrated;
-          inputValues.push(value);
-          return false;
-        },
-        (err) => {
-          error = err;
-          return true;
-        }
-      );
-
-      if (errored) {
-        return Err(error!);
-      }
-    }
-
-    if (!needsHydration && !force) {
-      return Ok(false);
-    }
-
-    // inputs is now a valid array of type Inputs.
-    const inputs: Inputs = inputValues as Inputs;
-
-    // Convert the inputs into outputs.
-    const outputResults = this.convert(inputs);
-    if (!outputResults.isOk()) {
-      return Err(outputResults.getErr()!);
-    }
-
-    // Set output value of links.
-    const outResults = outputResults.get()!;
-    for (let i = 0; i < outResults.length; i++) {
-      const result = outResults[i];
-      this.outputs[i]!.setValue(result);
-    }
-
-    return Ok(true);
+  public getDefaultValue(): T {
+    return this.defaultValue;
   }
-}
+};
 
-// Convenience source node for a single value.
-export class SourceNode<T, E> extends Node<[T], [T], E> {
-  protected convert(inputs: [T]): Result<[T], E> {
-    return Ok(inputs);
-  }
+// A node in the graph.
+export class Node<T, M> implements HydrateTarget {
+  // The template table this node uses.
+  private templateTable: TemplateTable<T, M>;
 
-  constructor(value: T) {
-    super(1, 1, [value]);
-  }
+  // The template this node uses.
+  private template: string;
 
-  public setValue(value: T): void {
-    this.getInputs()[0].setValue(value);
-  }
-}
+  // The metadata for this node.
+  private metadata: M;
 
-// Convenience sink node for a single value.
-export class SinkNode<T, E> extends Node<[T], [T], E> {
-  protected convert(inputs: [T]): Result<[T], E> {
-    return Ok(inputs);
-  }
+  // The links coming into this node.
+  private inputs: Array<Link<T, M>>;
 
-  constructor(defaultValue: T) {
-    super(1, 1, [defaultValue]);
-  }
+  // The links coming out of this node.
+  private outputs: Array<Link<T, M>>;
 
-  public getValue(): Result<T, E> {
-    return this.getOutput(0);
-  }
-}
-
-// Convenience node that re-transmits its values.
-export class IdentityNode<T extends [...any[]], E> extends Node<T, T, E> {
-  protected convert(inputs: T): Result<T, E> {
-    return Ok(inputs);
-  }
-
-  public constructor(numValues: number, defaults: T) {
-    super(numValues, numValues, defaults);
-  }
-}
-
-// Convenience class that just runs a callback when it is hydrated.
-export class CallbackNode<
-  Inputs extends [...any[]],
-  Outputs extends [...any[]],
-  E
-> extends Node<Inputs, Outputs, E> {
-  private readonly callback: (inputs: Inputs) => Result<Outputs, E>;
-
-  protected convert(inputs: Inputs): Result<Outputs, E> {
-    return this.callback(inputs);
-  }
+  // The ID of this node.
+  private readonly id: number;
 
   public constructor(
-    numInputs: number,
-    numOutputs: number,
-    defaults: Inputs,
-    callback: (inputs: Inputs) => Result<Outputs, E>
+    // The template this node uses.
+    templateTable: TemplateTable<T, M>,
+    template: string,
+    // The metadata for this node.
+    metadata: M,
+    // The ID of this node.
+    id: number,
   ) {
-    super(numInputs, numOutputs, defaults);
-    this.callback = callback;
+    this.templateTable = templateTable;
+    this.template = template;
+    this.metadata = metadata;
+    this.id = id;
+
+    const realTemplate = templateTable.getTemplate(template);
+    let lastLinkId = id + MAX_NODES;
+
+    this.inputs = map(realTemplate.getInputs(), (inputTemplate, index) => {
+      const link = new Link(inputTemplate, inputTemplate.getMetadata(), lastLinkId);
+      link.__setTo(this, index);
+      lastLinkId += MAX_NODES;
+      return link;
+    });
+
+    this.outputs = map(realTemplate.getOutputs(), (outputTemplate, index) => {
+      const link = new Link(outputTemplate, outputTemplate.getMetadata(), lastLinkId);
+      link.__setFrom(this, index);
+      lastLinkId += MAX_NODES;
+      return link;
+    });
+  }
+
+  public getTemplateTable(): TemplateTable<T, M> {
+    return this.templateTable;
+  }
+
+  public getTemplate(): string {
+    return this.template;
+  }
+
+  public getId(): number {
+    return this.id;
+  }
+
+  public getMetadata(): M {
+    return this.metadata;
+  }
+
+  public getInputs(): Array<Link<T, M>> {
+    return this.inputs;
+  }
+
+  public getOutputs(): Array<Link<T, M>> {
+    return this.outputs;
+  }
+
+  __hydrate(): void {
+    const isDirty = any(this.inputs, (input) => input.isDirty());
+
+    // If this node is dirty, process it.
+    if (!isDirty) {
+      return;
+    }
+
+    // Process the node.
+    const template = this.templateTable.getTemplate(this.template);
+    const outputs = template.__process(this.inputs);
+
+    // Set the outputs.
+    forEach(this.outputs, (output, index) => {
+      output.set(outputs[index]!);
+    });
+  }
+
+  // PRIVATE: Set an output link.
+  __setOutputLink(link: Link<T, M>, index: number): void {
+    this.outputs[index] = link;
+  }
+
+  // PRIVATE: Replace the link at the given index.
+  __replaceLink(index: number, input: boolean, id: number): void {
+    const template = this.templateTable.getTemplate(this.template);
+    if (input) {
+      const inputTemplate = template.getInputs()[index]!;
+      this.inputs[index] = new Link(inputTemplate, inputTemplate.getMetadata(), id);
+    } else {
+      const outputTemplate = template.getOutputs()[index]!;
+      this.outputs[index] = new Link(outputTemplate, outputTemplate.getMetadata(), id);
+    }
+  }
+
+  // PRIVATE: As the "to" node, link this node to a "from" node.
+  __linkFrom(from: Node<T, M>, fromIndex: number, toIndex: number): Link<T, M> {
+    from.outputs[fromIndex] = this.inputs[toIndex]!;
+    this.inputs[toIndex]!.__setFrom(from, fromIndex);
+    return this.inputs[toIndex]!;
+  }
+
+  // PRIVATE: As the "to" node, remove the link from a "from" node.
+  __unlinkFrom(from: Node<T, M>, fromIndex: number, toIndex: number, id: number): void {
+    from.__replaceLink(fromIndex, false, id);
+    this.inputs[toIndex]!.__clearFrom();
+  }
+
+  // PRIVATE: Unlink all links coming into this node.
+  __unlinkAll(): void {
+    for (let i = this.inputs.length - 1; i > 0; i--) {
+      this.__unlinkFrom(this.inputs[i]!.getFrom()!, this.inputs[i]!.getFromIndex()!, i, this.inputs[i]!.getId());
+    }
+
+    throw new Error("TODO");
+  }
+};
+
+// A link between two nodes.
+export class Link<T, M> {
+  private template: LinkTemplate<T, M>;
+
+  private readonly id: number;
+
+  // The node this link is coming from.
+  private from: HydrateTarget;
+
+  // The index of the link in the 'from' node's outputs.
+  private fromIndex: number;
+
+  // The node this link is going to.
+  private to: HydrateTarget;
+
+  // The index of the link in the 'to' node's inputs.
+  private toIndex: number;
+
+  // The metadata for this link.
+  private metadata: M;
+
+  // Whether this link needs to be hydrated.
+  private dirty: boolean;
+
+  // The current value of this link.
+  private value: T;
+
+  // Is this link using a default value not belonging to the template?
+  private customDefault: boolean;
+
+  public constructor(
+    // The link template this link uses.
+    template: LinkTemplate<T, M>,
+    // Metadata for this link.
+    metadata: M,
+    // The ID of this link.
+    id: number,
+  ) {
+    this.template = template;
+    this.from = NO_NODE;
+    this.fromIndex = -1;
+    this.to = NO_NODE;
+    this.toIndex = -1;
+    this.metadata = metadata;
+    this.dirty = true;
+    this.value = template.getDefaultValue();
+    this.customDefault = false;
+    this.id = id;
+  }
+
+  public getId(): number {
+    return this.id;
+  }
+
+  // PRIVATE: Set the "from" node of this link.
+  __setFrom(from: HydrateTarget, fromIndex: number): void {
+    this.from = from;
+    this.fromIndex = fromIndex;
+  }
+
+  // PRIVATE: Clear the "from" node of this link.
+  __clearFrom(): void {
+    this.from = NO_NODE;
+    this.fromIndex = -1;
+  }
+
+  // PRIVATE: Set the "to" node of this link.
+  __setTo(to: HydrateTarget, toIndex: number): void {
+    this.to = to;
+    this.toIndex = toIndex;
+  }
+
+  // PRIVATE: Clear the "to" node of this link.
+  __clearTo(): void {
+    this.to = NO_NODE;
+    this.toIndex = -1;
+  }
+
+  // Is this link currently dirty?
+  public isDirty(): boolean {
+    return this.dirty;
+  }
+
+  // Hydrate this link.
+  public hydrate(): void {
+    this.from.__hydrate();
+    this.dirty = false;
+  }
+
+  // Get the value of this link.
+  public get(): T {
+    this.hydrate();
+    return this.value;
+  }
+
+  // Set the value of this link.
+  public set(value: T): void {
+    this.value = value;
+    this.dirty = true;
+    this.customDefault = true;
+  }
+
+  // Get the 'from' node of this link.
+  public getFrom(): Node<T, M> | undefined {
+    const from = this.from;
+
+    if (from === NO_NODE) {
+      return undefined;
+    }
+
+    return from as Node<T, M>;
+  }
+
+  /// Get the index of this link in the 'from' node's outputs.
+  public getFromIndex(): number {
+    return this.fromIndex;
+  }
+
+  // Get the 'to' node of this link.
+  public getTo(): Node<T, M> | undefined {
+    const to = this.to;
+
+    if (to === NO_NODE) {
+      return undefined;
+    }
+
+    return to as Node<T, M>;
+  }
+
+  // Get the index of this link in the 'to' node's inputs.
+  public getToIndex(): number {
+    return this.toIndex;
+  }
+
+  // Get the metadata for this link.
+  public getMetadata(): M {
+    return this.metadata;
   }
 }
 
-// Map the array to a new array.
-function map<Type, Result>(
-  list: Type[],
-  mapper: (value: Type) => Result
-): Result[] {
-  // Some JS environments provide an optimized version of map.
+interface HydrateTarget {
+  // Hydrate this node.
+  __hydrate(): void;
+}
+
+const NO_NODE: HydrateTarget = {
+  __hydrate: () => {},
+};
+
+// A pipeline consisting of several nodes.
+export class Pipeline<T, M> {
+  // List of all nodes in the pipeline.
+  private nodes: Map<number, Node<T, M>>;
+
+  // List of all links in the pipeline.
+  private links: Map<number, Link<T, M>>;
+
+  // Table of templates.
+  private templateTable: TemplateTable<T, M>;
+
+  // The ID of the next node to be created.
+  private nextNodeId: number;
+
+  public constructor(templateTable: TemplateTable<T, M>) {
+    this.nodes = new Map();
+    this.links = new Map();
+    this.templateTable = templateTable;
+    this.nextNodeId = 0;
+  }
+
+  // Create a new node in the pipeline.
+  public createNode(template: string, metadata: M): Node<T, M> {
+    const node = new Node(this.templateTable, template, metadata, this.nextNodeId);
+    this.nodes.set(this.nextNodeId, node);
+    this.nextNodeId++;
+    return node;
+  }
+
+  // Link two nodes together at the given index.
+  public link(fromId: number, fromIndex: number, toId: number, toIndex: number): void {
+    const from = this.nodes.get(fromId);
+
+    if (from === undefined) {
+      throw new Error(`Node with ID ${fromId} does not exist.`);
+    }
+
+    const to = this.nodes.get(toId);
+
+    if (to === undefined) {
+      throw new Error(`Node with ID ${toId} does not exist.`);
+    }
+
+    const link = to.__linkFrom(from, fromIndex, toIndex);
+    this.links.set(link.getId(), link);
+  }
+
+  // Unlink two nodes at the given index.
+  public unlink(fromId: number, fromIndex: number, toId: number, toIndex: number): void {
+    const from = this.nodes.get(fromId);
+
+    if (from === undefined) {
+      throw new Error(`Node with ID ${fromId} does not exist.`);
+    }
+
+    const to = this.nodes.get(toId);
+
+    if (to === undefined) {
+      throw new Error(`Node with ID ${toId} does not exist.`);
+    }
+
+    to.__unlinkFrom(from, fromIndex, toIndex, this.nextNodeId);
+    this.nextNodeId++;
+  }
+
+  // Get a node by its ID.
+  public getNode(id: number): Node<T, M> | undefined {
+    return this.nodes.get(id);
+  }
+
+  // Get every node.
+  public getNodes(): Array<Node<T, M>> {
+    return Array.from(this.nodes.values());
+  }
+
+  // Get every link.
+  public getLinks(): Array<Link<T, M>> {
+    return Array.from(this.links.values());
+  }
+
+  // Remove a node.
+  public removeNode(id: number): void {
+    const node = this.nodes.get(id);
+
+    if (node === undefined) {
+      throw new Error(`Node with ID ${id} does not exist.`);
+    }
+
+    node.__unlinkAll();
+    this.nextNodeId++;
+    this.nodes.delete(id);
+  }
+};
+
+// TODO: Serialization/Deserialization
+
+// Iterate over every element in an array and run a function on it.
+const forEach: <T>(
+  array: Array<T>,
+  fn: (item: T, index: number) => void
+) => void = (() => {
+  if (typeof Array.prototype.forEach === "function") {
+    return (array, fn) => array.forEach(fn);
+  }
+
+  return (array, fn) => {
+    for (let i = 0; i < array.length; i++) {
+      fn(array[i]!, i);
+    }
+  };
+})();
+
+// Iterate over an array, get each element, map it, and return an array of all values.
+const map: <T, U>(array: Array<T>, fn: (item: T, index: number) => U) => Array<U> = (() => {
   if (typeof Array.prototype.map === "function") {
-    return list.map(mapper);
+    return (array, fn) => array.map(fn);
   }
 
-  // Otherwise, we have to do it ourselves.
-  const result: Result[] = [];
+  return <T, U>(array: Array<T>, fn: (item: T, index: number) => U) => {
+    const result: Array<U> = [];
 
-  for (const value of list) {
-    result.push(mapper(value));
+    forEach(array, (item, index) => {
+      result.push(fn(item, index));
+    });
+
+    return result;
+  };
+})();
+
+// Reduce the array to a single value.
+const reduce: <T, U>(
+  array: Array<T>,
+  fn: (acc: U, item: T) => U,
+  initial: U
+) => U = (() => {
+  if (typeof Array.prototype.reduce === "function") {
+    return (array, fn, initial) => array.reduce(fn, initial);
   }
 
-  return result;
-}
+  return <T, U>(array: Array<T>, fn: (acc: U, item: T) => U, initial: U) => {
+    let acc = initial;
+
+    for (const item of array) {
+      acc = fn(acc, item);
+    }
+
+    return acc;
+  };
+})();
+
+// Are any of the boolean values produced by a closure true?
+const any: <T>(array: Array<T>, fn: (item: T) => boolean) => boolean = (() => {
+  if (typeof Array.prototype.some === "function") {
+    return (array, fn) => array.some(fn);
+  }
+
+  return <T>(array: Array<T>, fn: (item: T) => boolean) => {
+    return reduce(array, (acc, item) => acc || fn(item), false);
+  };
+})();
+
+// Filter a list of items.
+const filter: <T>(array: Array<T>, fn: (item: T) => boolean) => Array<T> =
+  (() => {
+    if (typeof Array.prototype.filter === "function") {
+      return (array, fn) => array.filter(fn);
+    }
+
+    return <T>(array: Array<T>, fn: (item: T) => boolean) => {
+      const result: Array<T> = [];
+
+      for (const item of array) {
+        if (fn(item)) {
+          result.push(item);
+        }
+      }
+
+      return result;
+    };
+  })();
