@@ -1,13 +1,5 @@
 <!-- GNU AGPL v3 License -->
 
-<script lang="ts">
-import { defineComponent } from "vue";
-
-export default defineComponent({
-  name: "Homepage",
-});
-</script>
-
 <template>
   <div id="homepage">
     <p class="text-h5 text-center">Welcome to Pictonode!</p>
