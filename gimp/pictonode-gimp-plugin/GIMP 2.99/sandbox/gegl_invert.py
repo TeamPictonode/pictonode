@@ -4,8 +4,6 @@
     Windows CLI usage:
         .\scripts\Windows\run_gimp_sandbox.bat <name of sandbox script> <any CLAs go here>
 
-        --note, the name of the sandbox script is the cla first argument to the python script itself
-
         Running this script (gegl_invert.py) would then be:
             .\scripts\Windows\run_gimp_sandbox.bat gegl_invert.py <Complete Path to Input JPG> <Complete Path to Output JPG>
 '''
