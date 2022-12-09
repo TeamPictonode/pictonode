@@ -74,7 +74,7 @@ export default defineComponent({
     },
 
     processCanvas() {
-      console.log("processing canvas");
+      console.log(this.pipeline);
       // Get the "output" node for the pipeline.
       let outputNode;
 
@@ -121,7 +121,53 @@ export default defineComponent({
     },
 
     onConnect(connection: Connection | Edge) {
-      this.elements = addEdge(connection, this.elements);
+      //this.elements = addEdge(connection, this.elements);
+
+      // Get the source and target nodes.
+      const sourceId = parseInt(connection.source);
+      const sourceNode = this.pipeline.getNode(sourceId);
+      const sourceHandle = connection.sourceHandle!;
+      const targetId = parseInt(connection.target);
+      const targetNode = this.pipeline.getNode(targetId);
+      const targetHandle = connection.targetHandle!;
+
+      if (!sourceNode || !targetNode) {
+        throw new Error("Could not get source or target node");
+      }
+
+      // Determine the values; source should have "output-" at the front, and
+      // target should have "input-" at the front.
+      const sourceValue = parseInt(sourceHandle.substring(7));
+      const targetValue = parseInt(targetHandle.substring(6));
+
+      // If the target node already has an input link, unlink it.
+      if (targetNode.isInputOccupied(targetValue)) {
+        // Get the node that is currently linked to the target node.
+        const oldSourceNode = targetNode.getInputs()[targetValue].getFrom();
+
+        if (oldSourceNode) {
+          console.log(oldSourceNode);
+          const oldSourceId = oldSourceNode.getId();
+          const oldSourceValue = oldSourceNode
+            .getOutputs()
+            .indexOf(targetNode.getInputs()[targetValue]);
+
+          this.pipeline.unlink(
+            oldSourceId,
+            oldSourceValue,
+            targetId,
+            targetValue
+          );
+        }
+      }
+
+      // Link the nodes.
+      this.pipeline.link(sourceId, sourceValue, targetId, targetValue);
+
+      // Update the graph.
+      // @ts-ignore
+      this.elements = pipelineToVueFlow(this.pipeline);
+      this.processCanvas();
     },
   },
 

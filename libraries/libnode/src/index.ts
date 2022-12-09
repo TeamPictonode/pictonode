@@ -202,12 +202,27 @@ export class Node<T, M> implements HydrateTarget {
 
   // PRIVATE: Replace the link at the given index.
   __replaceLink(index: number, input: boolean, id: number): void {
+    if (index === -1) {
+      return;
+    }
+
     const template = this.templateTable.getTemplate(this.template);
+
     if (input) {
-      const inputTemplate = template.getInputs()[index]!;
+      const inputTemplate = template.getInputs()[index];
+
+      if (inputTemplate === undefined) {
+        throw new Error(`Invalid input index ${index}`);
+      }
+
       this.inputs[index] = new Link(inputTemplate, inputTemplate.getMetadata(), id);
     } else {
-      const outputTemplate = template.getOutputs()[index]!;
+      const outputTemplate = template.getOutputs()[index];
+
+      if (outputTemplate === undefined) {
+        throw new Error(`Invalid output index ${index}`);
+      }
+
       this.outputs[index] = new Link(outputTemplate, outputTemplate.getMetadata(), id);
     }
   }
@@ -232,6 +247,16 @@ export class Node<T, M> implements HydrateTarget {
     }
 
     throw new Error("TODO");
+  }
+
+  // Is the input at the given index occupied?
+  public isInputOccupied(index: number): boolean {
+    return this.inputs[index]!.__isFromOccupied();
+  }
+
+  // Is the output at the given index occupied?
+  public isOutputOccupied(index: number): boolean {
+    return this.outputs[index]!.__isToOccupied();
   }
 };
 
@@ -289,6 +314,14 @@ export class Link<T, M> {
     return this.id;
   }
 
+  __isFromOccupied(): boolean {
+    return !isNoNode(this.from);
+  }
+
+  __isToOccupied(): boolean {
+    return !isNoNode(this.to);
+  }
+
   // PRIVATE: Set the "from" node of this link.
   __setFrom(from: HydrateTarget, fromIndex: number): void {
     this.from = from;
@@ -341,7 +374,7 @@ export class Link<T, M> {
   public getFrom(): Node<T, M> | undefined {
     const from = this.from;
 
-    if (from === NO_NODE) {
+    if (isNoNode(from)) {
       return undefined;
     }
 
@@ -357,7 +390,7 @@ export class Link<T, M> {
   public getTo(): Node<T, M> | undefined {
     const to = this.to;
 
-    if (to === NO_NODE) {
+    if (isNoNode(to)) {
       return undefined;
     }
 
@@ -380,9 +413,14 @@ interface HydrateTarget {
   __hydrate(): void;
 }
 
-const NO_NODE: HydrateTarget = {
+const NO_NODE: HydrateTarget & { __thisIsNoNode: true } = {
+  __thisIsNoNode: true,
   __hydrate: () => {},
 };
+
+function isNoNode(node: HydrateTarget): node is typeof NO_NODE {
+  return (node as any).__thisIsNoNode === true;
+}
 
 // A pipeline consisting of several nodes.
 export class Pipeline<T, M> {

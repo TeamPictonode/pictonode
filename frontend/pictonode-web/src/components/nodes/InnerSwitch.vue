@@ -53,7 +53,19 @@ export default defineComponent({
         img.src = e.target!.result;
       };
     },
-    getSpecialType(): SpecialNodeType {
+
+    onColorInputUpdate(color: string) {
+      this.node.getOutputs()[0].set({
+        type: NodeDataType.Color,
+
+        // @ts-ignore
+        color,
+      });
+      this.$emit("input-update");
+    },
+  },
+  computed: {
+    specialType(): SpecialNodeType {
       const metadata = this.node
         .getTemplateTable()
         .getTemplate(this.node.getTemplate())
@@ -71,8 +83,14 @@ export default defineComponent({
 
 <template>
   <v-file-input
-    v-if="getSpecialType() === SpecialNodeType.ImageInput"
+    v-if="specialType === SpecialNodeType.ImageInput"
     ref="imageInput"
     @change="onImageInputUpdate"
   />
+  <v-color-picker
+    v-if="specialType === SpecialNodeType.ColorInput"
+    dot-size="25"
+    swatches-max-height="200"
+    @input="onColorInputUpdate"
+  ></v-color-picker>
 </template>
