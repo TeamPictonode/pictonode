@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-
+import threading
 import gi
 gi.require_version('Gimp', '3.0')
 from gi.repository import Gimp
@@ -11,6 +11,7 @@ from gi.repository import GObject
 from gi.repository import GLib
 from gi.repository import Gio
 import sys
+import os
 
 #Plugin impl
 from client import *
@@ -18,9 +19,43 @@ from client import *
 def N_(message): return message
 def _(message): return GLib.dgettext(None, message)
 
-def save_layer_to_png(button, gegl_buffer):
-    STATIC_TARGET = ".\\pictonode-intermediate.png"
-    
+
+def send_message_to_controller_callback(button, msg):
+    client.connect_to_controller()
+    client.send_message_to_controller(msg)
+    client.receive_message_from_controller()
+
+    client.close_connection_to_controller()
+
+def send_image_to_controller_callback(button, gegl):
+    def do_send_image(gegl):
+        client.connect_to_controller()
+
+        image = save_layer_to_png(gegl)
+
+        client.send_message_to_controller(f"{str(os.stat(image).st_size)}")
+        client.receive_message_from_controller()
+
+        client.send_image_to_controller(image)
+
+    x = threading.Thread(target=do_send_image, args=(gegl,))
+    x.start()
+    x.join()
+
+    client.receive_message_from_controller()
+    #client.receive_image_from_controller()
+
+    client.close_connection_to_controller()
+
+def save_layer_to_png(gegl_buffer):
+    STATIC_TARGET_DIR = f"{os.path.dirname(os.path.abspath(__file__))}\\int"
+    STATIC_TARGET = f"{STATIC_TARGET_DIR}\\pictonode-intermediate.png"
+
+    #make the empty target
+    os.makedirs(STATIC_TARGET_DIR, exist_ok=True)
+    intermediate_file = os.open(STATIC_TARGET, os.O_CREAT | os.O_TRUNC)
+    os.close(intermediate_file)
+
     Gegl.init(None)
     parent = Gegl.Node()
 
@@ -38,6 +73,8 @@ def save_layer_to_png(button, gegl_buffer):
 
     buffer_output.process()
 
+    return STATIC_TARGET
+
 def entry_point(procedure, run_mode, image, n_drawables, drawables, args, data):
     return procedure.new_return_values(Gimp.PDBStatusType.SUCCESS, GLib.Error())
 
@@ -54,7 +91,7 @@ class Pictonode (Gimp.PlugIn):
         procedure = Gimp.ImageProcedure.new(self, name,
                                             Gimp.PDBProcType.PLUGIN,
                                             self.run, None)
-        procedure.set_image_types("RGB*, GRAY*");
+        procedure.set_image_types("RGB*, GRAY*")
         procedure.set_sensitivity_mask (Gimp.ProcedureSensitivityMask.DRAWABLE |
                                         Gimp.ProcedureSensitivityMask.DRAWABLES)
         procedure.set_documentation (_("Pictonode"),
@@ -106,9 +143,19 @@ class Pictonode (Gimp.PlugIn):
             image_path = image.get_file().get_path()
             image_display.set_from_file(image_path)
 
+
+            '''
+                Sending an image to controller works like this:
+                
+                START
+                    -Plugin sends init message to controller (Hey dude im sending an image in a sec and its a png/svg/whatever)
+                    -Plugin waits for controller to confirm (Controller replies saying thats chill bro)
+                    -Plugin sends image chunks then waits for controller to confirm (Controller replies mmm yummy)
+                END
+            '''
+
             button = Gtk.Button(label="Send To Controller")
-            #button.connect('clicked', send_message_to_controller_callback, "drawable.get_buffer()")
-            button.connect('clicked', save_layer_to_png, drawable.get_buffer())
+            button.connect('clicked', send_image_to_controller_callback, drawable.get_buffer())
 
             grid.attach(button, 0, 2, 20, 10)
             grid.attach(image_display, 0, 1, 1000, 500)

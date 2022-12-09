@@ -1,3 +1,4 @@
+import os
 import socket
 class PluginClient:
     def __init__(self):
@@ -12,6 +13,9 @@ class PluginClient:
         print("Plugin Socket connected to: ")
         print(f"Local Host ({self.HOST_NAME}): {self.LOCALHOST_IP}", f"On Port: {self.PORT}")
 
+    def close_connection_to_controller(self):
+        self.client.close()
+
     def send_message_to_controller(self, msg):
         self.client.send(msg.encode('utf-8'))
 
@@ -19,19 +23,12 @@ class PluginClient:
         print(self.client.recv(1024).decode('utf-8'))
 
     def send_image_to_controller(self, image):
-        pass
+        file = open(image, "rb")
+        image_data = file.read()
+        self.client.sendall(image_data)
+        file.close()
 
     def receive_image_from_controller(self, image):
         pass
 
 client = PluginClient()
-
-def send_message_to_controller_callback(button, msg):
-    client.connect_to_controller()
-    client.send_message_to_controller(msg)
-    client.receive_message_from_controller()
-
-def send_image_to_controller_callback(button, gegl):
-    client.connect_to_controller()
-    client.send_image_to_controller(image)
-    client.receive_message_from_controller()
