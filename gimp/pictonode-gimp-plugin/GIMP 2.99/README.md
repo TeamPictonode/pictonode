@@ -25,7 +25,7 @@ To develop modules for the plugin or just test against the GObject typelibs GIMP
 
 ### Usage
 Simply copy gimp_sandbox.py and rename it to something new. Place any new code inside of main():
-```
+```python
 '''
     This is a sandbox template
 
