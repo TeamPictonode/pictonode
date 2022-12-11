@@ -55,6 +55,7 @@ export default defineComponent({
     },
 
     onColorInputUpdate(color: string) {
+      console.log(`Color input updated: ${color}`);
       this.node.getOutputs()[0].set({
         type: NodeDataType.Color,
 
@@ -91,6 +92,7 @@ export default defineComponent({
     v-if="specialType === SpecialNodeType.ColorInput"
     dot-size="25"
     swatches-max-height="200"
+    value="#FF0000"
     @input="onColorInputUpdate"
   ></v-color-picker>
 </template>

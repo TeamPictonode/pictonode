@@ -71,6 +71,7 @@ export default defineComponent({
 
       // Add a new node to the graph.
       this.elements.push(nodeToViewFlow(newNode));
+      this.reprocess();
     },
 
     processCanvas() {
@@ -100,7 +101,7 @@ export default defineComponent({
         }
 
         // Blue background.
-        ctx.fillStyle = "#0000FF";
+        ctx.fillStyle = "#00FF00";
         ctx.fillRect(0, 0, 200, 100);
 
         // White text.
@@ -140,6 +141,10 @@ export default defineComponent({
       const sourceValue = parseInt(sourceHandle.substring(7));
       const targetValue = parseInt(targetHandle.substring(6));
 
+      console.log(
+        `Linking ${sourceId} ${sourceValue} to ${targetId} ${targetValue}`
+      );
+
       // If the target node already has an input link, unlink it.
       if (targetNode.isInputOccupied(targetValue)) {
         // Get the node that is currently linked to the target node.
@@ -165,6 +170,10 @@ export default defineComponent({
       this.pipeline.link(sourceId, sourceValue, targetId, targetValue);
 
       // Update the graph.
+      this.reprocess();
+    },
+
+    reprocess() {
       // @ts-ignore
       this.elements = pipelineToVueFlow(this.pipeline);
       this.processCanvas();

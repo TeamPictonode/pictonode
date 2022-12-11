@@ -169,6 +169,10 @@ export class Node<T, M> implements HydrateTarget {
     return this.metadata;
   }
 
+  public setMetadata(metadata: M): void {
+    this.metadata = metadata;
+  }
+
   public getInputs(): Array<Link<T, M>> {
     return this.inputs;
   }
@@ -231,6 +235,7 @@ export class Node<T, M> implements HydrateTarget {
   __linkFrom(from: Node<T, M>, fromIndex: number, toIndex: number): Link<T, M> {
     from.outputs[fromIndex] = this.inputs[toIndex]!;
     this.inputs[toIndex]!.__setFrom(from, fromIndex);
+    this.inputs[toIndex]!.__setTo(this, toIndex);
     return this.inputs[toIndex]!;
   }
 
@@ -238,6 +243,7 @@ export class Node<T, M> implements HydrateTarget {
   __unlinkFrom(from: Node<T, M>, fromIndex: number, toIndex: number, id: number): void {
     from.__replaceLink(fromIndex, false, id);
     this.inputs[toIndex]!.__clearFrom();
+    this.inputs[toIndex]!.__clearTo();
   }
 
   // PRIVATE: Unlink all links coming into this node.

@@ -162,8 +162,14 @@ function defaultImage(): NodeData {
   canvas.width = 100;
   canvas.height = 100;
   const ctx = canvas.getContext("2d")!;
-  ctx.fillStyle = "#3344FF";
+  ctx.fillStyle = "#FF4433";
   ctx.fillRect(0, 0, 100, 100);
+
+  // Write black text saying "error".
+  ctx.fillStyle = "#000000";
+  ctx.font = "20px Arial";
+  ctx.fillText("Error", 10, 50);
+
   return { type: NodeDataType.Image, canvas };
 }
 

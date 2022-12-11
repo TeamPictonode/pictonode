@@ -127,20 +127,20 @@ export function pipelineToVueFlow(pipeline: Pipeline): Array<any> {
 
   // Add the links.
   for (const link of pipeline.getLinks()) {
-    const sourceId = (() => {
+    const [sourceId, sourceHandle] = (() => {
       const source = link.getFrom();
       if (source) {
-        return source.getId().toString();
+        return [source.getId().toString(), link.getFromIndex()];
       } else {
-        return "X_";
+        return ["X_", -1];
       }
     })();
-    const targetId = (() => {
+    const [targetId, targetHandle] = (() => {
       const target = link.getTo();
       if (target) {
-        return target.getId().toString();
+        return [target.getId().toString(), link.getToIndex()];
       } else {
-        return "X_";
+        return ["X_", -1];
       }
     })();
 
@@ -148,6 +148,8 @@ export function pipelineToVueFlow(pipeline: Pipeline): Array<any> {
       id: `e${sourceId}-${targetId}`,
       source: sourceId,
       target: targetId,
+      sourceHandle: `output-${sourceHandle}`,
+      targetHandle: `input-${targetHandle}`,
       animated: true,
     });
   }
