@@ -7,13 +7,13 @@ import Register from "./app/Register.vue";
 import * as VueRouter from "vue-router";
 
 const ROUTES = [
-    { path: "/", component: Homepage, },
-    { path: "/canvas", component: Canvas },
-    { path: "/login", component: Login },
-    { path: "/register", component: Register },
-]
+  { path: "/", component: Homepage },
+  { path: "/canvas", component: Canvas },
+  { path: "/login", component: Login },
+  { path: "/register", component: Register },
+];
 
 export default VueRouter.createRouter({
-    history: VueRouter.createWebHashHistory(),
-    routes: ROUTES,
+  history: VueRouter.createWebHashHistory(),
+  routes: ROUTES,
 });

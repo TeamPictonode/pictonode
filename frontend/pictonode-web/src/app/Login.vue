@@ -1,11 +1,11 @@
 <!-- GNU AGPL v3 License -->
 
 <script lang="ts">
-  import { defineComponent } from "vue";
+import { defineComponent } from "vue";
 
-  export default defineComponent({
-    name: "Login",
-  });
+export default defineComponent({
+  name: "Login",
+});
 </script>
 
 <template>
@@ -26,7 +26,7 @@
 
 <style scoped lang="scss">
 #login {
-    padding: 1rem;
-    margin: 1rem;
+  padding: 1rem;
+  margin: 1rem;
 }
 </style>

@@ -1,10 +1,10 @@
 <!-- GNU AGPL v3 License -->
 <script lang="ts">
-  import { defineComponent } from "vue";
+import { defineComponent } from "vue";
 
-  export default defineComponent({
-    name: "Topbar",
-  });
+export default defineComponent({
+  name: "Topbar",
+});
 </script>
 
 <template>
@@ -22,14 +22,12 @@
 
       <v-list>
         <v-list-item>
-          <router-link to="/login">Login</router-link> 
+          <router-link to="/login">Login</router-link>
         </v-list-item>
         <v-list-item>
           <router-link to="/register">Register</router-link>
         </v-list-item>
-        <v-list-item>
-          Settings (TODO)
-        </v-list-item>
+        <v-list-item> Settings (TODO) </v-list-item>
       </v-list>
     </v-menu>
   </v-app-bar>

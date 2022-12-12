@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-
+import threading
 import gi
 gi.require_version('Gimp', '3.0')
 from gi.repository import Gimp
@@ -11,9 +11,69 @@ from gi.repository import GObject
 from gi.repository import GLib
 from gi.repository import Gio
 import sys
+import os
+
+#Plugin impl
+from client import *
 
 def N_(message): return message
 def _(message): return GLib.dgettext(None, message)
+
+
+def send_message_to_controller_callback(button, msg):
+    client.connect_to_controller()
+    client.send_message_to_controller(msg)
+    client.receive_message_from_controller()
+
+    client.close_connection_to_controller()
+
+def send_image_to_controller_callback(button, gegl):
+    def do_send_image(gegl):
+        client.connect_to_controller()
+
+        image = save_layer_to_png(gegl)
+
+        client.send_message_to_controller(f"{str(os.stat(image).st_size)}")
+        client.receive_message_from_controller()
+
+        client.send_image_to_controller(image)
+
+    x = threading.Thread(target=do_send_image, args=(gegl,))
+    x.start()
+    x.join()
+
+    client.receive_message_from_controller()
+    #client.receive_image_from_controller()
+
+    client.close_connection_to_controller()
+
+def save_layer_to_png(gegl_buffer):
+    STATIC_TARGET_DIR = f"{os.path.dirname(os.path.abspath(__file__))}\\int"
+    STATIC_TARGET = f"{STATIC_TARGET_DIR}\\pictonode-intermediate.png"
+
+    #make the empty target
+    os.makedirs(STATIC_TARGET_DIR, exist_ok=True)
+    intermediate_file = os.open(STATIC_TARGET, os.O_CREAT | os.O_TRUNC)
+    os.close(intermediate_file)
+
+    Gegl.init(None)
+    parent = Gegl.Node()
+
+    buffer_input = Gegl.Node()
+    buffer_input.set_property("operation", "gegl:buffer-source")
+    buffer_input.set_property("buffer", gegl_buffer)
+    parent.add_child(buffer_input)
+
+    buffer_output = Gegl.Node()
+    buffer_output.set_property("operation", "gegl:png-save")
+    buffer_output.set_property("path", STATIC_TARGET)
+    parent.add_child(buffer_output)
+
+    buffer_input.connect_to("output", buffer_output, "input")
+
+    buffer_output.process()
+
+    return STATIC_TARGET
 
 def entry_point(procedure, run_mode, image, n_drawables, drawables, args, data):
     return procedure.new_return_values(Gimp.PDBStatusType.SUCCESS, GLib.Error())
@@ -31,14 +91,14 @@ class Pictonode (Gimp.PlugIn):
         procedure = Gimp.ImageProcedure.new(self, name,
                                             Gimp.PDBProcType.PLUGIN,
                                             self.run, None)
-        procedure.set_image_types("RGB*, GRAY*");
+        procedure.set_image_types("RGB*, GRAY*")
         procedure.set_sensitivity_mask (Gimp.ProcedureSensitivityMask.DRAWABLE |
                                         Gimp.ProcedureSensitivityMask.DRAWABLES)
         procedure.set_documentation (_("Pictonode"),
                                      _("Launches Pictonode plugin"),
                                      name)
         procedure.set_menu_label(_("Launch"))
-        procedure.set_attribution("Stephen Foster",
+        procedure.set_attribution("Stephen Foster, Parker Nelms",
                                   "Team Picto",
                                   "2022")
         procedure.add_menu_path ("<Image>/Pictonode")
@@ -85,7 +145,18 @@ class Pictonode (Gimp.PlugIn):
             image_display.set_from_file(image_path)
             image_display.set_from_pixbuf(image_display.get_pixbuf())
 
-            button = Gtk.Button(label="Button 1")
+            '''
+                Sending an image to controller works like this:
+                
+                START
+                    -Plugin sends init message to controller (Hey dude im sending an image in a sec and its a png/svg/whatever)
+                    -Plugin waits for controller to confirm (Controller replies saying thats chill bro)
+                    -Plugin sends image chunks then waits for controller to confirm (Controller replies mmm yummy)
+                END
+            '''
+
+            button = Gtk.Button(label="Send To Controller")
+            button.connect('clicked', send_image_to_controller_callback, drawable.get_buffer())
 
             scrolled = Gtk.ScrolledWindow()
             scrolled.add_with_viewport(image_display)
