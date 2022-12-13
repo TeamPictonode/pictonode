@@ -20,8 +20,13 @@ export default defineComponent({
   <v-layout>
   <v-app-bar pictonode>
     <v-app-bar-nav-icon @click.stop="drawer = !drawer"></v-app-bar-nav-icon>
-    <v-toolbar-title>Pictonode</v-toolbar-title>
-    <router-link to="/">Homepage</router-link>
+    <v-toolbar-title>
+      <router-link to="/" tag="v-btn">
+        <v-btn>
+          Pictonode
+        </v-btn>
+      </router-link>
+    </v-toolbar-title>
     <v-spacer />
     <v-menu left bottom>
       <template #activator="{ props }">
@@ -32,10 +37,16 @@ export default defineComponent({
 
       <v-list>
         <v-list-item>
-          <router-link to="/login">Login</router-link>
+          <router-link to="/login" tag="v-btn">
+            <v-btn>
+              Login
+            </v-btn>
+          </router-link>
         </v-list-item>
         <v-list-item>
-          <router-link to="/register">Register</router-link>
+          <router-link to="/register" tag="v-btn"><v-btn>
+            Register
+          </v-btn></router-link>
         </v-list-item>
         <v-list-item> Settings (TODO) </v-list-item>
       </v-list>
