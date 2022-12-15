@@ -1,5 +1,9 @@
 <!-- GNU AGPL v3 License -->
 
+<!--
+  This file in its entirety was written by John Nunley and Grace Meredith.
+-->
+
 <script lang="ts">
 import { Handle, Position, NodeEventsOn, NodeDragEvent } from "@vue-flow/core";
 import { defineComponent } from "vue";

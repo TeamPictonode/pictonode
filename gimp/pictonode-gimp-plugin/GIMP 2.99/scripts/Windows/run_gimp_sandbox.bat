@@ -2,6 +2,8 @@
 set GIMP_VERSION=2.99
 set GIMP_PYTHON="C:\Program Files\GIMP %GIMP_VERSION%\bin\python3.exe"
 
+rem This file was written in its entirety by Parker Nelms and Stephen Foster.
+
 REM %1 == first command-line argument
 set SANDBOX_SCRIPT=%1
 

@@ -1,5 +1,7 @@
 // GNU AGPL 3.0 License
 
+// This file in its entirety was written by John Nunley and Grace Meredith.
+
 const { join, resolve } = require("path");
 const { VueLoaderPlugin } = require("vue-loader");
 const { VuetifyPlugin } = require("webpack-plugin-vuetify");

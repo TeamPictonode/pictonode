@@ -1,5 +1,7 @@
 // AGPL v3 License
 
+// This file in its entirety was written by John Nunley.
+
 // More nodes than we'll probably ever use (about 16 million).
 const MAX_NODES: number = 1 << 24;
 

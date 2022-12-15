@@ -2,6 +2,10 @@
 
 Pictonode web frontend. Many pictos, much nodes. Wow.
 
+## Credits
+
+The code in this folder was developed in its entirety by John Nunley (notgull) and Grace Meredith, with a few exceptions. All dependencies except for `libnode` were created by others.
+
 ## Development
 
 Install a recent version of Node and NPM. Linux/MacOS users can use [nvm](https://github.com/nvm-sh/nvm#install--update-script) to take care of this. Just do:

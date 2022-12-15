@@ -1,5 +1,9 @@
 <!-- GNU AGPL v3 License -->
 
+<!--
+  This file in its entirety was written by John Nunley and Grace Meredith.
+-->
+
 <script lang="ts">
 import { Position, VueFlow, Connection, Edge, addEdge } from "@vue-flow/core";
 import { Controls } from "@vue-flow/additional-components";

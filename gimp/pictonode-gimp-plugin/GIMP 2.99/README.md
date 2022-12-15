@@ -1,5 +1,9 @@
 # pictonode plugin
 
+## Contributions
+
+This subfolder was written in its entirety by Parker Nelms and Stephen Foster.
+
 ## Depends On
 
 GIMP 2.99+

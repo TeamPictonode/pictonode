@@ -1,5 +1,8 @@
 import os
 import socket
+
+# This file was written in its entirety by Parker Nelms and Stephen Foster.
+
 class PluginClient:
     def __init__(self):
         self.HOST_NAME = socket.gethostname()

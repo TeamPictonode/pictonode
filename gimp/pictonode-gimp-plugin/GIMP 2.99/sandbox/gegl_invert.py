@@ -11,6 +11,8 @@
 # Import Gimp's GObject typelibs by setting an environment variable GI_TYPELIB_PATH
 # We can use any typelib dependency found in "C:\Program Files\GIMP %GIMP_VERSION%\lib\girepository-1.0"
 
+# This file was written in its entirety by Parker Nelms and Stephen Foster.
+
 import sys
 import os
 

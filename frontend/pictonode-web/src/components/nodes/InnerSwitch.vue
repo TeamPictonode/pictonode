@@ -1,5 +1,9 @@
 <!-- GNU AGPL v3 License -->
 
+<!--
+  This file in its entirety was written by John Nunley and Grace Meredith.
+-->
+
 <script lang="ts">
 import { defineComponent } from "vue";
 import { Node, SpecialNodeType, MetadataType, NodeDataType } from "./NodeTree";

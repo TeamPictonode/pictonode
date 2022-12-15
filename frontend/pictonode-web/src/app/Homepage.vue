@@ -1,5 +1,9 @@
 <!-- GNU AGPL v3 License -->
 
+<!--
+  This file in its entirety was written by John Nunley and Grace Meredith.
+-->
+
 <template>
   <div id="homepage">
     <p class="text-h5 text-center">Welcome to Pictonode!</p>

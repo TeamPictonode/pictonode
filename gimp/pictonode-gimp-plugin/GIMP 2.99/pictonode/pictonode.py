@@ -13,6 +13,8 @@ from gi.repository import Gio
 import sys
 import os
 
+# This file was written in its entirety by Parker Nelms and Stephen Foster.
+
 #Plugin impl
 from client import *
 
