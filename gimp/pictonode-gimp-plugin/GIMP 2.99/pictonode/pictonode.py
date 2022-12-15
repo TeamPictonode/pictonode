@@ -137,14 +137,15 @@ class Pictonode (Gimp.PlugIn):
             
             win = Gtk.ApplicationWindow()
             win.set_title("Pictonode")
-            win.set_default_size(1000, 500)
+            win.set_default_size(400, 400)
 
             grid = Gtk.Grid()
 
+            #grabs a pixbuf of the currently selected image and 
             image_display = Gtk.Image()
             image_path = image.get_file().get_path()
             image_display.set_from_file(image_path)
-
+            image_display.set_from_pixbuf(image_display.get_pixbuf())
 
             '''
                 Sending an image to controller works like this:
@@ -159,8 +160,13 @@ class Pictonode (Gimp.PlugIn):
             button = Gtk.Button(label="Send To Controller")
             button.connect('clicked', send_image_to_controller_callback, drawable.get_buffer())
 
-            grid.attach(button, 0, 2, 20, 10)
-            grid.attach(image_display, 0, 1, 1000, 500)
+            scrolled = Gtk.ScrolledWindow()
+            scrolled.add_with_viewport(image_display)
+            scrolled.set_min_content_height(500)
+            scrolled.set_min_content_width(400)
+
+            grid.attach(button, 0, 3, 2, 1)
+            grid.attach(scrolled, 0, 1, 100, 2)
 
             win.add(grid)
             win.show_all()
