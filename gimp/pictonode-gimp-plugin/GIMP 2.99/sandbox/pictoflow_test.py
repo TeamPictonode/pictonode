@@ -68,9 +68,5 @@ def main():
     print("hello from sandbox!")
     Demo()
 
-def print_api(obj):
-    for l in dir(obj):
-        print(l)
-
 if __name__=='__main__':
     main()
