@@ -33,6 +33,6 @@ def main():
     giimported = list(filter((lambda f: ("gi.repository.") in f), sys.modules))
     for giapi in giimported:
         print_giapi(sys.modules[giapi])
-    print(dir(Gdk.WindowAttributesType))
+
 if __name__=="__main__":
     main()
