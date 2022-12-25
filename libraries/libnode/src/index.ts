@@ -8,7 +8,7 @@ const MAX_NODES: number = 1 << 24;
 // A table made up of node templates.
 export class TemplateTable<T, M> {
   private table: Map<string, NodeTemplate<T, M>>;
-  
+
   public constructor() {
     this.table = new Map();
   }
@@ -31,7 +31,7 @@ export class TemplateTable<T, M> {
   public getTemplates(): Array<string> {
     return Array.from(this.table.keys());
   }
-};
+}
 
 // Template for creating a node.
 export class NodeTemplate<T, M> {
@@ -55,7 +55,7 @@ export class NodeTemplate<T, M> {
     // Default outputs for this node.
     outputs: Array<LinkTemplate<T, M>>,
     // Metadata
-    metadata: M,
+    metadata: M
   ) {
     this.onProcess = onProcess;
     this.inputs = inputs;
@@ -82,7 +82,7 @@ export class NodeTemplate<T, M> {
   __process(data: Array<Link<T, M>>): Array<T> {
     return this.onProcess(data);
   }
-};
+}
 
 // Template for creating a link.
 export class LinkTemplate<T, M> {
@@ -101,7 +101,7 @@ export class LinkTemplate<T, M> {
   public getDefaultValue(): T {
     return this.defaultValue;
   }
-};
+}
 
 // A node in the graph.
 export class Node<T, M> implements HydrateTarget {
@@ -130,7 +130,7 @@ export class Node<T, M> implements HydrateTarget {
     // The metadata for this node.
     metadata: M,
     // The ID of this node.
-    id: number,
+    id: number
   ) {
     this.templateTable = templateTable;
     this.template = template;
@@ -141,14 +141,22 @@ export class Node<T, M> implements HydrateTarget {
     let lastLinkId = id + MAX_NODES;
 
     this.inputs = map(realTemplate.getInputs(), (inputTemplate, index) => {
-      const link = new Link(inputTemplate, inputTemplate.getMetadata(), lastLinkId);
+      const link = new Link(
+        inputTemplate,
+        inputTemplate.getMetadata(),
+        lastLinkId
+      );
       link.__setTo(this, index);
       lastLinkId += MAX_NODES;
       return link;
     });
 
     this.outputs = map(realTemplate.getOutputs(), (outputTemplate, index) => {
-      const link = new Link(outputTemplate, outputTemplate.getMetadata(), lastLinkId);
+      const link = new Link(
+        outputTemplate,
+        outputTemplate.getMetadata(),
+        lastLinkId
+      );
       link.__setFrom(this, index);
       lastLinkId += MAX_NODES;
       return link;
@@ -221,7 +229,11 @@ export class Node<T, M> implements HydrateTarget {
         throw new Error(`Invalid input index ${index}`);
       }
 
-      this.inputs[index] = new Link(inputTemplate, inputTemplate.getMetadata(), id);
+      this.inputs[index] = new Link(
+        inputTemplate,
+        inputTemplate.getMetadata(),
+        id
+      );
     } else {
       const outputTemplate = template.getOutputs()[index];
 
@@ -229,7 +241,11 @@ export class Node<T, M> implements HydrateTarget {
         throw new Error(`Invalid output index ${index}`);
       }
 
-      this.outputs[index] = new Link(outputTemplate, outputTemplate.getMetadata(), id);
+      this.outputs[index] = new Link(
+        outputTemplate,
+        outputTemplate.getMetadata(),
+        id
+      );
     }
   }
 
@@ -242,7 +258,12 @@ export class Node<T, M> implements HydrateTarget {
   }
 
   // PRIVATE: As the "to" node, remove the link from a "from" node.
-  __unlinkFrom(from: Node<T, M>, fromIndex: number, toIndex: number, id: number): void {
+  __unlinkFrom(
+    from: Node<T, M>,
+    fromIndex: number,
+    toIndex: number,
+    id: number
+  ): void {
     from.__replaceLink(fromIndex, false, id);
     this.inputs[toIndex]!.__clearFrom();
     this.inputs[toIndex]!.__clearTo();
@@ -251,7 +272,12 @@ export class Node<T, M> implements HydrateTarget {
   // PRIVATE: Unlink all links coming into this node.
   __unlinkAll(): void {
     for (let i = this.inputs.length - 1; i > 0; i--) {
-      this.__unlinkFrom(this.inputs[i]!.getFrom()!, this.inputs[i]!.getFromIndex()!, i, this.inputs[i]!.getId());
+      this.__unlinkFrom(
+        this.inputs[i]!.getFrom()!,
+        this.inputs[i]!.getFromIndex()!,
+        i,
+        this.inputs[i]!.getId()
+      );
     }
 
     throw new Error("TODO");
@@ -266,7 +292,7 @@ export class Node<T, M> implements HydrateTarget {
   public isOutputOccupied(index: number): boolean {
     return this.outputs[index]!.__isToOccupied();
   }
-};
+}
 
 // A link between two nodes.
 export class Link<T, M> {
@@ -304,7 +330,7 @@ export class Link<T, M> {
     // Metadata for this link.
     metadata: M,
     // The ID of this link.
-    id: number,
+    id: number
   ) {
     this.template = template;
     this.from = NO_NODE;
@@ -453,14 +479,24 @@ export class Pipeline<T, M> {
 
   // Create a new node in the pipeline.
   public createNode(template: string, metadata: M): Node<T, M> {
-    const node = new Node(this.templateTable, template, metadata, this.nextNodeId);
+    const node = new Node(
+      this.templateTable,
+      template,
+      metadata,
+      this.nextNodeId
+    );
     this.nodes.set(this.nextNodeId, node);
     this.nextNodeId++;
     return node;
   }
 
   // Link two nodes together at the given index.
-  public link(fromId: number, fromIndex: number, toId: number, toIndex: number): void {
+  public link(
+    fromId: number,
+    fromIndex: number,
+    toId: number,
+    toIndex: number
+  ): void {
     const from = this.nodes.get(fromId);
 
     if (from === undefined) {
@@ -478,7 +514,12 @@ export class Pipeline<T, M> {
   }
 
   // Unlink two nodes at the given index.
-  public unlink(fromId: number, fromIndex: number, toId: number, toIndex: number): void {
+  public unlink(
+    fromId: number,
+    fromIndex: number,
+    toId: number,
+    toIndex: number
+  ): void {
     const from = this.nodes.get(fromId);
 
     if (from === undefined) {
@@ -522,7 +563,7 @@ export class Pipeline<T, M> {
     this.nextNodeId++;
     this.nodes.delete(id);
   }
-};
+}
 
 // TODO: Serialization/Deserialization
 
@@ -543,7 +584,10 @@ const forEach: <T>(
 })();
 
 // Iterate over an array, get each element, map it, and return an array of all values.
-const map: <T, U>(array: Array<T>, fn: (item: T, index: number) => U) => Array<U> = (() => {
+const map: <T, U>(
+  array: Array<T>,
+  fn: (item: T, index: number) => U
+) => Array<U> = (() => {
   if (typeof Array.prototype.map === "function") {
     return (array, fn) => array.map(fn);
   }

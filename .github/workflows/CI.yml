@@ -1,0 +1,122 @@
+# Continuous Integration Pipeline
+
+name: 'ci'
+on:
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  format_check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v1
+        with:
+          node-version: '19.x'
+      - name: Install Dependencies
+        run: npm install
+      - name: Run Format Check
+        run: npm run format-check
+
+  lint_check:        
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v1
+        with:
+          node-version: '19.x'
+      - name: Install Dependencies
+        run: npm install
+      - name: Run Lint Check
+        run: npm run lint
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
