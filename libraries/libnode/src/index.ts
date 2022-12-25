@@ -7,7 +7,7 @@ const MAX_NODES: number = 1 << 24;
 
 // A table made up of node templates.
 export class TemplateTable<T, M> {
-  private table: Map<string, NodeTemplate<T, M>>;
+  private readonly table: Map<string, NodeTemplate<T, M>>;
 
   public constructor() {
     this.table = new Map();
@@ -28,7 +28,7 @@ export class TemplateTable<T, M> {
   }
 
   // Get a list of every template.
-  public getTemplates(): Array<string> {
+  public getTemplates(): string[] {
     return Array.from(this.table.keys());
   }
 }
@@ -36,20 +36,20 @@ export class TemplateTable<T, M> {
 // Template for creating a node.
 export class NodeTemplate<T, M> {
   // Callback for when the node's data is processed.
-  private onProcess: (data: Array<Link<T, M>>) => Array<T>;
+  private readonly onProcess: (data: Array<Link<T, M>>) => T[];
 
   // Inputs for this node.
-  private inputs: Array<LinkTemplate<T, M>>;
+  private readonly inputs: Array<LinkTemplate<T, M>>;
 
   // Outputs for this node.
-  private outputs: Array<LinkTemplate<T, M>>;
+  private readonly outputs: Array<LinkTemplate<T, M>>;
 
   // Metadata
-  private metadata: M;
+  private readonly metadata: M;
 
   public constructor(
     // Callback for when the node's data is processed.
-    onProcess: (data: Array<Link<T, M>>) => Array<T>,
+    onProcess: (data: Array<Link<T, M>>) => T[],
     // Default inputs for this node.
     inputs: Array<LinkTemplate<T, M>>,
     // Default outputs for this node.
@@ -79,15 +79,15 @@ export class NodeTemplate<T, M> {
   }
 
   // PRIVATE: Process the node's data.
-  __process(data: Array<Link<T, M>>): Array<T> {
+  __process(data: Array<Link<T, M>>): T[] {
     return this.onProcess(data);
   }
 }
 
 // Template for creating a link.
 export class LinkTemplate<T, M> {
-  private metadata: M;
-  private defaultValue: T;
+  private readonly metadata: M;
+  private readonly defaultValue: T;
 
   public constructor(metadata: M, defaultValue: T) {
     this.metadata = metadata;
@@ -106,10 +106,10 @@ export class LinkTemplate<T, M> {
 // A node in the graph.
 export class Node<T, M> implements HydrateTarget {
   // The template table this node uses.
-  private templateTable: TemplateTable<T, M>;
+  private readonly templateTable: TemplateTable<T, M>;
 
   // The template this node uses.
-  private template: string;
+  private readonly template: string;
 
   // The metadata for this node.
   private metadata: M;
@@ -205,6 +205,7 @@ export class Node<T, M> implements HydrateTarget {
 
     // Set the outputs.
     forEach(this.outputs, (output, index) => {
+      /* eslint-disable @typescript-eslint/no-non-null-assertion */
       output.set(outputs[index]!);
     });
   }
@@ -251,6 +252,7 @@ export class Node<T, M> implements HydrateTarget {
 
   // PRIVATE: As the "to" node, link this node to a "from" node.
   __linkFrom(from: Node<T, M>, fromIndex: number, toIndex: number): Link<T, M> {
+    /* eslint-disable @typescript-eslint/no-non-null-assertion */
     from.outputs[fromIndex] = this.inputs[toIndex]!;
     this.inputs[toIndex]!.__setFrom(from, fromIndex);
     this.inputs[toIndex]!.__setTo(this, toIndex);
@@ -271,6 +273,7 @@ export class Node<T, M> implements HydrateTarget {
 
   // PRIVATE: Unlink all links coming into this node.
   __unlinkAll(): void {
+    /* eslint-disable @typescript-eslint/no-non-null-assertion */
     for (let i = this.inputs.length - 1; i > 0; i--) {
       this.__unlinkFrom(
         this.inputs[i]!.getFrom()!,
@@ -285,18 +288,20 @@ export class Node<T, M> implements HydrateTarget {
 
   // Is the input at the given index occupied?
   public isInputOccupied(index: number): boolean {
+    /* eslint-disable @typescript-eslint/no-non-null-assertion */
     return this.inputs[index]!.__isFromOccupied();
   }
 
   // Is the output at the given index occupied?
   public isOutputOccupied(index: number): boolean {
+    /* eslint-disable @typescript-eslint/no-non-null-assertion */
     return this.outputs[index]!.__isToOccupied();
   }
 }
 
 // A link between two nodes.
 export class Link<T, M> {
-  private template: LinkTemplate<T, M>;
+  private readonly template: LinkTemplate<T, M>;
 
   private readonly id: number;
 
@@ -313,7 +318,7 @@ export class Link<T, M> {
   private toIndex: number;
 
   // The metadata for this link.
-  private metadata: M;
+  private readonly metadata: M;
 
   // Whether this link needs to be hydrated.
   private dirty: boolean;
@@ -323,6 +328,10 @@ export class Link<T, M> {
 
   // Is this link using a default value not belonging to the template?
   private customDefault: boolean;
+
+  __eat(): any {
+    return [this.template, this.customDefault];
+  }
 
   public constructor(
     // The link template this link uses.
@@ -444,7 +453,7 @@ export class Link<T, M> {
 
 interface HydrateTarget {
   // Hydrate this node.
-  __hydrate(): void;
+  __hydrate: () => void;
 }
 
 const NO_NODE: HydrateTarget & { __thisIsNoNode: true } = {
@@ -459,13 +468,13 @@ function isNoNode(node: HydrateTarget): node is typeof NO_NODE {
 // A pipeline consisting of several nodes.
 export class Pipeline<T, M> {
   // List of all nodes in the pipeline.
-  private nodes: Map<number, Node<T, M>>;
+  private readonly nodes: Map<number, Node<T, M>>;
 
   // List of all links in the pipeline.
-  private links: Map<number, Link<T, M>>;
+  private readonly links: Map<number, Link<T, M>>;
 
   // Table of templates.
-  private templateTable: TemplateTable<T, M>;
+  private readonly templateTable: TemplateTable<T, M>;
 
   // The ID of the next node to be created.
   private nextNodeId: number;
@@ -568,89 +577,64 @@ export class Pipeline<T, M> {
 // TODO: Serialization/Deserialization
 
 // Iterate over every element in an array and run a function on it.
-const forEach: <T>(
-  array: Array<T>,
-  fn: (item: T, index: number) => void
-) => void = (() => {
-  if (typeof Array.prototype.forEach === "function") {
-    return (array, fn) => array.forEach(fn);
-  }
-
-  return (array, fn) => {
-    for (let i = 0; i < array.length; i++) {
-      fn(array[i]!, i);
+const forEach: <T>(array: T[], fn: (item: T, index: number) => void) => void =
+  (() => {
+    if (typeof Array.prototype.forEach === "function") {
+      return (array, fn) => array.forEach(fn);
     }
-  };
-})();
+
+    return (array, fn) => {
+      let i = 0;
+      for (const item of array) {
+        fn(item, i);
+        i++;
+      }
+    };
+  })();
 
 // Iterate over an array, get each element, map it, and return an array of all values.
-const map: <T, U>(
-  array: Array<T>,
-  fn: (item: T, index: number) => U
-) => Array<U> = (() => {
-  if (typeof Array.prototype.map === "function") {
-    return (array, fn) => array.map(fn);
-  }
-
-  return <T, U>(array: Array<T>, fn: (item: T, index: number) => U) => {
-    const result: Array<U> = [];
-
-    forEach(array, (item, index) => {
-      result.push(fn(item, index));
-    });
-
-    return result;
-  };
-})();
-
-// Reduce the array to a single value.
-const reduce: <T, U>(
-  array: Array<T>,
-  fn: (acc: U, item: T) => U,
-  initial: U
-) => U = (() => {
-  if (typeof Array.prototype.reduce === "function") {
-    return (array, fn, initial) => array.reduce(fn, initial);
-  }
-
-  return <T, U>(array: Array<T>, fn: (acc: U, item: T) => U, initial: U) => {
-    let acc = initial;
-
-    for (const item of array) {
-      acc = fn(acc, item);
-    }
-
-    return acc;
-  };
-})();
-
-// Are any of the boolean values produced by a closure true?
-const any: <T>(array: Array<T>, fn: (item: T) => boolean) => boolean = (() => {
-  if (typeof Array.prototype.some === "function") {
-    return (array, fn) => array.some(fn);
-  }
-
-  return <T>(array: Array<T>, fn: (item: T) => boolean) => {
-    return reduce(array, (acc, item) => acc || fn(item), false);
-  };
-})();
-
-// Filter a list of items.
-const filter: <T>(array: Array<T>, fn: (item: T) => boolean) => Array<T> =
+const map: <T, U>(array: T[], fn: (item: T, index: number) => U) => U[] =
   (() => {
-    if (typeof Array.prototype.filter === "function") {
-      return (array, fn) => array.filter(fn);
+    if (typeof Array.prototype.map === "function") {
+      return (array, fn) => array.map(fn);
     }
 
-    return <T>(array: Array<T>, fn: (item: T) => boolean) => {
-      const result: Array<T> = [];
+    return <T, U>(array: T[], fn: (item: T, index: number) => U) => {
+      const result: U[] = [];
 
-      for (const item of array) {
-        if (fn(item)) {
-          result.push(item);
-        }
-      }
+      forEach(array, (item, index) => {
+        result.push(fn(item, index));
+      });
 
       return result;
     };
   })();
+
+// Reduce the array to a single value.
+const reduce: <T, U>(array: T[], fn: (acc: U, item: T) => U, initial: U) => U =
+  (() => {
+    if (typeof Array.prototype.reduce === "function") {
+      return (array, fn, initial) => array.reduce(fn, initial);
+    }
+
+    return <T, U>(array: T[], fn: (acc: U, item: T) => U, initial: U) => {
+      let acc = initial;
+
+      for (const item of array) {
+        acc = fn(acc, item);
+      }
+
+      return acc;
+    };
+  })();
+
+// Are any of the boolean values produced by a closure true?
+const any: <T>(array: T[], fn: (item: T) => boolean) => boolean = (() => {
+  if (typeof Array.prototype.some === "function") {
+    return (array, fn) => array.some(fn);
+  }
+
+  return <T>(array: T[], fn: (item: T) => boolean) => {
+    return reduce(array, (acc, item) => acc || fn(item), false);
+  };
+})();

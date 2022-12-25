@@ -15,7 +15,7 @@ jobs:
         with:
           node-version: '19.x'
       - name: Install Dependencies
-        run: npm install
+        run: npm ci
       - name: Run Format Check
         run: npm run format-check
 
@@ -27,9 +27,21 @@ jobs:
         with:
           node-version: '19.x'
       - name: Install Dependencies
-        run: npm install
+        run: npm ci
       - name: Run Lint Check
         run: npm run lint
+  
+  unit_test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v1
+        with:
+          node-version: '19.x'
+      - name: Install Dependencies
+        run: npm ci
+      - name: Run Unit Tests
+        run: npm run unit-test
         
 
 
