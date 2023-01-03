@@ -29,7 +29,9 @@ from pictoflow import node_view
 class Demo():
     def __init__(self):
         w = Gtk.Window.new(Gtk.WindowType.TOPLEVEL)
-        w.set_border_width(20)
+        w.set_border_width(10)
+        w.set_default_size(500,500)
+        w.set_title("Pictoflow Demo")
         hbox = Gtk.Box.new(Gtk.Orientation.HORIZONTAL, 0)
 
         b = Gtk.Button(label="Save")
