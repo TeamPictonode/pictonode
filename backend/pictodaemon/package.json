@@ -1,0 +1,14 @@
+{
+  "name": "pictodaemon",
+  "version": "1.0.0",
+  "description": "",
+  "main": "src/index.ts",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "AGPL-3.0-or-later",
+  "dependencies": {
+    "libnode": "file:../../libraries/libnode"
+  }
+}
