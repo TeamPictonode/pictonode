@@ -1,7 +1,7 @@
 // GNU AGPL v3
 // Written by John Nunley
 
-import * as crypto from "crypto"
+import * as crypto from "crypto";
 
 export default class Rng {
   private static RANDOM: Rng | undefined = undefined;
@@ -24,8 +24,8 @@ export default class Rng {
         } else {
           resolve(num);
         }
-      })
-    })
+      });
+    });
   }
 
   // Generate a random string of the given length.
@@ -37,7 +37,7 @@ export default class Rng {
         } else {
           resolve(buf.toString("hex"));
         }
-      })
-    })
+      });
+    });
   }
-};
+}
