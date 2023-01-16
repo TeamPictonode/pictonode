@@ -5,14 +5,11 @@
 // for reformatting, testing, compiling etc etc
 
 const { join } = require("path");
-const { series, src, dest, parallel } = require("gulp");
+const { src, dest, parallel } = require("gulp");
 const { spawn } = require("child_process");
-const { Transform, Writable } = require("stream");
+const { Transform } = require("stream");
 
 const prettier = require("prettier");
-const fs = require("fs");
-const ts = require("gulp-typescript");
-const webpack = require("webpack");
 
 // Paths for pure TS projects.
 const PURE = [
