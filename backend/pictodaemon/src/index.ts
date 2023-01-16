@@ -41,7 +41,11 @@ export default class Daemon {
 
     while (running) {
       // Race the promises against eachother.
-      const promises = [cancelPromise, this.smManager.cleanupSessions(), this.imManager.cleanupImages()];
+      const promises = [
+        cancelPromise,
+        this.smManager.cleanupSessions(),
+        this.imManager.cleanupImages(),
+      ];
       await Promise.race(promises);
     }
   }
@@ -56,11 +60,10 @@ export default class Daemon {
     return this.imManager.getImagePath(id);
   }
 
-
   // Cancel the daemon.
-  // 
+  //
   // If the daemon is `run()`ing, this will cause it to stop.
   public cancel(): void {
     this.cancelFunc();
   }
-};
+}

@@ -20,7 +20,7 @@ export interface User {
   id: ID;
   username: string;
   realname: string;
-};
+}
 
 export type NewUser = Omit<User, "id">;
 export type UpdateUser = Partial<NewUser> & Pick<User, "id">;

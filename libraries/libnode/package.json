@@ -1,7 +1,7 @@
 {
   "name": "libnode",
-  "version": "1.0.0",
-  "description": "",
+  "version": "0.0.1",
+  "description": "`libnode` (not to be confused with Node.js, the Javascript runtime) is a library for modeling composable, node-based pipelines. It is written in pure TypeScript, allowing it to be portable to any JavaScript environment (e.g. browser or Node.js).",
   "main": "src/index.ts",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
@@ -10,5 +10,16 @@
   "license": "AGPL-3.0-or-later",
   "devDependencies": {
     "typescript": "^4.9.3"
-  }
+  },
+  "directories": {
+    "test": "tests"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/notgull/pictonode.git"
+  },
+  "bugs": {
+    "url": "https://github.com/notgull/pictonode/issues"
+  },
+  "homepage": "https://github.com/notgull/pictonode#readme"
 }
