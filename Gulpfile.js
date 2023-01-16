@@ -49,13 +49,28 @@ const tfPrettier = parallel(...TS.map(runPrettier));
 const tfPrettierCheck = parallel(...TS.map(prettierCheck));
 
 /**
+ * Runs npm ci on all projects.
+ */
+const tfNpmCi = parallel(...TS.map(runNpmCi));
+
+/**
+ * 
+ */
+
+/**
  * Runs webpack on the pictonode-web-frontend.
  */
 function tfWebpack() {
-  const config = require("./frontend/pictonode-web/webpack.config.js");
-
-   
+  // Run webpack as a child process.
+  return spawn("npx", ["webpack"], {
+    cwd: join(__dirname, "frontend/pictonode-web"),
+  })
 }
+
+/**
+ * Runs mocha for all tests in the project.
+ */
+const tfMocha = parallel(...TS.map(runMocha));
 
 /**
  * Creates a stream that runs prettier on every provided file.
@@ -167,8 +182,60 @@ function prettierCheck(path) {
     .pipe(dest(join(path, "src")));
 }
 
+/**
+ * Runs mocha on a given path.
+ * @param {string} path The path to run mocha on.
+ */
+function runMocha(path) {
+  // Run mocha as a child process.
+  return () => {
+    const tsNodePath = require.resolve("ts-node/register");
+
+    const args = [
+      "mocha",
+      "--recursive",
+      "-r",
+      tsNodePath,
+      '"tests/**/*.ts"'
+    ]
+
+    const compilerOptions = {
+      module: "commonjs",
+    }
+
+    const extraEnv = {
+      TS_NODE_COMPILER_OPTIONS: JSON.stringify(compilerOptions),
+    }
+
+    const pr = spawn("npx", args, {
+      cwd: join(__dirname, path),
+      env: {
+        ...extraEnv,
+        ...process.env,
+      }
+    })
+
+    pr.stdout.pipe(process.stdout);
+    pr.stderr.pipe(process.stderr);
+
+    return pr
+  }
+}
+
+/**
+ * Run npm ci on a given path.
+ * @param {string} path The path to run npm ci on.
+ */
+function runNpmCi(path) {
+  return () => spawn("npm", ["ci"], {
+    cwd: join(__dirname, path),
+  })
+}
+
 module.exports = {
   format: tfPrettier,
   "format-check": tfPrettierCheck,
   webpack: tfWebpack,
+  mocha: tfMocha,
+  "npm-ci": tfNpmCi,
 };
