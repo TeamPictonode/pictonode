@@ -77,8 +77,43 @@ def save_layer_to_png(gegl_buffer):
 
     return STATIC_TARGET
 
+
 def entry_point(procedure, run_mode, image, n_drawables, drawables, args, data):
     return procedure.new_return_values(Gimp.PDBStatusType.SUCCESS, GLib.Error())
+
+
+def add_op(button2, op_name, image_path):
+    Gegl.init([])
+    x = Gegl.Node()
+
+    y = Gegl.Node()
+    y.set_property("operation", "gegl:jpg-load")
+    y.set_property("path", image_path)
+    x.add_child(y)
+
+    z = []
+    z.append(Gegl.Node())
+    z[0].set_property("operation", op_name)
+    x.add_child(z[0])
+
+    w = Gegl.Node()
+    w.set_property("operation", "gegl:jpg-save")
+    w.set_property("path", image_path)
+    x.add_child(w)
+
+    y.connect_to("output", z[0], "input")
+    z[0].connect_to("output", w, "input")
+
+    w.process()
+
+    tree = []
+    for i in x.get_children():
+        tree.append([i.get_gegl_operation(),i.get_parent(),i.get_children()])
+
+    print("Tree: ", tree)
+
+    return tree
+
 
 class Pictonode (Gimp.PlugIn):
 
@@ -141,7 +176,7 @@ class Pictonode (Gimp.PlugIn):
 
             grid = Gtk.Grid()
 
-            #grabs a pixbuf of the currently selected image and 
+            #grabs a pixbuf of the currently selected image and displays it
             image_display = Gtk.Image()
             image_path = image.get_file().get_path()
             image_display.set_from_file(image_path)
@@ -157,15 +192,20 @@ class Pictonode (Gimp.PlugIn):
                 END
             '''
 
+
             button = Gtk.Button(label="Send To Controller")
             button.connect('clicked', send_image_to_controller_callback, drawable.get_buffer())
+
+            button2 = Gtk.Button(label="Invert")
+            button2.connect('clicked', add_op, "gegl:c2g", image_path)
 
             scrolled = Gtk.ScrolledWindow()
             scrolled.add_with_viewport(image_display)
             scrolled.set_min_content_height(500)
             scrolled.set_min_content_width(400)
 
-            grid.attach(button, 0, 3, 2, 1)
+            grid.attach(button2, 0, 3, 2, 1)
+            #grid.attach(button2, 0, 3, 2, 1)
             grid.attach(scrolled, 0, 1, 100, 2)
 
             win.add(grid)
