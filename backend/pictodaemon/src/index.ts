@@ -5,6 +5,9 @@ import Database from "./database";
 import ImageManager, { AddImageResult } from "./imageManager";
 import Rng from "./rng";
 import SessionManager from "./sessionManager";
+import process, { ProcessingResult } from "./processor";
+
+import { SerializedPipeline } from "libnode";
 
 // The background daemon for Pictonode.
 export default class Daemon {
@@ -57,7 +60,14 @@ export default class Daemon {
 
   // Get an image from the daemon.
   public async getImage(id: number): Promise<string | undefined> {
-    return this.imManager.getImagePath(id);
+    return await this.imManager.getImagePath(id);
+  }
+
+  // Process an image pipeline.
+  public async processImage(
+    pipeline: SerializedPipeline<any>
+  ): Promise<ProcessingResult> {
+    return process(pipeline, this.imManager);
   }
 
   // Cancel the daemon.

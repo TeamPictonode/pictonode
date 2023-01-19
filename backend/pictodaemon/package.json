@@ -9,6 +9,10 @@
   "author": "",
   "license": "AGPL-3.0-or-later",
   "dependencies": {
-    "libnode": "file:../../libraries/libnode"
+    "libnode": "file:../../libraries/libnode",
+    "sharp": "^0.31.3"
+  },
+  "devDependencies": {
+    "@types/sharp": "^0.31.1"
   }
 }
