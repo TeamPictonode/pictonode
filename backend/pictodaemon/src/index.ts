@@ -65,7 +65,7 @@ export default class Daemon {
 
   // Process an image pipeline.
   public async processImage(
-    pipeline: SerializedPipeline<any>,
+    pipeline: SerializedPipeline<any>
   ): Promise<ProcessingResult> {
     return process(pipeline, this.imManager);
   }

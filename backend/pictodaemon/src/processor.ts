@@ -2,34 +2,44 @@
 // Written by John Nunley
 
 import sharp, { Sharp } from "sharp";
-import { SerializedPipeline, deserializePipeline, TemplateTable } from "libnode";
+import {
+  SerializedPipeline,
+  deserializePipeline,
+  TemplateTable,
+} from "libnode";
 import ImageManager from "./imageManager";
 
 export type ProcessingResult = ProcessingMidResult<Buffer>;
 
-type ProcessingMidResult<T> = {
-  type: ProcessingResultType.Success;
-  image: T;
-} | {
-  type: ProcessingResultType.ImageNotFound;
-  missing: Array<number>;
-} | {
-  type: ProcessingResultType.Error;
-  error: string;
-}
+type ProcessingMidResult<T> =
+  | {
+      type: ProcessingResultType.Success;
+      image: T;
+    }
+  | {
+      type: ProcessingResultType.ImageNotFound;
+      missing: Array<number>;
+    }
+  | {
+      type: ProcessingResultType.Error;
+      error: string;
+    };
 
 export enum ProcessingResultType {
   Success,
   ImageNotFound,
-  Error
-};
+  Error,
+}
 
 export default async function process(
-  pipeline: SerializedPipeline<any>,  
-  images: ImageManager,
+  pipeline: SerializedPipeline<any>,
+  images: ImageManager
 ): Promise<ProcessingResult> {
   // Deserialize the pipeline.
-  const deserialized = deserializePipeline<ProcessingMidResult<Sharp>, any>(pipeline, templateTable());
+  const deserialized = deserializePipeline<ProcessingMidResult<Sharp>, any>(
+    pipeline,
+    templateTable()
+  );
 
   // Set the metadata of all nodes to the image manager.
   for (const node of deserialized.getNodes()) {
@@ -42,7 +52,7 @@ export default async function process(
   if (outputNode === undefined) {
     return {
       type: ProcessingResultType.Error,
-      error: "Output node not found"
+      error: "Output node not found",
     };
   }
 
@@ -51,7 +61,7 @@ export default async function process(
   if (outputLink === undefined) {
     return {
       type: ProcessingResultType.Error,
-      error: "Output not found"
+      error: "Output not found",
     };
   }
 
@@ -69,8 +79,8 @@ export default async function process(
 
   return {
     type: ProcessingResultType.Success,
-    image: result
-  }
+    image: result,
+  };
 }
 
 function templateTable(): TemplateTable<ProcessingMidResult<Sharp>, any> {
