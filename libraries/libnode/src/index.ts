@@ -576,6 +576,77 @@ export class Pipeline<T, M> {
 
 // TODO: Serialization/Deserialization
 
+// The serialized form of a pipeline.
+export interface SerializedPipeline<M> {
+  nodes: Array<SerializedNode<M>>;
+  links: Array<SerializedLink<M>>;
+}
+
+export interface SerializedNode<M> {
+  id: number;
+  template: string;
+  metadata: M;
+};
+
+export type SerializedLink<M> = {
+  id: number;
+  metadata: M;
+} & ({ from: number; fromIndex: number; } | { from: undefined; })
+  & ({ to: number; toIndex: number; } | { to: undefined; });
+
+// Serialize a pipeline to a JSON object.
+export function serializePipeline<T, M>(pipeline: Pipeline<T, M>): SerializedPipeline<M> {
+  const nodes: Array<SerializedNode<M>> = reduce(pipeline.getNodes(), (nodes, node) => {
+    nodes.push({
+      id: node.getId(),
+      template: node.getTemplate(),
+      metadata: node.getMetadata(),
+    });
+    return nodes;
+  }, [] as Array<SerializedNode<M>>);
+
+  const links: Array<SerializedLink<M>> = reduce(pipeline.getLinks(), (links, link) => {
+    let linkValue: SerializedLink<M> = {
+      id: link.getId(),
+      from: undefined,
+      to: undefined,
+      metadata: link.getMetadata(),
+    };
+
+    // Set from and to values.
+    const fromNode = link.getFrom();
+    if (fromNode !== undefined) {
+      linkValue = {
+        ...linkValue,
+        from: fromNode.getId(),
+        fromIndex: link.getFromIndex(),
+      };
+    }
+
+    const toNode = link.getTo();
+    if (toNode !== undefined) {
+      linkValue = {
+        ...linkValue,
+        to: toNode.getId(),
+        toIndex: link.getToIndex(),
+      };
+    }
+
+    links.push(linkValue);
+    return links;
+  }, [] as Array<SerializedLink<M>>);
+
+  return {
+    nodes,
+    links
+  }
+}
+
+// Deserialize a pipeline from a JSON object.
+export function deserializePipeline<T, M>(serialized: SerializedPipeline<M>, templateTable: TemplateTable<T, M>): Pipeline<T, M> {
+  throw new Error("Not implemented.");
+}
+
 // Iterate over every element in an array and run a function on it.
 const forEach: <T>(array: T[], fn: (item: T, index: number) => void) => void =
   (() => {
