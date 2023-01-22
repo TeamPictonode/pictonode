@@ -1,0 +1,7 @@
+{
+	"userid": 1234,
+	"name": "Parker",
+	"username": "parkern",
+	"is_logged_in": "True",
+	"last_login_date": '2021-01-27T11:10:00.489530'
+}

@@ -3,7 +3,7 @@ import socket
 
 HOST_NAME = socket.gethostname()
 LOCALHOST_IP = socket.gethostbyname(HOST_NAME)
-PORT = 69
+PORT = 2407
 
 #Bind Test Controller (server) to Local Host and Port
 controller = socket.socket(socket.AF_INET, socket.SOCK_STREAM)

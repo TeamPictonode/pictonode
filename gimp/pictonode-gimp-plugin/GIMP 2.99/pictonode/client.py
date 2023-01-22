@@ -32,7 +32,25 @@ class PluginClient:
         file.close()
 
     def receive_user_update(self):
-        return self.client.recv(4096)
+        """Takes in user information updates from daemon.
+        Format required is json."""
+
+        self.client.listen(1)
+
+        print("Controller Socket open on: ")
+        print(f"Local Host ({HOST_NAME}): {LOCALHOST_IP}", f"On Port: {PORT}")
+
+        #Accept connection from daemon
+        plugin_socket, address = self.client.accept()
+        plugin_socket.settimeout(1.0)
+        print(f"Connected to {address}")
+
+        #Message for right now is file size being sent
+        message = plugin_socket.recv(1024).decode('utf-8')
+        print(f"Message from daemon is: {message}")
+        plugin_socket.send(f"Controller->Plugin: Message Received. Please start data transmission".encode('utf-8'))
+
+        return self.client.recv(1024).decode('utf-8')
 
     def receive_image_from_controller(self, image):
         pass

@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import threading
+import json
 import gi
 gi.require_version('Gimp', '3.0')
 from gi.repository import Gimp
@@ -17,26 +18,40 @@ import os
 
 #Plugin impl
 from client import *
+from user import *
 
 def N_(message): return message
 def _(message): return GLib.dgettext(None, message)
 
+def deserialize(bitstream):
+    """takes a bitstream and returns a deserialized json object"""
+    return json.loads(bitstream)
+
+def convert_to_file(msg):
+    """convert bitstream to file"""
+    f = open('./', 'wb')
+    f.write(msg)
+    f.close()
+
 def send_data_to_daemon(image, node_tree):
+    """sends image metadata and node objects to daemon"""
+    pass
 
-    return None
-
-def receive_from_daemon(user):
+def receive_from_daemon(user: User):
+    """Receives user data from daemon to update the plugin"""
     client.connect_to_controller()
-    user = User 
     while(True):
         #wait for message
-        
-        #store data
-        None 
-    return None
+        user_data = deserialize(client.receive_user_update())
+        user = User(user_data["name"],user_data["username"],user_data["last_login_date"])
+        print(user.name,user.username,user.last_login_date)
+        #TODO: update the ui with changes
 
 
 def send_message_to_controller_callback(button, msg):
+
+    """"""
+
     client.connect_to_controller()
     client.send_message_to_controller(msg)
     client.receive_message_from_controller()
@@ -166,7 +181,10 @@ class Pictonode (Gimp.PlugIn):
         else:
             drawable = drawables[0]
 
-        t1 = threading.Thread(target=print_square, args=(10,))
+        #create a new thread for receiving user updates from daemon
+        user = None
+        t1 = threading.Thread(target=receive_from_daemon, args=(user,))
+        t1.start()
 
         if run_mode == Gimp.RunMode.INTERACTIVE:
             gi.require_version('Gtk', '3.0')
@@ -210,7 +228,7 @@ class Pictonode (Gimp.PlugIn):
 
 
             button = Gtk.Button(label="Send To Controller")
-            button.connect('clicked', send_image_to_controller_callback, drawable.get_buffer())
+            button.connect('clicked', send_image_to_controller_callback, "user_json_example.txt")
 
             button2 = Gtk.Button(label="Invert")
             button2.connect('clicked', add_op, "gegl:c2g", image_path)
@@ -220,7 +238,7 @@ class Pictonode (Gimp.PlugIn):
             scrolled.set_min_content_height(500)
             scrolled.set_min_content_width(400)
 
-            grid.attach(button2, 0, 3, 2, 1)
+            grid.attach(button, 0, 3, 2, 1)
             #grid.attach(button2, 0, 3, 2, 1)
             grid.attach(scrolled, 0, 1, 100, 2)
 
@@ -243,6 +261,7 @@ class Pictonode (Gimp.PlugIn):
             box.show()
 
             while (True):
+
                 response = dialog.run()
                 if response == Gtk.ResponseType.OK:
                     position = Gimp.get_pdb().run_procedure('gimp-image-get-item-position',
@@ -257,6 +276,7 @@ class Pictonode (Gimp.PlugIn):
                     return procedure.new_return_values(Gimp.PDBStatusType.CANCEL,
                                                        GLib.Error())
         
+        t1.join()
         return procedure.new_return_values(Gimp.PDBStatusType.SUCCESS, GLib.Error())
 
 Gimp.main(Pictonode.__gtype__, sys.argv)
