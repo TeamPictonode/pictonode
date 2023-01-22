@@ -21,6 +21,20 @@ from client import *
 def N_(message): return message
 def _(message): return GLib.dgettext(None, message)
 
+def send_data_to_daemon(image, node_tree):
+
+    return None
+
+def receive_from_daemon(user):
+    client.connect_to_controller()
+    user = User 
+    while(True):
+        #wait for message
+        
+        #store data
+        None 
+    return None
+
 
 def send_message_to_controller_callback(button, msg):
     client.connect_to_controller()
@@ -151,6 +165,8 @@ class Pictonode (Gimp.PlugIn):
             return procedure.new_return_values(Gimp.PDBStatusType.CALLING_ERROR, error)
         else:
             drawable = drawables[0]
+
+        t1 = threading.Thread(target=print_square, args=(10,))
 
         if run_mode == Gimp.RunMode.INTERACTIVE:
             gi.require_version('Gtk', '3.0')

@@ -7,7 +7,7 @@ class PluginClient:
     def __init__(self):
         self.HOST_NAME = socket.gethostname()
         self.LOCALHOST_IP = socket.gethostbyname(self.HOST_NAME)
-        self.PORT = 69
+        self.PORT = 2407
 
         self.client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
@@ -30,6 +30,9 @@ class PluginClient:
         image_data = file.read()
         self.client.sendall(image_data)
         file.close()
+
+    def receive_user_update(self):
+        return self.client.recv(4096)
 
     def receive_image_from_controller(self, image):
         pass
