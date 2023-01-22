@@ -9,6 +9,8 @@ import process, { ProcessingResult } from "./processor";
 
 import { SerializedPipeline } from "libnode";
 
+export { default as Database, User, NewUser, UpdateUser } from "./database";
+
 // The background daemon for Pictonode.
 export default class Daemon {
   private db: Database;

@@ -57,7 +57,7 @@ export default async function process(
   }
 
   // Get the first output of the output node.
-  const outputLink = outputNode.getOutputs()[0];
+  const outputLink = outputNode.getInputs()[0];
   if (outputLink === undefined) {
     return {
       type: ProcessingResultType.Error,
@@ -75,7 +75,7 @@ export default async function process(
   }
 
   // Process the pipeline.
-  const result = await imageDescription.toBuffer();
+  const result = await imageDescription.webp().toBuffer();
 
   return {
     type: ProcessingResultType.Success,
