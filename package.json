@@ -3,7 +3,8 @@
   "workspaces": [
     "backend/pictodaemon",
     "frontend/pictonode-web-frontend",
-    "libraries/libnode"
+    "libraries/libnode",
+    "backend/plugin-backend"
   ],
   "devDependencies": {
     "@swc/core": "^1.3.26",
