@@ -10,7 +10,6 @@ from gi.repository import Gtk
 gi.require_version('Gdk', '3.0')
 from gi.repository import Gdk
 
-
 class NodeView(Gtk.Container):
     __gtype_name__ = "NodeView"
 
