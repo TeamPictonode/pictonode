@@ -1,30 +1,15 @@
-
 import sys
 import os
-
 if sys.platform == "win32":
     os.environ['GI_TYPELIB_PATH'] = "C:\Program Files\GIMP %GIMP_VERSION%\lib\girepository-1.0"
 
 import gi
-gi.require_version('Gimp', '3.0')
-from gi.repository import Gimp
 
 gi.require_version('Gtk', '3.0')
 from gi.repository import Gtk
 
-gi.require_version('Gegl', '0.4')
-from gi.repository import Gegl
-
-from gi.repository import GObject
-from gi.repository import GLib
-from gi.repository import Gio
-
-gi.require_version('GimpUi', '3.0')
-from gi.repository import GimpUi
-
-
 from pictoflow import node_view
-
+from pictoflow import node
 
 class Demo():
     def __init__(self):
@@ -55,6 +40,9 @@ class Demo():
         vbox.pack_start(hbox, False, False, 0)
         vbox.pack_start(frame, True, True, 0)
         w.add(vbox)
+
+        self.node = node.Node()
+        self.node_view.do_add(self.node)
 
         w.connect("destroy", Gtk.main_quit)
         w.show_all()

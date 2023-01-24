@@ -1,8 +1,15 @@
+import os
+import sys
+
+if sys.platform == "win32":
+    os.environ['GI_TYPELIB_PATH'] = "C:\Program Files\GIMP %GIMP_VERSION%\lib\girepository-1.0"
+
 import gi
 gi.require_version('Gtk', '3.0')
 from gi.repository import Gtk
 gi.require_version('Gdk', '3.0')
 from gi.repository import Gdk
+
 
 class NodeView(Gtk.Container):
     __gtype_name__ = "NodeView"
