@@ -1,3 +1,6 @@
+# GNU AGPL v3 License
+# Written by Stephen Foster, derived from code by aluntzer and AliensGroup
+
 import os
 import sys
 
