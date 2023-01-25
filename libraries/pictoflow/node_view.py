@@ -1,3 +1,8 @@
+# GNU AGPL v3 License
+# Written by Stephen Foster, derived from code by aluntzer and AliensGroup
+
+from gi.repository import Gdk
+from gi.repository import Gtk
 import os
 import sys
 
@@ -6,9 +11,8 @@ if sys.platform == "win32":
 
 import gi
 gi.require_version('Gtk', '3.0')
-from gi.repository import Gtk
 gi.require_version('Gdk', '3.0')
-from gi.repository import Gdk
+
 
 class NodeView(Gtk.Container):
     __gtype_name__ = "NodeView"
@@ -64,7 +68,8 @@ class NodeView(Gtk.Container):
 
         if self.get_has_window():
             if self.get_realized():
-                self.get_window().move_resize(allocation.x, allocation.y, allocation.width, allocation.height)
+                self.get_window().move_resize(allocation.x, allocation.y,
+                                              allocation.width, allocation.height)
 
         for widget in self.children:
             if widget.get_visible():
@@ -94,12 +99,13 @@ class NodeView(Gtk.Container):
         attr.height = allocation.height
         attr.window_class = Gdk.WindowWindowClass.INPUT_OUTPUT
         attr.visual = self.get_visual()
-        attr.event_mask = self.get_events() | (Gdk.EventMask.BUTTON_PRESS_MASK | Gdk.EventMask.BUTTON_RELEASE_MASK | Gdk.EventMask.POINTER_MOTION_MASK | Gdk.EventMask.TOUCH_MASK | Gdk.EventMask.ENTER_NOTIFY_MASK | Gdk.EventMask.LEAVE_NOTIFY_MASK)
+        attr.event_mask = self.get_events() | (Gdk.EventMask.BUTTON_PRESS_MASK | Gdk.EventMask.BUTTON_RELEASE_MASK |
+                                               Gdk.EventMask.POINTER_MOTION_MASK | Gdk.EventMask.TOUCH_MASK | Gdk.EventMask.ENTER_NOTIFY_MASK | Gdk.EventMask.LEAVE_NOTIFY_MASK)
 
         WAT = Gdk.WindowAttributesType
         mask = WAT.X | WAT.Y
 
-        window = Gdk.Window(self.get_parent_window(), attr, mask);
+        window = Gdk.Window(self.get_parent_window(), attr, mask)
 
         self.set_window(window)
         self.register_window(window)
@@ -107,7 +113,8 @@ class NodeView(Gtk.Container):
 
     def do_draw(self, cr):
         allocation = self.get_allocation()
-        Gtk.render_background(self.get_style_context(), cr, 0, 0, allocation.width, allocation.height)
+        Gtk.render_background(self.get_style_context(),
+                              cr, 0, 0, allocation.width, allocation.height)
 
         for widget in self.children:
             self.propagate_draw(widget, cr)
@@ -124,5 +131,3 @@ class NodeView(Gtk.Container):
         
         #container template above, refactor based on above links
     '''
-
-
