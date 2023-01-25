@@ -50,8 +50,8 @@ def send_image_to_controller_callback(button, gegl):
     client.close_connection_to_controller()
 
 def save_layer_to_png(gegl_buffer):
-    STATIC_TARGET_DIR = f"{os.path.dirname(os.path.abspath(__file__))}\\int"
-    STATIC_TARGET = f"{STATIC_TARGET_DIR}\\pictonode-intermediate.png"
+    STATIC_TARGET_DIR = os.path.abspath(f"{os.path.dirname(os.path.abspath(__file__))}\\int")
+    STATIC_TARGET = os.path.abspath(f"{STATIC_TARGET_DIR}\\pictonode-intermediate.png")
 
     #make the empty target
     os.makedirs(STATIC_TARGET_DIR, exist_ok=True)
