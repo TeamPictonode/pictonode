@@ -1,9 +1,6 @@
 # GNU AGPL v3 License
-# Written by Stephen Foster, derived from code by aluntzer and AliensGroup
+# Written by Stephen Foster and John Nunley, derived from code by aluntzer and AliensGroup
 
-from gi.repository import GObject
-from gi.repository import Gdk
-from gi.repository import Gtk
 import cairo
 import os
 import sys
@@ -17,10 +14,16 @@ from collections.abc import List
 if sys.platform == "win32":
     os.environ['GI_TYPELIB_PATH'] = "C:\Program Files\GIMP %GIMP_VERSION%\lib\girepository-1.0"
 
+# autopep8: off
 import gi
 gi.require_version('Gtk', '3.0')
 gi.require_version('Gdk', '3.0')
 gi.require_foreign('cairo')
+
+from gi.repository import GObject
+from gi.repository import Gdk
+from gi.repository import Gtk
+# autopep8: on
 
 
 RESIZE_RECTANGLE = 16
