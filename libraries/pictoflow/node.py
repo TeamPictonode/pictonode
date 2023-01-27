@@ -19,10 +19,15 @@ from gi.repository import Gtk
 from gi.repository import GObject
 # autopep8: on
 
+class _NodeChild:
+    item: Gtk.Widget
+    socket: Gtk.Widget
+
+    input_id: int
 
 class Node(Gtk.Box):
-    event_window: Union[Gdk.Window, NoneType]
-    children: List[Gtk.Widget]
+    __event_window: Union[Gdk.Window, NoneType]
+    __children: List[Gtk.Widget]
 
     id = GObject.Property(type=int, default=0)
     x = GObject.Property(type=int, default=0)
@@ -32,7 +37,27 @@ class Node(Gtk.Box):
     socketid = GObject.Property(type=int, default=0)
     inputid = GObject.Property(type=int, default=0)
 
-    socket_radius: float
+    __socket_radius: float
+    __func_width: int
+    __func_height: int
+    __priv_width: int
+    __priv_height: int
+
+    __padding_top: int
+    __padding_bottom: int
+    __padding_left: int
+    __padding_right: int
+
+    __margin_top: int
+    __margin_bottom: int
+    __margin_left: int
+    __margin_right: int
+
+    __icon_name: str
+    __expander: Gtk.Expander
+    __expander_blocked: bool
+    __last_expanded: bool
+    __allocation: Gdk.Allocation
 
     __gsignals__ = {
         "node-drag-begin": (GObject.SignalFlags.RUN_LAST, None, (int, int)),
@@ -46,72 +71,91 @@ class Node(Gtk.Box):
     def __init__(self):
         super().__init__()
         self.attr = Gdk.WindowAttr()
-        self.event_window = None
-        self.children = []
+        self.__event_window = None
+        self.__children = []
 
-        #self.rectangle = Gdk.Rectangle(20,20,40,40)
-        self.rect_x = 20
-        self.rect_y = 20
-        self.width = 100
-        self.height = 100
-        self.socket_radius = 8.0
-        self.padding_top = 10
-        self.padding_bottom = 10
-        self.padding_left = 10
-        self.padding_right = 10
-        self.margin_top = self.socket_radius
-        self.margin_bottom = self.socket_radius
-        self.margin_left = self.socket_radius
-        self.margin_right = self.socket_radius
-        self.icon_name = "edit-delete-symbolic"
+        self.__func_width = 20
+        self.__func_height = 20
+        self.__priv_width = 20
+        self.__priv_height = 20
+
+        self.__socket_radius = 8.0
+
+        self.__padding_bottom = 10
+        self.__padding_left = 10
+        self.__padding_right = 10
+        self.__padding_top = 10
+
+        self.__margin_top = 8
+        self.__margin_bottom = 8
+        self.__margin_left = 8
+        self.__margin_right = 8
+
+        self.__icon_name = "edit-delete-symbolic"
 
         self.set_homogeneous(False)
         self.set_orientation(Gtk.Orientation.VERTICAL)
-        self.expander = Gtk.Expander.new("Node")
-        self.expander.set_expanded(True)
+        self.__expander = Gtk.Expander.new("Node")
+        self.__expander.set_expanded(True)
         self.pack_start(self.expander, False, False, 10)
-        # self.expander_signal =
-        # self.expander_blocked
-        # self.last_expanded
-        # self.expander
-        # self.box_pack_start
-        # self.set_has_window
-        # self.pack_start()
+
+        self.__expander_blocked = False
+        self.__last_expanded = True
+        self.__allocation = Gdk.Allocation()
+
         self.set_has_window(False)
 
-    def do_map(self):
-        #self.map = self
-        # super().do_map()
+    # TODO: Get/Set properties
 
-        pass
+    def do_map(self):
+        super().do_map()
+
+        if self.__event_window is not None:
+            self.__event_window.show()
 
     def do_unmap(self):
-        pass
+        if self.__event_window is not None:
+            self.__event_window.hide()
+
+        super().do_unmap()
 
     def do_realize(self):
-        print("node - do_realize")
-        # super().do_realize()
+        super().do_realize()
         self.set_realized(True)
         self.set_window(self.get_parent_window())
+
         allocation = self.get_allocation()
 
-        self.attr.window_type = Gdk.WindowType.CHILD
-        self.attr.x = allocation.x
-        self.attr.y = allocation.y
-        self.attr.width = allocation.width
-        self.attr.height = allocation.height
-        self.attr.visual = self.get_visual()
-        self.attr.window_class = Gdk.WindowWindowClass.INPUT_OUTPUT
-        self.attr.event_mask = (Gdk.EventMask.BUTTON_PRESS_MASK | Gdk.EventMask.BUTTON_RELEASE_MASK | Gdk.EventMask.POINTER_MOTION_MASK |
+        attributes = Gdk.WindowAttr()
+        attributes.window_type = Gdk.WindowType.CHILD
+        attributes.x = allocation.x
+        attributes.y = allocation.y
+        attributes.width = allocation.width
+        attributes.height = allocation.height
+        attributes.visual = self.get_visual()
+        attributes.window_class = Gdk.WindowWindowClass.INPUT_OUTPUT
+        attributes.event_mask = (Gdk.EventMask.BUTTON_PRESS_MASK | Gdk.EventMask.BUTTON_RELEASE_MASK | Gdk.EventMask.POINTER_MOTION_MASK |
                                 Gdk.EventMask.TOUCH_MASK | Gdk.EventMask.ENTER_NOTIFY_MASK | Gdk.EventMask.LEAVE_NOTIFY_MASK)
         attr_mask = Gdk.WindowAttributesType.X | Gdk.WindowAttributesType.Y
-        self.event_window = Gdk.Window(self.get_window(), self.attr, attr_mask)
-        # more shit lol
 
-        pass
+        self.__event_window = Gdk.Window(self.get_window(), self.attr, attr_mask)
+        self.register_window(self.__event_window)
+
+        for child in self.__children:
+            child.item.set_parent_window(self.__event_window)
+            child.socket.set_parent_window(self.__event_window)
+
+        self.__expander.set_parent_window(self.__event_window)
 
     def do_unrealize(self):
-        pass
+        if self.__event_window is not None:
+            self.unregister_window(self.__event_window)
+            self.__event_window.destroy()
+            self.__event_window = None
+        
+        # TODO: Activate_id removal
+
+        super().do_unrealize()
 
     def do_size_allocate(self, allocation):
         pass

@@ -79,35 +79,35 @@ def point_in_rect(rect: Gdk.Rectangle, x: int, y: int):
 class NodeView(Gtk.Container):
     __gtype_name__ = "NodeView"
 
-    event_window: Union[Gdk.Window, NoneType]
-    children: List[_NodeViewChild]
-    connections: List[_NodeViewConnection]
-    action: _Action
-    node_id: Union[int, NoneType]
+    __event_window: Union[Gdk.Window, NoneType]
+    __children: List[_NodeViewChild]
+    __connections: List[_NodeViewConnection]
+    __action: _Action
+    __node_id: Union[int, NoneType]
 
-    action_x0: int
-    action_y0: int
-    action_x1: int
-    action_y1: int
+    __action_x0: int
+    __action_y0: int
+    __action_x1: int
+    __action_y1: int
 
-    default_cursor: Union[Gdk.Cursor, NoneType]
-    se_resize_cursor: Union[Gdk.Cursor, NoneType]
+    __default_cursor: Union[Gdk.Cursor, NoneType]
+    __se_resize_cursor: Union[Gdk.Cursor, NoneType]
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self.children = []
-        self.connections = []
-        self.action = _Action.NONE
-        self.node_id = None
-        self.event_window = None
+        self.__children = []
+        self.__connections = []
+        self.__action = _Action.NONE
+        self.__node_id = None
+        self.__event_window = None
         self.set_has_window(False)
         self.set_size_request(100, 100)
 
-        self.action_x0 = 0
-        self.action_y0 = 0
-        self.action_x1 = 0
-        self.action_y1 = 0
+        self.__action_x0 = 0
+        self.__action_y0 = 0
+        self.__action_x1 = 0
+        self.__action_y1 = 0
 
         self.__cursor_init()
         self.drag_dest_set(Gtk.DestDefaults.MOTION, [], Gdk.DragAction.PRIVATE)
@@ -117,19 +117,19 @@ class NodeView(Gtk.Container):
     def do_map(self):
         self.set_mapped(True)
 
-        for child in self.children:
+        for child in self.__children:
             if not child.widget.get_visible():
                 continue
 
             if not child.widget.get_mapped():
                 child.widget.map()
 
-        if self.event_window is not None:
-            self.event_window.show()
+        if self.__event_window is not None:
+            self.__event_window.show()
 
     def do_unmap(self):
-        if self.event_window is not None:
-            self.event_window.hide()
+        if self.__event_window is not None:
+            self.__event_window.hide()
 
         super().do_unmap()
 
@@ -155,22 +155,22 @@ class NodeView(Gtk.Container):
         window = self.get_parent_window()
         self.set_widow(window)
 
-        self.event_window = Gdk.Window.new(window, attributes, attributes_mask)
-        self.register_window(self.event_window)
+        self.__event_window = Gdk.Window.new(window, attributes, attributes_mask)
+        self.register_window(self.__event_window)
 
-        for child in self.children:
-            child.widget.set_parent_window(self.event_window)
+        for child in self.__children:
+            child.widget.set_parent_window(self.__event_window)
 
     def do_unrealize(self):
-        if self.event_window is not None:
-            self.unregister_window(self.event_window)
-            self.event_window.destroy()
-            self.event_window = None
+        if self.__event_window is not None:
+            self.unregister_window(self.__event_window)
+            self.__event_window.destroy()
+            self.__event_window = None
 
         super().do_unrealize()
 
     def do_size_allocate(self, allocation):
-        for child in self.children:
+        for child in self.__children:
             requisition = child.widget.get_preferred_size(None)
             child.rectangle.x = child.get_property("x")
             child.rectangle.y = child.get_property("y")
@@ -206,26 +206,26 @@ class NodeView(Gtk.Container):
         if not self.get_realized():
             return
 
-        if not self.event_window:
+        if not self.__event_window:
             return
 
-        self.event_window.move_resize(
+        self.__event_window.move_resize(
             allocation.x, allocation.y, allocation.width, allocation.height)
 
     def do_draw(self, cr: cairo.Context):
-        if self.action == _Action.DRAG_CONNECTION:
+        if self.__action == _Action.DRAG_CONNECTION:
             cr.save()
             cr.set_source_rgba(1.0, 0.2, 0.2, 0.6)
 
-            connecting_curve(cr, self.action_x0, self.action_y0,
-                             self.action_x1, self.action_y1)
+            connecting_curve(cr, self.__action_x0, self.__action_y0,
+                             self.__action_x1, self.__action_y1)
             cr.stroke()
             cr.restore()
 
-        for conn in self.connections:
+        for conn in self.__connections:
             self.__draw_socket_connection(cr, conn)
 
-        if Gtk.cairo_should_draw_window(cr, self.event_window):
+        if Gtk.cairo_should_draw_window(cr, self.__event_window):
             super().do_draw(cr)
 
         return Gdk.EVENT_PROPAGATE
@@ -265,21 +265,21 @@ class NodeView(Gtk.Container):
             widget.connect("node-socket-destroyed", self.__socket_destroyed)
 
             # Set the node ID.
-            node_id = self.node_id
-            self.node_id += 1
+            node_id = self.__node_id
+            self.__node_id += 1
             widget.set_property("id", node_id)
 
-        self.children.append(child)
+        self.__children.append(child)
 
         if self.get_realized():
-            widget.set_parent_window(self.event_window)
+            widget.set_parent_window(self.__event_window)
 
         widget.set_parent(self)
         widget.show_all()
 
     def do_remove(self, widget: Gtk.Widget):
         child = self.__get_child(widget)
-        self.children.remove(child)
+        self.__children.remove(child)
 
         widget.unparent()
 
@@ -287,7 +287,7 @@ class NodeView(Gtk.Container):
         print("do_forall() self = %x" % id(self))
 
         if not callback is None:
-            for child in self.children:
+            for child in self.__children:
                 callback(child.widget, *callback_parameters)
 
     def do_child_type(self):
@@ -298,7 +298,7 @@ class NodeView(Gtk.Container):
         return (Gtk.Widget.get_type())
 
     def __child_motion_notify(self, w: Gtk.Widget, event: Gdk.EventMotion, child: _NodeViewChild):
-        if self.action == _Action.NONE:
+        if self.__action == _Action.NONE:
             inside = point_in_rect(child.south_east, event.x, event.y)
 
             if inside:
@@ -307,14 +307,14 @@ class NodeView(Gtk.Container):
                 self.__cursor_set(_Action.NONE)
 
         if event.state & Gdk.ModifierType.BUTTON1_MASK != 0:
-            if self.action == _Action.DRAG_CHILD:
+            if self.__action == _Action.DRAG_CHILD:
                 # TODO: block expander/move child
                 self.__move_child(
                     child,
                     event.x - child.start_x,
                     event.y - child.start_y
                 )
-            elif self.action == _Action.RESIZE_CHILD:
+            elif self.__action == _Action.RESIZE_CHILD:
                 w = event.x - child.rectangle.x - child.dx
                 h = event.y - child.rectangle.y - child.dy
 
@@ -327,7 +327,7 @@ class NodeView(Gtk.Container):
         return Gdk.EVENT_LAST
 
     def __child_pointer_crossing(self, w: Gtk.Widget, event: Gdk.EventCrossing):
-        if self.action == _Action.RESIZE_CHILD:
+        if self.__action == _Action.RESIZE_CHILD:
             return Gdk.EVENT_PROPAGATE
 
         if event.type == Gdk.EventType.LEAVE_NOTIFY:
@@ -340,9 +340,9 @@ class NodeView(Gtk.Container):
             inside = point_in_rect(child.south_east, event.x, event.y)
 
             if inside:
-                self.action = _Action.RESIZE_CHILD
+                self.__action = _Action.RESIZE_CHILD
             else:
-                self.action = _Action.DRAG_CHILD
+                self.__action = _Action.DRAG_CHILD
 
             child.start_x = event.x
             child.start_y = event.y
@@ -358,47 +358,47 @@ class NodeView(Gtk.Container):
             # TODO: unblock
             pass
 
-        self.action = _Action.NONE
+        self.__action = _Action.NONE
 
-        self.children.remove(child)
-        self.children.append(child)
+        self.__children.remove(child)
+        self.__children.append(child)
         self.queue_draw()
 
         return Gdk.EVENT_PROPAGATE
 
     def __drag_begin(self, w: Gtk.Widget, x0: int, y0: int):
-        self.action = _Action.DRAG_CONNECTION
-        self.action_x0 = x0
-        self.action_y0 = y0
+        self.__action = _Action.DRAG_CONNECTION
+        self.__action_x0 = x0
+        self.__action_y0 = y0
 
         return Gdk.EVENT_PROPAGATE
 
     def __drag_end(self, w: Gtk.Widget):
-        self.action = _Action.NONE
+        self.__action = _Action.NONE
         self.queue_draw()
 
         return Gdk.EVENT_PROPAGATE
 
     def __socket_connect(self, w: Gtk.Widget, source: Gtk.Widget, sink: Gtk.Widget):
         conn = _NodeViewConnection(source, sink)
-        self.connections.append(conn)
+        self.__connections.append(conn)
         self.queue_draw()
 
         return Gdk.EVENT_PROPAGATE
 
     def __socket_disconnect(self, w: Gtk.Widget, source: Gtk.Widget, sink: Gtk.Widget):
-        for conn in self.connections:
+        for conn in self.__connections:
             if conn.source == source and conn.sink == sink:
-                self.connections.remove(conn)
+                self.__connections.remove(conn)
                 self.queue_draw()
                 break
 
         return Gdk.EVENT_PROPAGATE
 
     def __socket_destroyed(self, w: Gtk.Widget, socket: Gtk.Widget):
-        for conn in self.connections:
+        for conn in self.__connections:
             if conn.source == socket or conn.sink == socket:
-                self.connections.remove(conn)
+                self.__connections.remove(conn)
                 self.queue_draw()
                 break
 
@@ -431,13 +431,13 @@ class NodeView(Gtk.Container):
         child.widget.set("x", child.rectangle.x)
         child.widget.set("y", child.rectangle.y)
 
-        self.children.remove(child)
-        self.children.append(child)
+        self.__children.remove(child)
+        self.__children.append(child)
 
         self.queue_draw()
 
     def __get_child(self, widget: Gtk.Widget) -> Union[_NodeViewChild, NoneType]:
-        for child in self.children:
+        for child in self.__children:
             if child.widget == widget:
                 return child
 
@@ -445,16 +445,16 @@ class NodeView(Gtk.Container):
 
     def __cursor_init(self):
         display = self.get_display()
-        self.default_cursor = Gdk.Cursor.new_from_name(display, "default")
-        self.se_resize_cursor = Gdk.Cursor.new_from_name(display, "se-resize")
+        self.__default_cursor = Gdk.Cursor.new_from_name(display, "default")
+        self.__se_resize_cursor = Gdk.Cursor.new_from_name(display, "se-resize")
 
     def __cursor_set(self, action: _Action):
         window = self.get_window()
 
         if action == _Action.RESIZE_CHILD:
-            window.set_cursor(self.se_resize_cursor)
+            window.set_cursor(self.__se_resize_cursor)
         else:
-            window.set_cursor(self.default_cursor)
+            window.set_cursor(self.__default_cursor)
 
     def __drag_motion(self, w: Gtk.Widget, x: int, y: int, time: int):
         self.queue_draw()
@@ -474,7 +474,7 @@ class NodeView(Gtk.Container):
         min_width = 0
         nat_width = 0
 
-        for widget in self.children:
+        for widget in self.__children:
             child_min_width, child_nat_width = widget.get_preferred_width()
             min_width = min_width + child_min_width
             nat_width = nat_width + child_nat_width
@@ -492,7 +492,7 @@ class NodeView(Gtk.Container):
                 self.get_window().move_resize(allocation.x, allocation.y,
                                               allocation.width, allocation.height)
 
-        for widget in self.children:
+        for widget in self.__children:
             if widget.get_visible():
                 min_size, nat_size = widget.get_preferred_size()
 
