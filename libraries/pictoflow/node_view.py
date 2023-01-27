@@ -155,7 +155,8 @@ class NodeView(Gtk.Container):
         window = self.get_parent_window()
         self.set_widow(window)
 
-        self.__event_window = Gdk.Window.new(window, attributes, attributes_mask)
+        self.__event_window = Gdk.Window.new(
+            window, attributes, attributes_mask)
         self.register_window(self.__event_window)
 
         for child in self.__children:
@@ -446,7 +447,8 @@ class NodeView(Gtk.Container):
     def __cursor_init(self):
         display = self.get_display()
         self.__default_cursor = Gdk.Cursor.new_from_name(display, "default")
-        self.__se_resize_cursor = Gdk.Cursor.new_from_name(display, "se-resize")
+        self.__se_resize_cursor = Gdk.Cursor.new_from_name(
+            display, "se-resize")
 
     def __cursor_set(self, action: _Action):
         window = self.get_window()

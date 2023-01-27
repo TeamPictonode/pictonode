@@ -19,11 +19,13 @@ from gi.repository import Gtk
 from gi.repository import GObject
 # autopep8: on
 
+
 class _NodeChild:
     item: Gtk.Widget
     socket: Gtk.Widget
 
     input_id: int
+
 
 class Node(Gtk.Box):
     __event_window: Union[Gdk.Window, NoneType]
@@ -135,10 +137,11 @@ class Node(Gtk.Box):
         attributes.visual = self.get_visual()
         attributes.window_class = Gdk.WindowWindowClass.INPUT_OUTPUT
         attributes.event_mask = (Gdk.EventMask.BUTTON_PRESS_MASK | Gdk.EventMask.BUTTON_RELEASE_MASK | Gdk.EventMask.POINTER_MOTION_MASK |
-                                Gdk.EventMask.TOUCH_MASK | Gdk.EventMask.ENTER_NOTIFY_MASK | Gdk.EventMask.LEAVE_NOTIFY_MASK)
+                                 Gdk.EventMask.TOUCH_MASK | Gdk.EventMask.ENTER_NOTIFY_MASK | Gdk.EventMask.LEAVE_NOTIFY_MASK)
         attr_mask = Gdk.WindowAttributesType.X | Gdk.WindowAttributesType.Y
 
-        self.__event_window = Gdk.Window(self.get_window(), self.attr, attr_mask)
+        self.__event_window = Gdk.Window(
+            self.get_window(), self.attr, attr_mask)
         self.register_window(self.__event_window)
 
         for child in self.__children:
@@ -152,7 +155,7 @@ class Node(Gtk.Box):
             self.unregister_window(self.__event_window)
             self.__event_window.destroy()
             self.__event_window = None
-        
+
         # TODO: Activate_id removal
 
         super().do_unrealize()
