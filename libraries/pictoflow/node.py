@@ -14,9 +14,11 @@ from typing import Union
 import gi
 gi.require_version('Gtk', '3.0')
 gi.require_version('Gdk', '3.0')
+gi.require_foreign("cairo")
 from gi.repository import Gdk
 from gi.repository import Gtk
 from gi.repository import GObject
+import cairo
 # autopep8: on
 
 
@@ -55,6 +57,11 @@ class Node(Gtk.Box):
     __margin_left: int
     __margin_right: int
 
+    __alloc_x: int
+    __alloc_y: int
+    __alloc_width: int
+    __alloc_height: int
+
     __icon_name: str
     __expander: Gtk.Expander
     __expander_blocked: bool
@@ -92,6 +99,11 @@ class Node(Gtk.Box):
         self.__margin_bottom = 8
         self.__margin_left = 8
         self.__margin_right = 8
+
+        self.__alloc_x = 0
+        self.__alloc_y = 0
+        self.__alloc_width = 0
+        self.__alloc_height = 0
 
         self.__icon_name = "edit-delete-symbolic"
 
@@ -160,22 +172,68 @@ class Node(Gtk.Box):
 
         super().do_unrealize()
 
-    def do_size_allocate(self, allocation):
-        pass
+    def do_size_allocate(self, allocation: Gdk.Allocation):
+        self.__alloc_x = allocation.x
+        self.__alloc_y = allocation.y
+        self.__alloc_width = allocation.width
+        self.__alloc_height = allocation.height
 
-    def do_draw(self, cr):
+        top = self.__padding_top + self.__margin_top
+        bottom = self.__padding_bottom + self.__margin_bottom
+        left = self.__padding_left + self.__margin_left
+        right = self.__padding_right + self.__margin_right
+
+        allocation.x = left
+        allocation.y = top
+        allocation.width -= left + right
+        allocation.height -= top + bottom
+
+        super().do_size_allocate(allocation)
+
+        if self.__expander.get_expanded():
+            expander_alloc = self.__expander.get_allocation()
+            minimum, natural = self.__expander.get_preferred_width()
+            expander_alloc.width = min(natural, minimum)
+            self.__expander.set_allocation(expander_alloc)
+
+            self.__alloc_width = expander_alloc.width + left + right + 25
+            expander_alloc.y = 0
+
+            # TODO: Allocate visible sockets
+            self.__alloc_height = expander_alloc.height
+        else:
+            # TODO: Allocate visible child sockets
+            pass
+
+        self.set_allocation(allocation)
+
+        if not self.get_realized():
+            return
+
+        if self.__event_window is not None:
+            return
+
+        self.__event_window.move_resize(
+            allocation.x, allocation.y, allocation.width, allocation.height)
+
+    def do_draw(self, cr: cairo.Context):
         print("node - do draw")
         allocation = self.get_allocation()
         allocation.x = self.margin_left
         allocation.y = self.margin_top
         allocation.width -= self.margin_left + self.margin_right
         allocation.height -= self.margin_top + self.margin_bottom
+
         self.draw_frame(cr, allocation)
         super().draw(cr)
+
         return Gdk.EVENT_PROPAGATE
 
-    def draw_frame(self, cr, allocation):
-        print("node - draw_frame")
+    def draw_frame(self, cr: cairo.Context, allocation: Gdk.Allocation):
+        # TODO
+        pass
+
+        '''
         c = self.get_style_node()
         Gtk.StyleContext.save(c)
         Gtk.render_background(c, cr, allocation.x, allocation.y,
@@ -193,6 +251,7 @@ class Node(Gtk.Box):
         Gdk.Cairo.set_source_pixbuf(cr, pb, self.rect_x, self.rect_y)
         Gdk.Cairo.paint(cr)
         Gdk.Cairo.restore(cr)
+        '''
 
     def get_type(self):
         pass
