@@ -1,5 +1,5 @@
 # GNU AGPL v3 License
-# Written by Stephen Foster and John Nunley, derived from code by aluntzer and AliensGroup
+# Written by Stephen Foster and John Nunley, derived from code by Armin Luntzer and AliensGroup
 
 import sys
 import os
@@ -22,6 +22,11 @@ import cairo
 # autopep8: on
 
 CLICKED_TIMEOUT = 250
+
+class SocketIO(Enum):
+  DISABLE = 0
+  SINK = 1
+  SOURCE = 2
 
 class _NodeChild:
     item: Gtk.Widget
@@ -272,7 +277,7 @@ class Node(Gtk.Box):
         return True
 
     def do_add(self, child: Gtk.Widget):
-        self.__do_add_real(child, TodoSocketDisable)
+        self.__do_add_real(child, SocketIO.SOURCE)
 
     def do_remove(self, child: Gtk.Widget):
         for i, c in enumerate(self.__children):
@@ -307,6 +312,63 @@ class Node(Gtk.Box):
                 return c
 
         return None
+
+    def __socket_drag_begin(self, widget: Gtk.Widget):
+        alloc_node = self.get_allocation()
+        alloc_socket = widget.get_allocation()
+
+        self.emit(
+            "node-drag-begin",
+            alloc_node.x + alloc_socket.x + alloc_socket.width / 2,
+            alloc_node.y + alloc_socket.y + alloc_socket.height / 2
+        )
+
+    def __socket_drag_end(self, widget: Gtk.Widget):
+        self.emit("node-drag-end")
+
+    def __connect_cb(self, source: Gtk.Widget, target: Gtk.Widget):
+        self.emit("node-connect", source, target)
+
+    def __disconnect_cb(self, source: Gtk.Widget, target: Gtk.Widget):
+        self.emit("node-disconnect", source, target)
+
+    def __socket_destroyed(self, socket: Gtk.Widget):
+        self.emit("node-socket-destroyed", socket)
+
+    def __expander_cb(self, expander: Gtk.Expander, param_spec: GObject.ParamSpec):
+        exp = self.__expander.get_expanded()
+
+        for child in self.__children:
+            child.socket.set_visible(exp)
+
+        center = self.get_center_widget()
+        if center is not None:
+            center.set_visible(exp)
+        
+        self.get_parent().queue_draw()
+
+    def __do_add_real(self, child: Gtk.Widget, io: SocketIO):
+        child_info = _NodeChild()
+
+        # TODO: Create a socket
+
+        if self.__event_window:
+            child_info.item.set_parent_window(self.__event_window)
+            child_info.socket.set_parent_window(self.__event_window)
+        
+        # TODO: Set socket ID/radius
+
+        child_info.socket.connect("socket-drag-begin", self.__socket_drag_begin)
+        child_info.socket.connect("socket-drag-end", self.__socket_drag_end)
+        child_info.socket.connect("socket-connect", self.__connect_cb)
+        child_info.socket.connect("socket-disconnect", self.__disconnect_cb)
+        child_info.socket.connect("destroy", self.__socket_destroyed)
+
+        self.__children.append(child_info)
+
+        self.pack_start(child_info.socket, False, False, 0)
+        child_info.socket.set_parent(self)
+        child_info.socket.set_visible(True)
 
     def draw_frame(self, cr: cairo.Context, allocation: Gdk.Allocation):
         # TODO
