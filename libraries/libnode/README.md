@@ -22,9 +22,7 @@ This is the basic function of `libnode`: a set of nodes that can recursively pro
 
 ## Serialization Format
 
-TODO: This has not been implemented yet.
-
-A pipeline CAN serialize to and be deserialized from a JSON object. The root of the JSON object MUST contain he `nodes` and `links` fields. These fields MUST contain an array of node and link objects, respectively. 
+A pipeline CAN serialize to and be deserialized from a JSON object. The root of the JSON object MUST contain the `nodes` and `links` fields. These fields MUST contain an array of node and link objects, respectively. 
 
 The node object is a two-field object. The `template` field MUST be a string that is the name of the node template. The `id` field is a unique numerical identifier for the node. The `id` field MUST be unique within the pipeline.
 

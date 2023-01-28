@@ -121,7 +121,7 @@ export class Node<T, M> implements HydrateTarget {
   private outputs: Array<Link<T, M>>;
 
   // The ID of this node.
-  private readonly id: number;
+  private id: number;
 
   public constructor(
     // The template this node uses.
@@ -191,6 +191,10 @@ export class Node<T, M> implements HydrateTarget {
     return this.outputs;
   }
 
+  __setId(id: number): void {
+    this.id = id;
+  }
+
   __hydrate(): void {
     const isDirty = any(this.inputs, (input) => input.isDirty());
 
@@ -251,12 +255,19 @@ export class Node<T, M> implements HydrateTarget {
   }
 
   // PRIVATE: As the "to" node, link this node to a "from" node.
-  __linkFrom(from: Node<T, M>, fromIndex: number, toIndex: number): Link<T, M> {
+  __linkFrom(
+    from: Node<T, M>,
+    fromIndex: number,
+    toIndex: number,
+    meta: M
+  ): Link<T, M> {
     /* eslint-disable @typescript-eslint/no-non-null-assertion */
-    from.outputs[fromIndex] = this.inputs[toIndex]!;
-    this.inputs[toIndex]!.__setFrom(from, fromIndex);
-    this.inputs[toIndex]!.__setTo(this, toIndex);
-    return this.inputs[toIndex]!;
+    const link = this.inputs[toIndex]!;
+    from.outputs[fromIndex] = link;
+    link.__setFrom(from, fromIndex);
+    link.__setTo(this, toIndex);
+    link.__setMetadata(meta);
+    return link;
   }
 
   // PRIVATE: As the "to" node, remove the link from a "from" node.
@@ -303,7 +314,7 @@ export class Node<T, M> implements HydrateTarget {
 export class Link<T, M> {
   private readonly template: LinkTemplate<T, M>;
 
-  private readonly id: number;
+  private id: number;
 
   // The node this link is coming from.
   private from: HydrateTarget;
@@ -318,7 +329,7 @@ export class Link<T, M> {
   private toIndex: number;
 
   // The metadata for this link.
-  private readonly metadata: M;
+  private metadata: M;
 
   // Whether this link needs to be hydrated.
   private dirty: boolean;
@@ -355,6 +366,14 @@ export class Link<T, M> {
 
   public getId(): number {
     return this.id;
+  }
+
+  __setId(id: number): void {
+    this.id = id;
+  }
+
+  __setMetadata(metadata: M): void {
+    this.metadata = metadata;
   }
 
   __isFromOccupied(): boolean {
@@ -504,8 +523,9 @@ export class Pipeline<T, M> {
     fromId: number,
     fromIndex: number,
     toId: number,
-    toIndex: number
-  ): void {
+    toIndex: number,
+    meta: M
+  ): Link<T, M> {
     const from = this.nodes.get(fromId);
 
     if (from === undefined) {
@@ -518,8 +538,9 @@ export class Pipeline<T, M> {
       throw new Error(`Node with ID ${toId} does not exist.`);
     }
 
-    const link = to.__linkFrom(from, fromIndex, toIndex);
+    const link = to.__linkFrom(from, fromIndex, toIndex, meta);
     this.links.set(link.getId(), link);
+    return link;
   }
 
   // Unlink two nodes at the given index.
@@ -575,6 +596,113 @@ export class Pipeline<T, M> {
 }
 
 // TODO: Serialization/Deserialization
+
+// The serialized form of a pipeline.
+export interface SerializedPipeline<M> {
+  nodes: Array<SerializedNode<M>>;
+  links: Array<SerializedLink<M>>;
+}
+
+export interface SerializedNode<M> {
+  id: number;
+  template: string;
+  metadata: M;
+}
+
+export type SerializedLink<M> = {
+  id: number;
+  metadata: M;
+} & ({ from: number; fromIndex: number } | { from: undefined }) &
+  ({ to: number; toIndex: number } | { to: undefined });
+
+// Serialize a pipeline to a JSON object.
+export function serializePipeline<T, M>(
+  pipeline: Pipeline<T, M>
+): SerializedPipeline<M> {
+  const nodes: Array<SerializedNode<M>> = reduce(
+    pipeline.getNodes(),
+    (nodes, node) => {
+      nodes.push({
+        id: node.getId(),
+        template: node.getTemplate(),
+        metadata: node.getMetadata(),
+      });
+      return nodes;
+    },
+    [] as Array<SerializedNode<M>>
+  );
+
+  const links: Array<SerializedLink<M>> = reduce(
+    pipeline.getLinks(),
+    (links, link) => {
+      let linkValue: SerializedLink<M> = {
+        id: link.getId(),
+        from: undefined,
+        to: undefined,
+        metadata: link.getMetadata(),
+      };
+
+      // Set from and to values.
+      const fromNode = link.getFrom();
+      if (fromNode !== undefined) {
+        linkValue = {
+          ...linkValue,
+          from: fromNode.getId(),
+          fromIndex: link.getFromIndex(),
+        };
+      }
+
+      const toNode = link.getTo();
+      if (toNode !== undefined) {
+        linkValue = {
+          ...linkValue,
+          to: toNode.getId(),
+          toIndex: link.getToIndex(),
+        };
+      }
+
+      links.push(linkValue);
+      return links;
+    },
+    [] as Array<SerializedLink<M>>
+  );
+
+  return {
+    nodes,
+    links,
+  };
+}
+
+// Deserialize a pipeline from a JSON object.
+export function deserializePipeline<T, M>(
+  serialized: SerializedPipeline<M>,
+  templateTable: TemplateTable<T, M>
+): Pipeline<T, M> {
+  const pipeline = new Pipeline(templateTable);
+
+  forEach(serialized.nodes, (node) => {
+    const newNode = pipeline.createNode(node.template, node.metadata);
+    newNode.__setId(node.id);
+  });
+
+  forEach(serialized.links, (link) => {
+    if (link.from === undefined || link.to === undefined) {
+      console.log(`Invalid link with id ${link.id}}`);
+      return;
+    }
+
+    const newLink = pipeline.link(
+      link.from,
+      link.fromIndex,
+      link.to,
+      link.toIndex,
+      link.metadata
+    );
+    newLink.__setId(link.id);
+  });
+
+  return pipeline;
+}
 
 // Iterate over every element in an array and run a function on it.
 const forEach: <T>(array: T[], fn: (item: T, index: number) => void) => void =

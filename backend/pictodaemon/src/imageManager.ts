@@ -8,12 +8,14 @@ import * as fs from "fs";
 import * as path from "path";
 import * as os from "os";
 
-export type AddImageResult = {
-  variant: AddImageVariant.Success;
-  id: number;
-} | {
-  variant: AddImageVariant.TooLarge;
-};
+export type AddImageResult =
+  | {
+      variant: AddImageVariant.Success;
+      id: number;
+    }
+  | {
+      variant: AddImageVariant.TooLarge;
+    };
 
 export enum AddImageVariant {
   Success = 0,
@@ -42,7 +44,10 @@ export default class ImageManager {
     this.lastImageId = 0;
 
     // Root is the tempdir, plus "pictonode{T}" where {T} is a random number.
-    this.root = path.join(os.tmpdir(), `pictonode${Math.floor(Math.random() * 100000)}`);
+    this.root = path.join(
+      os.tmpdir(),
+      `pictonode${Math.floor(Math.random() * 100000)}`
+    );
   }
 
   // Add the image at the given path to the image manager.
@@ -65,12 +70,15 @@ export default class ImageManager {
     await moveFile(filePath, newPath);
 
     // Add the image to the image map.
-    this.imageMap.set(id, new ImageInfo(
-      newPath,
-      size,
-      0, // TODO: Owner
-      new Date(),
-    ));
+    this.imageMap.set(
+      id,
+      new ImageInfo(
+        newPath,
+        size,
+        0, // TODO: Owner
+        new Date()
+      )
+    );
 
     return {
       variant: AddImageVariant.Success,
@@ -90,7 +98,7 @@ export default class ImageManager {
 
   // Continually remove old images.
   public async cleanupImages(): Promise<never> {
-    while(true) {
+    while (true) {
       const now = new Date();
 
       // Remove old images.
@@ -107,7 +115,7 @@ export default class ImageManager {
       await timeout(1000 * 60 * 15);
     }
   }
-};
+}
 
 class ImageInfo {
   // The path to the image on the disk.
@@ -155,7 +163,7 @@ function getFileSize(path: string): Promise<number> {
       } else {
         resolve(stats.size);
       }
-    })
+    });
   });
 }
 
@@ -168,8 +176,8 @@ function moveFile(from: string, to: string): Promise<void> {
       } else {
         resolve();
       }
-    })
-  })
+    });
+  });
 }
 
 // Remove an image.
@@ -181,6 +189,6 @@ function deleteFile(path: string): Promise<void> {
       } else {
         resolve();
       }
-    })
-  })
+    });
+  });
 }

@@ -9,7 +9,7 @@ export default abstract class Database {
   // Functions for getting and updating user data.
   public abstract getUser(id: number): Promise<User>;
   public abstract addUser(user: NewUser): Promise<User>;
-  public abstract updateUser(user: UpdateUser): Promise<User>;
+  public abstract updateUser(user: UpdateUser): Promise<void>;
 }
 
 // Unique ID for an object
@@ -20,7 +20,7 @@ export interface User {
   id: ID;
   username: string;
   realname: string;
-};
+}
 
 export type NewUser = Omit<User, "id">;
 export type UpdateUser = Partial<NewUser> & Pick<User, "id">;
