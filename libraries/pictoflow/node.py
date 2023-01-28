@@ -21,6 +21,7 @@ from gi.repository import GObject
 import cairo
 # autopep8: on
 
+CLICKED_TIMEOUT = 250
 
 class _NodeChild:
     item: Gtk.Widget
@@ -31,7 +32,7 @@ class _NodeChild:
 
 class Node(Gtk.Box):
     __event_window: Union[Gdk.Window, NoneType]
-    __children: List[Gtk.Widget]
+    __children: List[_NodeChild]
 
     id = GObject.Property(type=int, default=0)
     x = GObject.Property(type=int, default=0)
@@ -42,6 +43,8 @@ class Node(Gtk.Box):
     inputid = GObject.Property(type=int, default=0)
 
     __socket_radius: float
+    __func_x: int
+    __func_y: int
     __func_width: int
     __func_height: int
     __priv_width: int
@@ -83,8 +86,11 @@ class Node(Gtk.Box):
         self.__event_window = None
         self.__children = []
 
+        self.__func_x = 0
+        self.__func_y = 0
         self.__func_width = 20
         self.__func_height = 20
+
         self.__priv_width = 20
         self.__priv_height = 20
 
@@ -168,9 +174,15 @@ class Node(Gtk.Box):
             self.__event_window.destroy()
             self.__event_window = None
 
-        # TODO: Activate_id removal
+        # Cancel activate_id, which is a timeout from gdk threads
+        if self.__activate_id is not None:
+            GObject.source_remove(self.__activate_id)
+            self.__activate_id = None
 
         super().do_unrealize()
+
+    def do_adjust_size_request(self, orientation: Gtk.Orientation, minimum: int, natural: int):
+        print("Adjust size request, no known way of doing this using Python alone")
 
     def do_size_allocate(self, allocation: Gdk.Allocation):
         self.__alloc_x = allocation.x
@@ -228,6 +240,73 @@ class Node(Gtk.Box):
         super().draw(cr)
 
         return Gdk.EVENT_PROPAGATE
+
+    def do_button_press(self, event: Gdk.EventButton):
+        point = Gdk.Rectangle()
+        point.x = event.x
+        point.y = event.y
+        point.width = 1
+        point.height = 1
+
+        rectangle_func = Gdk.Rectangle()
+        rectangle_func.x = self.__func_x
+        rectangle_func.width = self.__func_width
+        rectangle_func.height = self.__func_height
+
+        # See if these two rectangles intersect
+        if not Gdk.Rectangle.intersect(rectangle_func, point, None):
+            return False
+
+        self.__activate_id = Gdk.threads_add_timeout(
+            CLICKED_TIMEOUT,
+            self.__on_clicked_timeout
+        )
+
+        return True
+
+    def do_button_release(self, event: Gdk.EventButton):
+        if self.__activate_id is not None:
+            # Emit the node-func-clicked signal
+            self.emit("node-func-clicked", self)
+
+        return True
+
+    def do_add(self, child: Gtk.Widget):
+        self.__do_add_real(child, TodoSocketDisable)
+
+    def do_remove(self, child: Gtk.Widget):
+        for i, c in enumerate(self.__children):
+            if c.item != child:
+                continue
+
+            self.__children.pop(i)
+            c.socket.unparent()
+            super().remove(child)
+            return
+
+    def do_forall(self, internal: bool, callback: Gtk.Callback, user_data: object):
+        super().do_forall(internal, callback, user_data)
+
+        if not internal:
+            return
+
+        for child in self.__children:
+            callback(child.socket, user_data)
+
+    def do_set_child_property(self, child: Gtk.Widget, property_id: int, value: object, pspec: GObject.ParamSpec):
+        # TODO
+        pass
+
+    def do_get_child_property(self, child: Gtk.Widget, property_id: int, value: object, pspec: GObject.ParamSpec):
+        # TODO
+        pass
+
+    def __get_child(self, child: Gtk.Widget) -> Union[_NodeChild, NoneType]:
+        for c in self.__children:
+            if c.item == child:
+                return c
+
+        return None
 
     def draw_frame(self, cr: cairo.Context, allocation: Gdk.Allocation):
         # TODO
