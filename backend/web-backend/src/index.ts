@@ -1,22 +1,26 @@
 // GNU AGPL v3.0
 // Written by John Nunley
 
-import Daemon from "pictodaemon"
-import express from "express"
-import SqliteDatabase from "./sqlite3"
+import Daemon from "pictodaemon";
+import dotenv from "dotenv";
+import express from "express";
+import PostgresDatabase from "./postgres";
 
-import { SerializedPipeline } from "libraries/libnode/src"
+import { SerializedPipeline } from "libraries/libnode/src";
 
-import * as fs from "fs"
-import { join } from "path"
+import * as fs from "fs";
+import { join } from "path";
 
 async function main() {
+  dotenv.config();
+
   // Spawn the daemon.
-  const tempDir = await mkdtemp("pictodaemon") 
-  const daemon = new Daemon(new SqliteDatabase(join(tempDir, "db.sqlite3")))
-  await daemon.init()
+  const tempDir = await mkdtemp("pictodaemon");
+  const daemon = new Daemon(new PostgresDatabase());
+  await daemon.init();
 
   await runExpress(tempDir, daemon)
+
 
   // Wait for the daemon to exit.
   await daemon.run()
@@ -24,10 +28,7 @@ async function main() {
 }
 
 async function runExpress(tempDir: string, daemon: Daemon) {
-  // Take the first argument as our port 
-  const port = parseInt(process.argv[2] || "2407") || 2407
-
-  const app = express()
+  const app = express();
 
   // Handle the /api/upload_image endpoint.
   app.post("/api/upload_image", async (req, res) => {
@@ -69,18 +70,23 @@ async function runExpress(tempDir: string, daemon: Daemon) {
     res.send(imageBuffer)
   })
 
-  // TODO: Middleware
+  // Host the public directory.
+  app.use(express.static(join(__dirname, "..", "public")))
 
-  // TODO: Make sure no one steps on our toes.
-  app.listen(port)
+  // Host HTTP and HTTPS servers.
+  const http_port = parseInt(process.env.HTTP_PORT || "80") || 80
+  const https_port = parseInt(process.env.HTTPS_PORT || "443") || 443
+
+  app.listen(http_port)
+  app.listen(https_port)
 }
 
 async function mkdtemp(prefix: string): Promise<string> {
   return new Promise((resolve, reject) => {
     fs.mkdtemp(prefix, (err, folder) => {
-      if (err) reject(err)
-      else resolve(folder)
-    })
+      if (err) reject(err);
+      else resolve(folder);
+    });
   })
 }
 
