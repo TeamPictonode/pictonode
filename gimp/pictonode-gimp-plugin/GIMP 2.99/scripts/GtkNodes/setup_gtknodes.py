@@ -119,7 +119,7 @@ def latest_gtknodes(target_dir: str) -> bool:
     return True
 
 
-def build_gtknodes(target_dir: str, typelib_dir: str, so_dir: str) -> bool:
+def build_gtknodes(target_dir: str, out_dir: str) -> bool:
     '''
     Builds GtkNodes.
     '''
@@ -138,7 +138,7 @@ def build_gtknodes(target_dir: str, typelib_dir: str, so_dir: str) -> bool:
 
     # Configure the build
     configure = sp.run(
-        ["./configure", "--prefix=/usr", "--libdir=/usr/lib",
+        ["./configure", 
             "--enable-gtk-doc", "--enable-introspection=yes"],
         cwd=cwddir
     )
@@ -157,28 +157,22 @@ def build_gtknodes(target_dir: str, typelib_dir: str, so_dir: str) -> bool:
         print("Failed to build GtkNodes.")
         return False
 
-    # Copy the typelib file to the typelib directory
+    # Copy the outputs to the output directory
     try:
-        os.makedirs(typelib_dir, exist_ok=True)
-        shutil.copyfile(path.join(cwddir, "introspection", "GtkNodes-0.1.typelib"),
-                  path.join(typelib_dir, "gtknodes.typelib"))
-    except Exception as e:
-        print(f"Failed to copy the typelib file: {str(e)}")
-        return False
+        # Remove the existing files
+        shutil.rmtree(out_dir)
 
-    # Copy the shared object file to the shared object directory
-    try:
-        os.makedirs(so_dir, exist_ok=True)
-        shutil.copyfile(path.join(cwddir, "src", ".libs", "libgtknodes-0.1.so"),
-                  path.join(so_dir, "libgtknodes.so"))
+        os.makedirs(out_dir, exist_ok=True)
+        shutil.copytree(path.join(cwddir, "src/.libs"), path.join(cwddir, "libs"))
+        shutil.copytree(path.join(cwddir, "introspection"), path.join(out_dir, "introspection"))
     except Exception as e:
-        print(f"Failed to copy the shared object file: {str(e)}")
+        print(f"Failed to copy the build output: {str(e)}")
         return False
 
     return True
 
 
-def main():
+def setup_gtknodes(output_dir: str) -> None:
     # Get the current operating system
     os = _get_os()
 
@@ -196,33 +190,22 @@ def main():
 
     # Create a temporary directory
     with tempfile.TemporaryDirectory() as target_dir:
-      # Get the typelib directory and so directory
-      if False:
-          if os == _Os.POSIX:
-              gimp_plugin_dir = path.join(
-                  sys.prefix, "lib", "gimp", "2.0", "plug-ins")
-          elif os == _Os.NT:
-              gimp_plugin_version = "2.99"
-              appdata_dir = os.getenv("APPDATA")
-              gimp_plugin_dir = path.join(
-                  appdata_dir, "GIMP", gimp_plugin_version, "plug-ins")
-      else:
-          gimp_plugin_dir = "." 
+        # Build and  install GtkNodes
+        if not latest_gtknodes(target_dir):
+            print("Failed to download the latest version of GtkNodes.")
+            return
 
-      typelib_dir = path.join(gimp_plugin_dir, "typelib")
-      so_dir = path.join(gimp_plugin_dir, "so")
+        res = build_gtknodes(target_dir, output_dir)
+        if not res:
+            print("Failed to build GtkNodes.")
+            return
 
-      # Build and  install GtkNodes
-      if not latest_gtknodes(target_dir):
-          print("Failed to download the latest version of GtkNodes.")
-          return
+        print("GtkNodes has been successfully installed.")
 
-      res = build_gtknodes(target_dir, typelib_dir, so_dir)
-      if not res:
-          print("Failed to build GtkNodes.")
-          return
 
-      print("GtkNodes has been successfully installed.")
+def main():
+    plugin_dir = "./output"
+    setup_gtknodes(plugin_dir)
 
 
 if __name__ == "__main__":
