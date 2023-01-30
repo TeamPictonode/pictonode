@@ -15,39 +15,23 @@ import os
 
 # This file was written in its entirety by Parker Nelms and Stephen Foster.
 
-#Plugin impl
+#Plugin implementation
+
 from client import *
+from httpclient import *
 
 def N_(message): return message
 def _(message): return GLib.dgettext(None, message)
 
-
-def send_message_to_controller_callback(button, msg):
-    client.connect_to_controller()
-    client.send_message_to_controller(msg)
-    client.receive_message_from_controller()
-
-    client.close_connection_to_controller()
-
-def send_image_to_controller_callback(button, gegl):
+def send_image_to_daemon(button, gegl):
+    
     def do_send_image(gegl):
-        client.connect_to_controller()
-
         image = save_layer_to_png(gegl)
-
-        client.send_message_to_controller(f"{str(os.stat(image).st_size)}")
-        client.receive_message_from_controller()
-
-        client.send_image_to_controller(image)
+        http_client.send_image(image)
 
     x = threading.Thread(target=do_send_image, args=(gegl,))
     x.start()
     x.join()
-
-    client.receive_message_from_controller()
-    #client.receive_image_from_controller()
-
-    client.close_connection_to_controller()
 
 def save_layer_to_png(gegl_buffer):
     STATIC_TARGET_DIR = os.path.abspath(f"{os.path.dirname(os.path.abspath(__file__))}\\int")
@@ -125,8 +109,6 @@ class Pictonode (Gimp.PlugIn):
 
             GimpUi.init("pictonode.py")
 
-            print(drawable.get_buffer())
-
             dialog = GimpUi.Dialog(use_header_bar=True,
                                    title=_("Pictonode"),
                                    role="es1-Python3")
@@ -157,7 +139,7 @@ class Pictonode (Gimp.PlugIn):
                 END
             '''
 
-            button = Gtk.Button(label="Send To Controller")
+            button = Gtk.Button(label="Send To Daemon")
             button.connect('clicked', send_image_to_controller_callback, drawable.get_buffer())
 
             scrolled = Gtk.ScrolledWindow()
