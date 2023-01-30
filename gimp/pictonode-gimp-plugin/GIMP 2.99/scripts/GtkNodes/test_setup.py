@@ -25,8 +25,7 @@ def runTest(target_dir):
 
 
 def main():
-  if True:
-    target_dir = "/tmp/foobar"
+  with tempfile.TemporaryFile() as target_dir:
     runTest(target_dir)
 
 
