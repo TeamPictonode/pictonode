@@ -25,7 +25,7 @@ def runTest(target_dir):
 
 
 def main():
-  with tempfile.TemporaryFile() as target_dir:
+  with tempfile.TemporaryDirectory() as target_dir:
     runTest(target_dir)
 
 
