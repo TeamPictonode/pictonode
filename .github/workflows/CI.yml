@@ -42,8 +42,13 @@ jobs:
         run: npm ci
       - name: Run Unit Tests
         run: npx gulp npm-ci && npx gulp mocha
-        
 
+  rebuild_libnode:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - run: python3 gimp/pictonode-gimp-plugin/GIMP\ 2.99/scripts/GtkNodes/test_setup.py
+ 
 
 
 
