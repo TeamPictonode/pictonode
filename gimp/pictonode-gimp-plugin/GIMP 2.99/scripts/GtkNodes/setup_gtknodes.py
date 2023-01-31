@@ -64,18 +64,18 @@ def install_deps_for_debian() -> bool:
         return False
 
     # Get the list of packages that are not installed.
-    not_installed_packages = []
+    not_installed_packages = set(DEBIAN_DEPENDENCIES)
     for installed_package in installed_packages.stdout.decode('utf-8').splitlines():
-        package_name, package_status = installed_package.split()
+        package_name = installed_package.split()[0]
 
         for needed_package in DEBIAN_DEPENDENCIES:
-            if package_name == needed_package and package_status != "install":
-                not_installed_packages.append(needed_package)
+            if needed_package in package_name:
+                not_installed_packages.remove(needed_package)
 
     # Install the packages that are not installed.
     if len(not_installed_packages) > 0:
         install_packages = sp.run(
-            ["pkexec", "apt", "install", "-y"] + not_installed_packages
+            ["pkexec", "apt", "install", "-y"] + list(not_installed_packages)
         )
 
         if install_packages.returncode != 0:
@@ -138,8 +138,7 @@ def build_gtknodes(target_dir: str, out_dir: str) -> bool:
 
     # Configure the build
     configure = sp.run(
-        ["./configure", 
-            "--enable-gtk-doc", "--enable-introspection=yes"],
+        ["./configure", "--enable-introspection=yes"],
         cwd=cwddir
     )
 
@@ -163,7 +162,7 @@ def build_gtknodes(target_dir: str, out_dir: str) -> bool:
         shutil.rmtree(out_dir)
 
         os.makedirs(out_dir, exist_ok=True)
-        shutil.copytree(path.join(cwddir, "src/.libs"), path.join(cwddir, "libs"))
+        shutil.copytree(path.join(cwddir, "src/.libs"), path.join(out_dir, "libs"))
         shutil.copytree(path.join(cwddir, "introspection"), path.join(out_dir, "introspection"))
     except Exception as e:
         print(f"Failed to copy the build output: {str(e)}")
@@ -173,15 +172,18 @@ def build_gtknodes(target_dir: str, out_dir: str) -> bool:
 
 
 def setup_gtknodes(output_dir: str) -> None:
+    # Create the output directory
+    os.makedirs(output_dir, exist_ok=True)
+
     # Get the current operating system
-    os = _get_os()
+    _os = _get_os()
 
     # Install dependencies
-    if os == _Os.POSIX:
+    if _os == _Os.POSIX:
         if not install_deps_for_debian():
             print("Failed to install dependencies for Debian.")
             return
-    elif os == _Os.NT:
+    elif _os == _Os.NT:
         print("Windows is not currently supported.")
         return
     else:
