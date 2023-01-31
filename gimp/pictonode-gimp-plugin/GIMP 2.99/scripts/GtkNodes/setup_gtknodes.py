@@ -44,7 +44,9 @@ DEBIAN_DEPENDENCIES = [
     "automake",
     "libgladeui-dev",
     "libgirepository1.0-dev",
-    "build-essential"
+    "build-essential",
+    "libgtk-3-dev",
+    "gir1.2-gtk-3.0",
 ]
 
 
