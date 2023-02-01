@@ -127,6 +127,13 @@ def build_gtknodes(target_dir: str, out_dir: str) -> bool:
     '''
 
     cwddir = path.join(target_dir, "gtknodes-master")
+    autogenexecp = sp.run(["chmod", "+x", "autogen.sh"], cwd=cwddir)
+
+    # Run autogen.sh
+    autogen = sp.run(["./autogen.sh"],cwd=cwddir)
+    if autogen.returncode != 0:
+        print("Failed to run autogen")
+        return False
 
     # Set up autoconf
     autoconf = sp.run(
