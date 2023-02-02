@@ -22,10 +22,12 @@ This is the basic function of `libnode`: a set of nodes that can recursively pro
 
 ## Serialization Format
 
-A pipeline CAN serialize to and be deserialized from a JSON object. The root of the JSON object MUST contain the `nodes` and `links` fields. These fields MUST contain an array of node and link objects, respectively. 
+A pipeline CAN serialize to and be deserialized from a JSON object. The root of the JSON object MUST contain the `output`, `nodes` and `links` fields. These fields MUST contain an array of node and link objects, respectively. 
 
 The node object is a two-field object. The `template` field MUST be a string that is the name of the node template. The `id` field is a unique numerical identifier for the node. The `id` field MUST be unique within the pipeline.
 
 The link object consists of its own unique `id` field. It also contains a `from` and `to` field, representing the nodes it goes from and to, respectively. These fields are numerical identifiers equivalent to the `id` fields of the nodes. There is also a `fromIndex` and `toIndex` field representing the index of the link in the `outputs` and `inputs` arrays of the nodes, respectively. These fields are used to determine which link is connected to which link.
+
+The `output` field is an integer that contains the `id` of the node that is the output of the pipeline.
 
 The template table is kept out of band, meaning that the pipeline itself does not contain the template table. This means that the serializer and deserialize must agree on the template table. 
