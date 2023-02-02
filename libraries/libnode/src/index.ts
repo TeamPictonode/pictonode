@@ -498,11 +498,15 @@ export class Pipeline<T, M> {
   // The ID of the next node to be created.
   private nextNodeId: number;
 
+  // The ID of the output node.
+  private outputNodeId: number | undefined;
+
   public constructor(templateTable: TemplateTable<T, M>) {
     this.nodes = new Map();
     this.links = new Map();
     this.templateTable = templateTable;
     this.nextNodeId = 0;
+    this.outputNodeId = undefined;
   }
 
   // Create a new node in the pipeline.
@@ -593,14 +597,31 @@ export class Pipeline<T, M> {
     this.nextNodeId++;
     this.nodes.delete(id);
   }
-}
 
-// TODO: Serialization/Deserialization
+  // Get the output node.
+  public getOutput(): Node<T, M> | undefined {
+    if (this.outputNodeId === undefined) {
+      return undefined;
+    }
+
+    return this.nodes.get(this.outputNodeId);
+  }
+
+  // Set the ID of the output node.
+  public setOutput(id: number): void {
+    this.outputNodeId = id;
+  }
+
+  __outputId(): number | undefined {
+    return this.outputNodeId;
+  }
+}
 
 // The serialized form of a pipeline.
 export interface SerializedPipeline<M> {
   nodes: Array<SerializedNode<M>>;
   links: Array<SerializedLink<M>>;
+  output: number;
 }
 
 export interface SerializedNode<M> {
@@ -670,6 +691,7 @@ export function serializePipeline<T, M>(
   return {
     nodes,
     links,
+    output: pipeline.__outputId() || -1,
   };
 }
 
@@ -700,6 +722,8 @@ export function deserializePipeline<T, M>(
     );
     newLink.__setId(link.id);
   });
+
+  pipeline.setOutput(serialized.output);
 
   return pipeline;
 }
