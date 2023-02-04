@@ -2,7 +2,7 @@
   "private": true,
   "workspaces": [
     "backend/pictodaemon",
-    "frontend/pictonode-web-frontend",
+    "frontend/pictonode-web",
     "libraries/libnode",
     "backend/plugin-backend",
     "backend/web-backend"
