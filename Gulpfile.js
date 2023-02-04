@@ -38,27 +38,35 @@ const TS = [...PURE, ...WEB, ...NODE]
 /**
  * Runs prettier on all files in the project.
  */
-const tfPrettier = parallel(...TS.map(runPrettier));
+const tfPrettier = parallel(...TS.map(name => named(`prettier_${name}`, runPrettier(name))));
 
 /**
  * Checks formatting on all files in the project.
  */
-const tfPrettierCheck = parallel(...TS.map(prettierCheck));
-
-/**
- * Runs npm ci on all projects.
- */
-const tfNpmCi = parallel(...TS.map(runNpmCi));
+const tfPrettierCheck = parallel(...TS.map(name => named(`prettier_check_${name}`, prettierCheck(name))));
 
 /**
  * Runs npx webpack for all web projects.
  */
-const tfNpxWebpack = parallel(...WEB.map(runNpxWebpack));
+const tfNpxWebpack = parallel(...WEB.map(name => named(`webpack_${name}`, runNpxWebpack(name))));
 
 /**
  * Runs mocha for all tests in the project.
  */
-const tfMocha = parallel(...TS.map(runMocha));
+const tfMocha = parallel(...TS.map(name => named(`mocha_${name}`, runMocha(name))));
+
+/**
+ * Assign an arbitrary name to an anonymous function.
+ * @param {string} name The name to assign to the function. 
+ * @param {Function} fn The function to name.
+ * @returns {Function} The function with the given name.
+ */
+function named(name, fn) {
+  // Sanitize the name.
+  name = name.replace(/[^a-zA-Z0-9_]/g, "_");
+
+  return new Function("fn", `return function ${name}() { return fn.apply(this, arguments); }`)(fn);
+}
 
 /**
  * Creates a stream that runs prettier on every provided file.
@@ -233,7 +241,6 @@ function runNpxWebpack(path) {
 module.exports = {
   format: tfPrettier,
   "format-check": tfPrettierCheck,
-  webpack: tfNpxWebpack,
   mocha: tfMocha,
-  "npm-ci": tfNpmCi,
+  webpack: tfNpxWebpack,
 };
