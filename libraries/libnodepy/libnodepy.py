@@ -559,11 +559,15 @@ class Pipeline(Generic[T, M]):
     # The next ID number.
     __nextId: int
 
+    # The ID number of the output node, or None if there is no output node.
+    __outputId: Optional[int]
+
     def __init__(self, templateTable: TemplateTable[T, M]):
         self.__nodes = {}
         self.__links = {}
         self.__templateTable = templateTable
         self.__nextId = 0
+        self.__outputId = None
 
     def createNode(self, template: str, metadata: M) -> Node[T, M]:
         """
@@ -631,6 +635,23 @@ class Pipeline(Generic[T, M]):
 
         return list(self.__nodes.values())
 
+    def getOutputNode(self) -> Optional[Node[T, M]]:
+        """
+        Returns the output node.
+        """
+
+        if self.__outputId is None:
+            return None
+
+        return self.__nodes[self.__outputId]
+
+    def setOutputNode(self, id: int) -> None:
+        """
+        Sets the output node.
+        """
+
+        self.__outputId = id
+
 
 SerializedLink = Dict[str, Any]
 SerializedNode = Dict[str, Any]
@@ -665,6 +686,7 @@ def serializePipeline(pipeline: Pipeline[T, M]) -> SerializedPipeline:
     return {
         "links": links,
         "nodes": nodes,
+        "output": pipeline.__outputId,
     }
 
 
@@ -691,5 +713,7 @@ def deserializePipeline(
             serializedLink["toIndex"],
             serializedLink["metadata"],
         )
+
+    pipeline.setOutputNode(serialized["output"])
 
     return pipeline
