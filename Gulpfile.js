@@ -51,18 +51,9 @@ const tfPrettierCheck = parallel(...TS.map(prettierCheck));
 const tfNpmCi = parallel(...TS.map(runNpmCi));
 
 /**
- * 
+ * Runs npx webpack for all web projects.
  */
-
-/**
- * Runs webpack on the pictonode-web-frontend.
- */
-function tfWebpack() {
-  // Run webpack as a child process.
-  return spawn("npx", ["webpack"], {
-    cwd: join(__dirname, "frontend/pictonode-web"),
-  })
-}
+const tfNpxWebpack = parallel(...WEB.map(runNpxWebpack));
 
 /**
  * Runs mocha for all tests in the project.
@@ -229,10 +220,20 @@ function runNpmCi(path) {
   })
 }
 
+/**
+ * Run npx webpack on a given path.
+ * @param{string} path The path to run npx webpack on
+ */
+function runNpxWebpack(path) {
+  return () => spawn("npx", ["webpack"], {
+    cwd: join(__dirname, path)
+  })
+}
+
 module.exports = {
   format: tfPrettier,
   "format-check": tfPrettierCheck,
-  webpack: tfWebpack,
+  webpack: tfNpxWebpack,
   mocha: tfMocha,
   "npm-ci": tfNpmCi,
 };
