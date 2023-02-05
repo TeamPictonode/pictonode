@@ -84,6 +84,9 @@ export default class ImageManager {
 
     await sharp(filePath).toFormat(this.internalType).toFile(newPath);
 
+    // We're done with the original image, delete it.
+    await deleteFile(filePath);
+
     // Add the image to the image map.
     this.imageMap.set(
       id,
