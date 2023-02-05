@@ -11,9 +11,7 @@
     <v-list class="text-center">
       <v-list-item>
         <router-link class="text-body-1" to="/canvas" tag="v-btn">
-          <v-btn>
-            Create a new Project
-          </v-btn>
+          <v-btn> Create a new Project </v-btn>
         </router-link>
       </v-list-item>
       <v-list-item>

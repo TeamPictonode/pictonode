@@ -7,6 +7,7 @@ import { timeout } from "./utils";
 import * as fs from "fs";
 import * as path from "path";
 import * as os from "os";
+import sharp from "sharp";
 
 export type AddImageResult =
   | {
@@ -20,6 +21,12 @@ export type AddImageResult =
 export enum AddImageVariant {
   Success = 0,
   TooLarge = 1,
+}
+
+export enum ImageInternalType {
+  Jpeg = "jpeg",
+  Webp = "webp",
+  Avif = "avif",
 }
 
 export default class ImageManager {
@@ -38,16 +45,24 @@ export default class ImageManager {
   // The last image ID we used.
   private lastImageId: number;
 
-  public constructor(maxSize: number) {
+  // The internal type of the image.
+  private internalType: ImageInternalType;
+
+  public constructor(maxSize: number, root: string | undefined) {
     this.maxSize = maxSize;
     this.imageMap = new Map();
     this.lastImageId = 0;
+    this.internalType = ImageInternalType.Webp;
 
     // Root is the tempdir, plus "pictonode{T}" where {T} is a random number.
-    this.root = path.join(
-      os.tmpdir(),
-      `pictonode${Math.floor(Math.random() * 100000)}`
-    );
+    if (root !== undefined) {
+      this.root = root;
+    } else {
+      this.root = path.join(
+        os.tmpdir(),
+        `pictonode${Math.floor(Math.random() * 100000)}`
+      );
+    }
   }
 
   // Add the image at the given path to the image manager.
@@ -63,11 +78,14 @@ export default class ImageManager {
     }
 
     // Otherwise, copy the image to the image manager.
-    // TODO: Convert to one standard format (probably AVIF)
     // TODO: Make this cryptographically secure
     const id = this.lastImageId++;
-    const newPath = path.join(this.root, `${id}`);
-    await moveFile(filePath, newPath);
+    const newPath = path.join(this.root, `${id}.${this.internalType}`);
+
+    await sharp(filePath).toFormat(this.internalType).toFile(newPath);
+
+    // We're done with the original image, delete it.
+    await deleteFile(filePath);
 
     // Add the image to the image map.
     this.imageMap.set(
@@ -102,7 +120,9 @@ export default class ImageManager {
       const now = new Date();
 
       // Remove old images.
-      for (const [id, info] of this.imageMap.entries()) {
+      const ids = Array.from(this.imageMap.keys());
+      for (const id of ids) {
+        const info = this.imageMap.get(id)!;
         const age = now.getTime() - info.getCreated().getTime();
         if (age > 1000 * 60 * 60 * 24) {
           // The image is older than a day, remove it.
@@ -162,19 +182,6 @@ function getFileSize(path: string): Promise<number> {
         reject(err);
       } else {
         resolve(stats.size);
-      }
-    });
-  });
-}
-
-// Move a file from one path to another.
-function moveFile(from: string, to: string): Promise<void> {
-  return new Promise((resolve, reject) => {
-    fs.rename(from, to, (err) => {
-      if (err) {
-        reject(err);
-      } else {
-        resolve();
       }
     });
   });
