@@ -31,6 +31,12 @@ export default defineComponent({
           Pictonode
         </v-btn>
       </router-link>
+
+      <router-link class="text-body-1" to="/about" tag="v-btn">
+        <v-btn>
+           About Page
+         </v-btn>
+       </router-link>
     </v-toolbar-title>
     <v-spacer />
     <v-menu left bottom>
