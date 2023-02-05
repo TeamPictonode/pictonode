@@ -23,7 +23,7 @@ export default class Daemon {
     this.db = db;
     this.cancelFunc = () => {};
     this.rng = new Rng();
-    this.imManager = new ImageManager(1024 * 1024 * 1024);
+    this.imManager = new ImageManager(1024 * 1024 * 1024, undefined);
     this.smManager = new SessionManager(this.rng);
   }
 
