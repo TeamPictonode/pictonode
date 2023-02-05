@@ -24,6 +24,9 @@ export type NodeMetadata =
       special: SpecialNodeType;
     }
   | {
+      metatype: MetadataType.Link;
+    }
+  | {
       metatype: MetadataType.Node;
       x: number;
       y: number;
@@ -33,6 +36,7 @@ export type NodeMetadata =
 export enum MetadataType {
   LinkTemplate,
   NodeTemplate,
+  Link,
   Node,
 }
 
@@ -71,6 +75,8 @@ export function metadataTitle(metadata: NodeMetadata): string {
       return metadata.name;
     case MetadataType.Node:
       return metadata.title ?? "UNKNOWN NODE";
+    case MetadataType.Link:
+      return "LINK";
   }
 }
 
@@ -94,7 +100,9 @@ export function defaultPipeline(): Pipeline {
     y: 200,
     title: "Image Output",
   });
-  pipeline.link(input.getId(), 0, output.getId(), 0);
+  pipeline.link(input.getId(), 0, output.getId(), 0, {
+    metatype: MetadataType.Link,
+  });
 
   return pipeline;
 }
