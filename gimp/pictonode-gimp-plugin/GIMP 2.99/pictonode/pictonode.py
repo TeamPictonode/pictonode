@@ -10,6 +10,8 @@ from gi.repository import Gegl
 from gi.repository import GObject
 from gi.repository import GLib
 from gi.repository import Gio
+from gi.repository import GtkNodes
+
 import sys
 import os
 
@@ -18,16 +20,17 @@ import os
 #Plugin implementation
 
 from client import *
-from httpclient import *
+#from httpclient import *
 
 def N_(message): return message
 def _(message): return GLib.dgettext(None, message)
+
 
 def send_image_to_daemon(button, gegl):
     
     def do_send_image(gegl):
         image = save_layer_to_png(gegl)
-        http_client.send_image(image)
+        #http_client.send_image(image)
 
     x = threading.Thread(target=do_send_image, args=(gegl,))
     x.start()
@@ -63,6 +66,67 @@ def save_layer_to_png(gegl_buffer):
 
 def entry_point(procedure, run_mode, image, n_drawables, drawables, args, data):
     return procedure.new_return_values(Gimp.PDBStatusType.SUCCESS, GLib.Error())
+
+class ImgSrcNode(GtkNodes.Node):
+  __gtype_name__ = 'SrcNode'
+
+
+  def __init__(self, *args, **kwds) -> None:
+    super().__init__(*args, **kwds)
+
+    self.set_label("Image Source")
+    self.connect("node_func_clicked",self.remove)
+
+  def remove(self, node):
+    self.destroy()
+
+#class based on the demo class from the gtknode img.py example
+class PluginWindow(object):
+
+
+  def __init__(self):
+    window: Gtk.Window = Gtk.Window.new(Gtk.WindowType.TOPLEVEL)
+    window.set_border_width(20)
+
+    hbox: Gtk.Box = Gtk.Box.new(Gtk.Orientation.HORIZONTAL, 0)
+
+    button: Gtk.Button = Gtk.Button(label="Add Generic Node")
+    button.connect("clicked", self.add_generic)
+    hbox.add(button)
+
+    frame = Gtk.Frame.new()
+
+    scrolled_window = Gtk.ScrolledWindow(hexpand=True, vexpand=True)
+    scrolled_window.set_policy(Gtk.PolicyType.AUTOMATIC, Gtk.PolicyType.AUTOMATIC)
+    frame.add(scrolled_window)
+
+    self.node_view: GtkNodes.NodeView = GtkNodes.NodeView()
+    scrolled_window.add(self.node_view)
+
+    full_view: Gtk.Box = Gtk.Box.new(Gtk.Orientation.VERTICAL, 0)
+    full_view.pack_start(hbox, False, False, 0)
+    full_view.pack_start(frame, True, True, 0)
+
+    window.add(full_view)
+    
+    window.connect("destroy", self.do_quit)
+    window.show_all()
+    Gtk.main()
+
+  def add_node(self,node_type: GtkNodes.Node, widget=None):
+    self.node_view.add(node_type)
+    self.node_view.show_all()
+
+  def do_quit(self, widget=None, data=None):
+    Gtk.main_quit()
+    sys.exit(0)
+
+  def save(self):
+    self.node_view.save("node_structure.xml")
+
+  def add_generic(self, widget=None):
+    self.node_view.add(ImgSrcNode())
+    self.node_view.show_all()
 
 class Pictonode (Gimp.PlugIn):
 
@@ -107,66 +171,7 @@ class Pictonode (Gimp.PlugIn):
             gi.require_version('Gdk', '3.0')
             from gi.repository import Gdk
 
-            GimpUi.init("pictonode.py")
-
-            dialog = GimpUi.Dialog(use_header_bar=True,
-                                   title=_("Pictonode"),
-                                   role="es1-Python3")
-
-            dialog.add_button(_("_Cancel"), Gtk.ResponseType.CANCEL)
-            dialog.add_button(_("_Source"), Gtk.ResponseType.APPLY)
-            dialog.add_button(_("_OK"), Gtk.ResponseType.OK)
-            
-            win = Gtk.ApplicationWindow()
-            win.set_title("Pictonode")
-            win.set_default_size(400, 400)
-
-            grid = Gtk.Grid()
-
-            #grabs a pixbuf of the currently selected image and 
-            image_display = Gtk.Image()
-            image_path = image.get_file().get_path()
-            image_display.set_from_file(image_path)
-            image_display.set_from_pixbuf(image_display.get_pixbuf())
-
-            '''
-                Sending an image to controller works like this:
-                
-                START
-                    -Plugin sends init message to controller (Hey dude im sending an image in a sec and its a png/svg/whatever)
-                    -Plugin waits for controller to confirm (Controller replies saying thats chill bro)
-                    -Plugin sends image chunks then waits for controller to confirm (Controller replies mmm yummy)
-                END
-            '''
-
-            button = Gtk.Button(label="Send To Daemon")
-            button.connect('clicked', send_image_to_controller_callback, drawable.get_buffer())
-
-            scrolled = Gtk.ScrolledWindow()
-            scrolled.add_with_viewport(image_display)
-            scrolled.set_min_content_height(500)
-            scrolled.set_min_content_width(400)
-
-            grid.attach(button, 0, 3, 2, 1)
-            grid.attach(scrolled, 0, 1, 100, 2)
-
-            win.add(grid)
-            win.show_all()
-
-            ''' geometry = Gdk.Geometry()
-            geometry.min_aspect = 0.5
-            geometry.max_aspect = 1.0
-            dialog.set_geometry_hints(None, geometry, Gdk.WindowHints.ASPECT)
-            '''
-
-            box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=2)
-            img = Gtk.Image.new_from_file('C:/Users/parke/Pictures/Camera Roll/example.jpg')
-
-            frame_rgb = Gtk.Frame(label='RGB image')
-            box.pack_start(frame_rgb, True, True, 0)
-            
-            dialog.get_content_area().add(box)
-            box.show()
+            plugin_window: PluginWindow = PluginWindow()
 
             while (True):
                 response = dialog.run()
