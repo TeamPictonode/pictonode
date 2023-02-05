@@ -140,7 +140,7 @@ class Pictonode (Gimp.PlugIn):
             '''
 
             button = Gtk.Button(label="Send To Daemon")
-            button.connect('clicked', send_image_to_controller_callback, drawable.get_buffer())
+            button.connect('clicked', send_image_to_daemon, drawable.get_buffer())
 
             scrolled = Gtk.ScrolledWindow()
             scrolled.add_with_viewport(image_display)
