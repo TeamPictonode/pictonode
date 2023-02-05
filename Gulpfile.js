@@ -111,7 +111,7 @@ function runPrettier(path) {
     }
   }
 
-  return () => src(join(path, "**/*.ts"))
+  return () => src(join(path, "**/*.{ts,js,vue}"))
     .pipe(new PrettierTransform())
     .pipe(dest(path));
 }
@@ -173,7 +173,7 @@ function prettierCheck(path) {
     }
   }
 
-  return () => src(join(path, "src/**/*.ts"))
+  return () => src(join(path, "src/**/*.{ts,vue,js}"))
     .pipe(new PrettierCheckTransform())
     .pipe(dest(join(path, "src")));
 }

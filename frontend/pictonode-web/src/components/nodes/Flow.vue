@@ -165,14 +165,14 @@ export default defineComponent({
             oldSourceId,
             oldSourceValue,
             targetId,
-            targetValue 
+            targetValue
           );
         }
       }
 
       // Link the nodes.
       this.pipeline.link(sourceId, sourceValue, targetId, targetValue, {
-        metatype: MetadataType.Link
+        metatype: MetadataType.Link,
       });
 
       // Update the graph.
