@@ -1,14 +1,12 @@
 // GNU AGPL v3 License
 // Written by John Nunley
 
-import { expect } from 'chai';
-import ImageManager, { AddImageVariant } from '../src/imageManager';
+import { expect } from "chai";
+import ImageManager, { AddImageVariant } from "../src/imageManager";
 
-import * as fs from 'fs';
-import * as os from 'os';
-import * as path from 'path';
-
-import sharp from "sharp";
+import * as fs from "fs";
+import * as os from "os";
+import * as path from "path";
 
 describe("image management", () => {
   // Set PICTONODE_IMAGE_ROOT to a temporary directory.
@@ -30,5 +28,4 @@ describe("image management", () => {
     const data = fs.readFileSync(image);
     expect(data.length).to.be.greaterThan(0);
   });
-})
-
+});
