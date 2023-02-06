@@ -11,6 +11,12 @@ const { Transform } = require("stream");
 
 const prettier = require("prettier");
 
+// Path to NPX.
+const NPX = process.env.NPX_CMD || "npx";
+
+// Path to python.
+const PYTHON = process.env.PYTHON_CMD || "python";
+
 // Paths for pure TS projects.
 const PURE = [
   "libraries/libnode"
@@ -28,7 +34,7 @@ const NODE = [
 ]
 
 // Paths for Python projects.
-const PYTHON = [
+const PYTHON_PROJECTS = [
   "gimp/pictonode-gimp-plugin"
 ]
 
@@ -54,6 +60,16 @@ const tfNpxWebpack = parallel(...WEB.map(name => named(`webpack_${name}`, runNpx
  * Runs mocha for all tests in the project.
  */
 const tfMocha = parallel(...TS.map(name => named(`mocha_${name}`, runMocha(name))));
+
+/**
+ * Runs autopep8 for all python projects.
+ */
+const tfAutopep8 = parallel(...PYTHON_PROJECTS.map(name => named(`autopep8_${name}`, runAutopep8(name))));
+
+/**
+ * Runs autopep8 as a check for all python projects.
+ */
+const tfAutopep8Check = parallel(...PYTHON_PROJECTS.map(name => named(`autopep8_check_${name}`, runAutopep8Checker(name))));
 
 /**
  * Assign an arbitrary name to an anonymous function.
@@ -179,6 +195,78 @@ function prettierCheck(path) {
 }
 
 /**
+ * Runs autopep8 for all py files in a dir.
+ * @param {string} path The path to run autopep8 on.
+ */
+function runAutopep8(path) {
+  class Autopep8Pipe extends Transform {
+    constructor(options) {
+      super({
+        objectMode: true,
+        ...options
+      });
+    }
+
+    _transform(file, _, callback) {
+      // Format the file.
+      autopep8(file.contents).then(formatted => {
+        file.contents = Buffer.from(formatted, "utf8");
+
+        // Push this file.
+        this.push(file);
+        callback();
+      }).catch(err => {
+        // Emit the error.
+        this.emit("error", err);
+      })
+    }
+  }
+
+  return () => src(join(path, "**/*.py"))
+    .pipe(new Autopep8Pipe())
+    .pipe(dest(path));
+}
+
+/**
+ * Runs autopep8 as a checker for all py files in a dir.
+ * @param {string} path The path to run autopep8 on.
+ */
+function runAutopep8Checker(path) {
+  class Autopep8CheckerPipe extends Transform {
+    constructor(options) {
+      super({
+        objectMode: true,
+        ...options
+      });
+    }
+
+    _transform(file, _, callback) {
+      // Format the file.
+      autopep8(file.contents).then(formatted => {
+        if (formatted !== file.contents.toString("utf8")) {
+          this.emit("error", new Error(`File ${file.path} is not formatted.`));
+          callback();
+          return;
+        }
+
+        // Push this file.
+        this.push(file);
+        callback();
+      }).catch(err => {
+        // Emit the error.
+        this.emit("error", err);
+        callback();
+        return;
+      })
+    }
+  }
+
+  return () => src(join(path, "**/*.py"))
+    .pipe(new Autopep8CheckerPipe())
+    .pipe(dest(path));
+}
+
+/**
  * Runs mocha on a given path.
  * @param {string} path The path to run mocha on.
  */
@@ -203,7 +291,7 @@ function runMocha(path) {
       TS_NODE_COMPILER_OPTIONS: JSON.stringify(compilerOptions),
     }
 
-    const pr = spawn("npx", args, {
+    const pr = spawn(NPX, args, {
       cwd: join(__dirname, path),
       env: {
         ...extraEnv,
@@ -219,28 +307,65 @@ function runMocha(path) {
 }
 
 /**
- * Run npm ci on a given path.
- * @param {string} path The path to run npm ci on.
- */
-function runNpmCi(path) {
-  return () => spawn("npm", ["ci"], {
-    cwd: join(__dirname, path),
-  })
-}
-
-/**
  * Run npx webpack on a given path.
  * @param{string} path The path to run npx webpack on
  */
 function runNpxWebpack(path) {
-  return () => spawn("npx", ["webpack"], {
+  return () => spawn(NPX, ["webpack"], {
     cwd: join(__dirname, path)
   })
 }
 
+/**
+ * Run autopep8 on a buffer of python code and return the formatted code.
+ * @param {Buffer} buffer The buffer to format.
+ * @returns {Promise<string>} The formatted code.
+ */
+function autopep8(buffer) {
+  let formatted = "";
+
+  return new Promise((resolve, reject) => {
+    // Run python -m autopep8 - with unformatted as stdin.
+    const child = spawn(PYTHON, ["-m", "autopep8", "-"], {
+      stdio: ["pipe", "pipe", "inherit"],
+    });
+
+    // Write the unformatted file to stdin.
+    child.stdin.write(buffer, (err) => {
+      if (err) {
+        reject(err);
+        return;
+      }
+
+      // Close stdin.
+      child.stdin.end();
+    })
+
+    // On data, append to formatted.
+    child.stdout.on("data", data => {
+      formatted += data.toString("utf8");
+    })
+
+    // On error, reject.
+    child.on("error", err => {
+      reject(err);
+    })
+
+    // On exit, get the formatted file.
+    child.on("exit", code => {
+      if (code !== 0) {
+        reject(new Error(`autopep8 exited with code ${code}`));
+        return;
+      }
+
+      resolve(formatted);
+    })
+  })
+}
+
 module.exports = {
-  format: tfPrettier,
-  "format-check": tfPrettierCheck,
+  format: parallel(tfPrettier, tfAutopep8),
+  "format-check": parallel(tfPrettierCheck, tfAutopep8Check),
   mocha: tfMocha,
   webpack: tfNpxWebpack,
 };

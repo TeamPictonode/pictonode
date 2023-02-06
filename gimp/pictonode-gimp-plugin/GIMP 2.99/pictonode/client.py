@@ -3,6 +3,7 @@ import socket
 
 # This file was written in its entirety by Parker Nelms and Stephen Foster.
 
+
 class PluginClient:
     def __init__(self):
         self.HOST_NAME = socket.gethostname()
@@ -14,7 +15,8 @@ class PluginClient:
     def connect_to_controller(self):
         self.client.connect((self.LOCALHOST_IP, self.PORT))
         print("Plugin Socket connected to: ")
-        print(f"Local Host ({self.HOST_NAME}): {self.LOCALHOST_IP}", f"On Port: {self.PORT}")
+        print(
+            f"Local Host ({self.HOST_NAME}): {self.LOCALHOST_IP}", f"On Port: {self.PORT}")
 
     def close_connection_to_controller(self):
         self.client.close()
@@ -33,5 +35,6 @@ class PluginClient:
 
     def receive_image_from_controller(self, image):
         pass
+
 
 client = PluginClient()

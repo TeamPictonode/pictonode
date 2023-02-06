@@ -1,30 +1,31 @@
 #!/usr/bin/env python3
+from httpclient import *
+from client import *
+import os
+import sys
+from gi.repository import Gio
+from gi.repository import GLib
+from gi.repository import GObject
+from gi.repository import Gegl
+from gi.repository import GimpUi
+from gi.repository import Gimp
 import threading
 import gi
 gi.require_version('Gimp', '3.0')
-from gi.repository import Gimp
 gi.require_version('GimpUi', '3.0')
-from gi.repository import GimpUi
 gi.require_version('Gegl', '0.4')
-from gi.repository import Gegl
-from gi.repository import GObject
-from gi.repository import GLib
-from gi.repository import Gio
-import sys
-import os
 
 # This file was written in its entirety by Parker Nelms and Stephen Foster.
 
-#Plugin implementation
+# Plugin implementation
 
-from client import *
-from httpclient import *
 
 def N_(message): return message
 def _(message): return GLib.dgettext(None, message)
 
+
 def send_image_to_daemon(button, gegl):
-    
+
     def do_send_image(gegl):
         image = save_layer_to_png(gegl)
         http_client.send_image(image)
@@ -33,11 +34,14 @@ def send_image_to_daemon(button, gegl):
     x.start()
     x.join()
 
-def save_layer_to_png(gegl_buffer):
-    STATIC_TARGET_DIR = os.path.abspath(f"{os.path.dirname(os.path.abspath(__file__))}\\int")
-    STATIC_TARGET = os.path.abspath(f"{STATIC_TARGET_DIR}\\pictonode-intermediate.png")
 
-    #make the empty target
+def save_layer_to_png(gegl_buffer):
+    STATIC_TARGET_DIR = os.path.abspath(
+        f"{os.path.dirname(os.path.abspath(__file__))}\\int")
+    STATIC_TARGET = os.path.abspath(
+        f"{STATIC_TARGET_DIR}\\pictonode-intermediate.png")
+
+    # make the empty target
     os.makedirs(STATIC_TARGET_DIR, exist_ok=True)
     intermediate_file = os.open(STATIC_TARGET, os.O_CREAT | os.O_TRUNC)
     os.close(intermediate_file)
@@ -61,8 +65,10 @@ def save_layer_to_png(gegl_buffer):
 
     return STATIC_TARGET
 
+
 def entry_point(procedure, run_mode, image, n_drawables, drawables, args, data):
     return procedure.new_return_values(Gimp.PDBStatusType.SUCCESS, GLib.Error())
+
 
 class Pictonode (Gimp.PlugIn):
 
@@ -71,23 +77,23 @@ class Pictonode (Gimp.PlugIn):
         return True, 'gimp30-python', None
 
     def do_query_procedures(self):
-        return [ 'pictonode' ]
+        return ['pictonode']
 
     def do_create_procedure(self, name):
         procedure = Gimp.ImageProcedure.new(self, name,
                                             Gimp.PDBProcType.PLUGIN,
                                             self.run, None)
         procedure.set_image_types("RGB*, GRAY*")
-        procedure.set_sensitivity_mask (Gimp.ProcedureSensitivityMask.DRAWABLE |
-                                        Gimp.ProcedureSensitivityMask.DRAWABLES)
-        procedure.set_documentation (_("Pictonode"),
-                                     _("Launches Pictonode plugin"),
-                                     name)
+        procedure.set_sensitivity_mask(Gimp.ProcedureSensitivityMask.DRAWABLE |
+                                       Gimp.ProcedureSensitivityMask.DRAWABLES)
+        procedure.set_documentation(_("Pictonode"),
+                                    _("Launches Pictonode plugin"),
+                                    name)
         procedure.set_menu_label(_("Launch"))
         procedure.set_attribution("Stephen Foster, Parker Nelms",
                                   "Team Picto",
                                   "2022")
-        procedure.add_menu_path ("<Image>/Pictonode")
+        procedure.add_menu_path("<Image>/Pictonode")
 
         procedure.add_argument_from_property(self, "name")
 
@@ -95,7 +101,8 @@ class Pictonode (Gimp.PlugIn):
 
     def run(self, procedure, run_mode, image, n_drawables, drawables, args, run_data):
         if n_drawables != 1:
-            msg = _("Procedure '{}' only works with one drawable.").format(procedure.get_name())
+            msg = _("Procedure '{}' only works with one drawable.").format(
+                procedure.get_name())
             error = GLib.Error.new_literal(Gimp.PlugIn.error_quark(), msg, 0)
             return procedure.new_return_values(Gimp.PDBStatusType.CALLING_ERROR, error)
         else:
@@ -116,14 +123,14 @@ class Pictonode (Gimp.PlugIn):
             dialog.add_button(_("_Cancel"), Gtk.ResponseType.CANCEL)
             dialog.add_button(_("_Source"), Gtk.ResponseType.APPLY)
             dialog.add_button(_("_OK"), Gtk.ResponseType.OK)
-            
+
             win = Gtk.ApplicationWindow()
             win.set_title("Pictonode")
             win.set_default_size(400, 400)
 
             grid = Gtk.Grid()
 
-            #grabs a pixbuf of the currently selected image and 
+            # grabs a pixbuf of the currently selected image and
             image_display = Gtk.Image()
             image_path = image.get_file().get_path()
             image_display.set_from_file(image_path)
@@ -140,7 +147,8 @@ class Pictonode (Gimp.PlugIn):
             '''
 
             button = Gtk.Button(label="Send To Daemon")
-            button.connect('clicked', send_image_to_daemon, drawable.get_buffer())
+            button.connect('clicked', send_image_to_daemon,
+                           drawable.get_buffer())
 
             scrolled = Gtk.ScrolledWindow()
             scrolled.add_with_viewport(image_display)
@@ -160,11 +168,12 @@ class Pictonode (Gimp.PlugIn):
             '''
 
             box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=2)
-            img = Gtk.Image.new_from_file('C:/Users/parke/Pictures/Camera Roll/example.jpg')
+            img = Gtk.Image.new_from_file(
+                'C:/Users/parke/Pictures/Camera Roll/example.jpg')
 
             frame_rgb = Gtk.Frame(label='RGB image')
             box.pack_start(frame_rgb, True, True, 0)
-            
+
             dialog.get_content_area().add(box)
             box.show()
 
@@ -172,8 +181,8 @@ class Pictonode (Gimp.PlugIn):
                 response = dialog.run()
                 if response == Gtk.ResponseType.OK:
                     position = Gimp.get_pdb().run_procedure('gimp-image-get-item-position',
-                                 [image,
-                                  drawable]).index(1)
+                                                            [image,
+                                                             drawable]).index(1)
 
                     # close dialog
                     dialog.destroy()
@@ -182,7 +191,8 @@ class Pictonode (Gimp.PlugIn):
                     dialog.destroy()
                     return procedure.new_return_values(Gimp.PDBStatusType.CANCEL,
                                                        GLib.Error())
-        
+
         return procedure.new_return_values(Gimp.PDBStatusType.SUCCESS, GLib.Error())
+
 
 Gimp.main(Pictonode.__gtype__, sys.argv)
