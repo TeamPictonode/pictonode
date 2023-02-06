@@ -16,6 +16,12 @@
 
 # This file was written in its entirety by Parker Nelms and Stephen Foster.
 
+from gi.repository import GimpUi
+from gi.repository import Gimp
+from gi.repository import Gio
+from gi.repository import GLib
+from gi.repository import GObject
+from gi.repository import Gegl
 import sys
 import os
 
@@ -25,22 +31,17 @@ if sys.platform == "win32":
 import gi
 
 gi.require_version('Gegl', '0.4')
-from gi.repository import Gegl
 
-from gi.repository import GObject
-from gi.repository import GLib
-from gi.repository import Gio
 
 gi.require_version('Gimp', '3.0')
-from gi.repository import Gimp
 
 gi.require_version('GimpUi', '3.0')
-from gi.repository import GimpUi
 
 
 # Put anything you want to test with gimp's python dependencies here :)
 def main():
     print("hello from sandbox!")
 
-if __name__=='__main__':
+
+if __name__ == '__main__':
     main()
