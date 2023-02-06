@@ -16,9 +16,17 @@ module.exports = {
       {
         test: /\.tsx?$/,
         use: 'ts-loader',
-        exclude: /node_modules/,
+        //exclude: /node_modules/,
       },
     ],
+  },
+  externals: {
+    "sharp": "sharp",
+    "express": "express",
+    "pg": "pg",
+    "fs": "fs",
+    "path": "path",
+    "os": "os"
   },
   resolve: {
     extensions: [ '.tsx', '.ts', '.js' ],

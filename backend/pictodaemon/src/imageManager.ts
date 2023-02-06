@@ -53,6 +53,7 @@ export default class ImageManager {
     this.imageMap = new Map();
     this.lastImageId = 0;
     this.internalType = ImageInternalType.Webp;
+    this.currentSize = 0;
 
     // Root is the tempdir, plus "pictonode{T}" where {T} is a random number.
     if (root !== undefined) {

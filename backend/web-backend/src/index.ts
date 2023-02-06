@@ -2,17 +2,19 @@
 // Written by John Nunley
 
 import Daemon from "pictodaemon";
-import dotenv from "dotenv";
-import express from "express";
+import * as dotenv from "dotenv";
+import * as express from "express";
 import PostgresDatabase from "./postgres";
 
-import { SerializedPipeline } from "libraries/libnode/src";
+import { SerializedPipeline } from "libnode";
 
 import * as fs from "fs";
 import { join } from "path";
 
 async function main() {
-  dotenv.config();
+  dotenv.config({
+    path: join(__dirname, ".env"),
+  });
 
   // Spawn the daemon.
   const tempDir = await mkdtemp("pictodaemon");
@@ -71,7 +73,7 @@ async function runExpress(tempDir: string, daemon: Daemon) {
   })
 
   // Host the public directory.
-  app.use(express.static(join(__dirname, "..", "public")))
+  app.use(express.static(join(__dirname, "public")))
 
   // Host HTTP and HTTPS servers.
   const http_port = parseInt(process.env.HTTP_PORT || "80") || 80
