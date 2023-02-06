@@ -1,3 +1,6 @@
+from pictoflow import node
+from pictoflow import node_view
+from gi.repository import Gtk
 import sys
 import os
 if sys.platform == "win32":
@@ -6,16 +9,13 @@ if sys.platform == "win32":
 import gi
 
 gi.require_version('Gtk', '3.0')
-from gi.repository import Gtk
 
-from pictoflow import node_view
-from pictoflow import node
 
 class Demo():
     def __init__(self):
         w = Gtk.Window.new(Gtk.WindowType.TOPLEVEL)
         w.set_border_width(10)
-        w.set_default_size(500,500)
+        w.set_default_size(500, 500)
         w.set_title("Pictoflow Demo")
         hbox = Gtk.Box.new(Gtk.Orientation.HORIZONTAL, 0)
 
@@ -54,9 +54,11 @@ class Demo():
     def load(self, widget=None):
         print("load")
 
+
 def main():
     print("hello from sandbox!")
     Demo()
 
-if __name__=='__main__':
+
+if __name__ == '__main__':
     main()

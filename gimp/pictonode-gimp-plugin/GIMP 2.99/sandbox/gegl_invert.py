@@ -13,6 +13,12 @@
 
 # This file was written in its entirety by Parker Nelms and Stephen Foster.
 
+from gi.repository import GimpUi
+from gi.repository import Gimp
+from gi.repository import Gio
+from gi.repository import GLib
+from gi.repository import GObject
+from gi.repository import Gegl
 import sys
 import os
 
@@ -22,21 +28,16 @@ if sys.platform == "win32":
 import gi
 
 gi.require_version('Gegl', '0.4')
-from gi.repository import Gegl
 
-from gi.repository import GObject
-from gi.repository import GLib
-from gi.repository import Gio
 
 gi.require_version('Gimp', '3.0')
-from gi.repository import Gimp
 
 gi.require_version('GimpUi', '3.0')
-from gi.repository import GimpUi
+
 
 def do_GEGL_invert():
     try:
-        #[index 1 (inclusive) to index 3 (exclusive)]
+        # [index 1 (inclusive) to index 3 (exclusive)]
         origin, target = sys.argv[1:3]
     except IndexError:
         sys.stderr.write("Usage: %s origin_jpg target_jpg" % __file__)
@@ -69,8 +70,10 @@ def do_GEGL_invert():
 
     w.process()
 
+
 def main():
     do_GEGL_invert()
 
-if __name__=='__main__':
+
+if __name__ == '__main__':
     main()

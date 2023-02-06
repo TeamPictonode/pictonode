@@ -25,9 +25,9 @@ def runTest(target_dir):
 
 
 def main():
-  with tempfile.TemporaryDirectory() as target_dir:
-    runTest(target_dir)
+    with tempfile.TemporaryDirectory() as target_dir:
+        runTest(target_dir)
 
 
 if __name__ == "__main__":
-  main()
+    main()
