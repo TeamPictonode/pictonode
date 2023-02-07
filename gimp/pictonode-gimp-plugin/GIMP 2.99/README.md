@@ -24,6 +24,11 @@ To install, just copy the Pictonode folder into any one of these folders, or use
 .\scripts\Windows\install.bat
 ```
 
+### Linux (Flatpak)
+```
+.\scripts\Linux\install-flatpak.sh
+```
+
 ## Sandbox
 To develop modules for the plugin or just test against the GObject typelibs GIMP uses at runtime without needing to run GIMP at all, use the gimp_sandbox template start!
 
