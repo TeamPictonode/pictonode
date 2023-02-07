@@ -1,23 +1,52 @@
 #!/usr/bin/env python3
-from httpclient import *
-from client import *
-import os
-import sys
-from gi.repository import Gio
-from gi.repository import GLib
-from gi.repository import GObject
-from gi.repository import Gegl
-from gi.repository import GimpUi
-from gi.repository import Gimp
-import threading
-import gi
-gi.require_version('Gimp', '3.0')
-gi.require_version('GimpUi', '3.0')
-gi.require_version('Gegl', '0.4')
 
 # This file was written in its entirety by Parker Nelms and Stephen Foster.
 
-# Plugin implementation
+from httpclient import *
+from client import *
+
+import sys
+import threading
+import os
+
+# autopep8 off
+import gi
+gi.require_version("GIRepository", "2.0")
+from gi.repository import GIRepository  # noqa
+
+GIRepository.Repository.prepend_search_path(
+    os.path.realpath(
+        os.path.dirname(
+            os.path.abspath(__file__)) +
+        "/introspection"))
+
+GIRepository.Repository.prepend_library_path(
+    os.path.realpath(
+        os.path.dirname(
+            os.path.abspath(__file__)) +
+        "/libs"))
+
+gi.require_version("GtkNodes", "0.1")
+from gi.repository import GtkNodes  # noqa
+
+gi.require_version('Gimp', '3.0')
+from gi.repository import Gimp  # noqa
+
+gi.require_version('GimpUi', '3.0')
+from gi.repository import GimpUi  # noqa
+
+gi.require_version('Gegl', '0.4')
+from gi.repository import Gegl  # noqa
+
+gi.require_version("Gio", "2.0")
+from gi.repository import Gio  # noqa
+
+gi.require_version("GLib", "2.0")
+from gi.repository import GLib  # noqa
+
+gi.require_version("GObject", "2.0")
+from gi.repository import GObject  # noqa
+# autopep8 on
 
 
 def N_(message): return message
@@ -66,10 +95,6 @@ def save_layer_to_png(gegl_buffer):
     return STATIC_TARGET
 
 
-def entry_point(procedure, run_mode, image, n_drawables, drawables, args, data):
-    return procedure.new_return_values(Gimp.PDBStatusType.SUCCESS, GLib.Error())
-
-
 class Pictonode (Gimp.PlugIn):
 
     ## GimpPlugIn virtual methods ##
@@ -99,12 +124,24 @@ class Pictonode (Gimp.PlugIn):
 
         return procedure
 
-    def run(self, procedure, run_mode, image, n_drawables, drawables, args, run_data):
+    def run(
+            self,
+            procedure,
+            run_mode,
+            image,
+            n_drawables,
+            drawables,
+            args,
+            run_data):
+
+        node_view = GtkNodes.NodeView()
+
         if n_drawables != 1:
             msg = _("Procedure '{}' only works with one drawable.").format(
                 procedure.get_name())
             error = GLib.Error.new_literal(Gimp.PlugIn.error_quark(), msg, 0)
-            return procedure.new_return_values(Gimp.PDBStatusType.CALLING_ERROR, error)
+            return procedure.new_return_values(
+                Gimp.PDBStatusType.CALLING_ERROR, error)
         else:
             drawable = drawables[0]
 
@@ -136,19 +173,11 @@ class Pictonode (Gimp.PlugIn):
             image_display.set_from_file(image_path)
             image_display.set_from_pixbuf(image_display.get_pixbuf())
 
-            '''
-                Sending an image to controller works like this:
-                
-                START
-                    -Plugin sends init message to controller (Hey dude im sending an image in a sec and its a png/svg/whatever)
-                    -Plugin waits for controller to confirm (Controller replies saying thats chill bro)
-                    -Plugin sends image chunks then waits for controller to confirm (Controller replies mmm yummy)
-                END
-            '''
-
             button = Gtk.Button(label="Send To Daemon")
-            button.connect('clicked', send_image_to_daemon,
-                           drawable.get_buffer())
+            button.connect(
+                'clicked',
+                send_image_to_daemon,
+                drawable.get_buffer())
 
             scrolled = Gtk.ScrolledWindow()
             scrolled.add_with_viewport(image_display)
@@ -180,19 +209,19 @@ class Pictonode (Gimp.PlugIn):
             while (True):
                 response = dialog.run()
                 if response == Gtk.ResponseType.OK:
-                    position = Gimp.get_pdb().run_procedure('gimp-image-get-item-position',
-                                                            [image,
-                                                             drawable]).index(1)
+                    position = Gimp.get_pdb().run_procedure(
+                        'gimp-image-get-item-position', [image, drawable]).index(1)
 
                     # close dialog
                     dialog.destroy()
                     break
                 else:
                     dialog.destroy()
-                    return procedure.new_return_values(Gimp.PDBStatusType.CANCEL,
-                                                       GLib.Error())
+                    return procedure.new_return_values(
+                        Gimp.PDBStatusType.CANCEL, GLib.Error())
 
-        return procedure.new_return_values(Gimp.PDBStatusType.SUCCESS, GLib.Error())
+        return procedure.new_return_values(
+            Gimp.PDBStatusType.SUCCESS, GLib.Error())
 
 
 Gimp.main(Pictonode.__gtype__, sys.argv)
