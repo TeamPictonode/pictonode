@@ -1,19 +1,25 @@
 #!/usr/bin/env python3
+
+# This file was written in its entirety by Parker Nelms and Stephen Foster.
+
 from httpclient import *
 from client import *
+
 import sys
 import threading
 import os
-import gi
 
-from gi.repository import GIRepository
+# autopep8 off
+import gi
 gi.require_version("GIRepository", "2.0")
+from gi.repository import GIRepository  # noqa
 
 GIRepository.Repository.prepend_search_path(
     os.path.realpath(
         os.path.dirname(
             os.path.abspath(__file__)) +
         "/introspection"))
+
 GIRepository.Repository.prepend_library_path(
     os.path.realpath(
         os.path.dirname(
@@ -21,24 +27,29 @@ GIRepository.Repository.prepend_library_path(
         "/libs"))
 
 gi.require_version("GtkNodes", "0.1")
-gi.require_version('Gimp', '3.0')
-gi.require_version('GimpUi', '3.0')
-gi.require_version('Gegl', '0.4')
-from gi.repository import Gio
-from gi.repository import GLib
-from gi.repository import GObject
-from gi.repository import Gegl
-from gi.repository import GimpUi
-from gi.repository import Gimp
-from gi.repository import GtkNodes
-# This file was written in its entirety by Parker Nelms and Stephen Foster.
+from gi.repository import GtkNodes  # noqa
 
-# Plugin implementation
+gi.require_version('Gimp', '3.0')
+from gi.repository import Gimp  # noqa
+
+gi.require_version('GimpUi', '3.0')
+from gi.repository import GimpUi  # noqa
+
+gi.require_version('Gegl', '0.4')
+from gi.repository import Gegl  # noqa
+
+gi.require_version("Gio", "2.0")
+from gi.repository import Gio  # noqa
+
+gi.require_version("GLib", "2.0")
+from gi.repository import GLib  # noqa
+
+gi.require_version("GObject", "2.0")
+from gi.repository import GObject  # noqa
+# autopep8 on
 
 
 def N_(message): return message
-
-
 def _(message): return GLib.dgettext(None, message)
 
 
@@ -82,19 +93,6 @@ def save_layer_to_png(gegl_buffer):
     buffer_output.process()
 
     return STATIC_TARGET
-
-
-def entry_point(
-        procedure,
-        run_mode,
-        image,
-        n_drawables,
-        drawables,
-        args,
-        data):
-    return procedure.new_return_values(
-        Gimp.PDBStatusType.SUCCESS, GLib.Error())
-
 
 
 class Pictonode (Gimp.PlugIn):
@@ -174,16 +172,6 @@ class Pictonode (Gimp.PlugIn):
             image_path = image.get_file().get_path()
             image_display.set_from_file(image_path)
             image_display.set_from_pixbuf(image_display.get_pixbuf())
-
-            '''
-                Sending an image to controller works like this:
-
-                START
-                    -Plugin sends init message to controller (Hey dude im sending an image in a sec and its a png/svg/whatever)
-                    -Plugin waits for controller to confirm (Controller replies saying thats chill bro)
-                    -Plugin sends image chunks then waits for controller to confirm (Controller replies mmm yummy)
-                END
-            '''
 
             button = Gtk.Button(label="Send To Daemon")
             button.connect(
