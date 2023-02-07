@@ -47,62 +47,50 @@
     </div>
     <div class="about">
       <h1 class="text-h4 text-center">Related Projects and Resources</h1>
-      <v-list class="text-center list">
-        <v-list-item>
-          <router-link
-            class="text-body-1"
-            to="https://github.com/notgull/pictonode"
-            tag="v-btn"
-          >
-            <v-btn> Github Repo </v-btn>
-          </router-link>
-        </v-list-item>
-        <v-list-item>
-          <router-link
-            class="text-body-1"
-            to="https://www.blender.org"
-            tag="v-btn"
-          >
-            <v-btn> Blender </v-btn>
-          </router-link>
-        </v-list-item>
-        <v-list-item>
-          <router-link
-            class="text-body-1"
-            to="https://www.gimp.org"
-            tag="v-btn"
-          >
-            <v-btn> GIMP </v-btn>
-          </router-link>
-        </v-list-item>
-        <v-list-item>
-          <router-link
-            class="text-body-1"
-            to="https://www.gegl.org"
-            tag="v-btn"
-          >
-            <v-btn> GEGL </v-btn>
-          </router-link>
-        </v-list-item>
-        <v-list-item>
-          <router-link
-            class="text-body-1"
-            to="https://github.com/aluntzer/gtknodes"
-            tag="v-btn"
-          >
-            <v-btn> GTKNodes </v-btn>
-          </router-link>
-        </v-list-item>
-        <v-list-item>
-          <router-link
-            class="text-body-1"
-            to=" https://github.com/AliensGroup/Gtk.NodeGraph"
-            tag="v-btn"
-          >
-            <v-btn> GTK.NodeGraph </v-btn>
-          </router-link>
-        </v-list-item>
-      </v-list>
+        <v-list class="text-center list">
+          <v-list-item>
+            <a class="text-body-1" href="https://github.com/notgull/pictonode" tag="v-btn">
+              <v-btn>
+                Github Repo
+              </v-btn>
+            </a>
+          </v-list-item>
+          <v-list-item>
+            <a class="text-body-1" href="https://www.blender.org" tag="v-btn">
+              <v-btn>
+                Blender
+              </v-btn>
+            </a>
+          </v-list-item>
+          <v-list-item>
+            <a class="text-body-1" href="https://www.gimp.org" tag="v-btn">
+              <v-btn>
+                GIMP
+              </v-btn>
+            </a>
+          </v-list-item>
+          <v-list-item>
+            <a class="text-body-1" href="https://www.gegl.org" tag="v-btn">
+              <v-btn>
+                GEGL
+              </v-btn>
+            </a>
+          </v-list-item>
+          <v-list-item>
+            <a class="text-body-1" href="https://github.com/aluntzer/gtknodes" tag="v-btn">
+              <v-btn>
+                GTKNodes
+              </v-btn>
+            </a>
+          </v-list-item>
+          <v-list-item>
+            <a class="text-body-1" href=" https://github.com/AliensGroup/Gtk.NodeGraph" tag="v-btn">
+              <v-btn>
+                GTK.NodeGraph
+              </v-btn>
+            </a>
+          </v-list-item>
+        </v-list>
     </div>
   </div>
 </template>
