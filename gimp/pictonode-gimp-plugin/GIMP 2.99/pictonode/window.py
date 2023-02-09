@@ -95,9 +95,13 @@ class PluginWindow(object):
         hbox: Gtk.Box = Gtk.Box.new(Gtk.Orientation.HORIZONTAL, 0)
 
         # add node options
-        button: Gtk.Button = Gtk.Button(label="Add Image Source Node")
-        button.connect("clicked", self.add_image_src_node)
-        hbox.add(button)
+        img_src_button: Gtk.Button = Gtk.Button(label="Add Image Source Node")
+        img_src_button.connect("clicked", self.add_image_src_node)
+        hbox.add(img_src_button)
+
+        img_out_button: Gtk.Button = Gtk.Button(label="Add Image Source Node")
+        img_out_button.connect("clicked", self.add_image_out_node)
+        hbox.add(img_out_button)
 
         # create a css provider to change the frame background
         css_provider = Gtk.CssProvider()
@@ -157,6 +161,10 @@ class PluginWindow(object):
 
     def add_image_src_node(self, widget=None):
         self.node_view.add(cn.ImgSrcNode())
+        self.node_view.show_all()
+
+    def add_image_out_node(self, widget=None):
+        self.node_view.add(cn.OutputNode())
         self.node_view.show_all()
 
     def set_node_view(self, new_nv: GtkNodes.NodeView):

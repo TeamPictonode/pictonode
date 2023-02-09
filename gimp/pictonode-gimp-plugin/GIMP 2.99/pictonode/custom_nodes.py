@@ -121,10 +121,10 @@ class ImgSrcNode(GtkNodes.Node):
         self.destroy()
 
     def update_output(self):
-        self.node_socket_output.write(bytes(self.filename, 'utf-8'))
+        self.node_socket_output.write(bytes(self.filename, 'utf8'))
 
     def node_socket_connect(self, sink, source):
-        self.node_socket_output.write(bytes(self.filename, 'utf-8'))
+        self.node_socket_output.write(bytes(self.filename, 'utf8'))
 
 
 class OutputNode(GtkNodes.Node):
@@ -142,10 +142,15 @@ class OutputNode(GtkNodes.Node):
         self.node_socket_input = self.item_add(
             label, GtkNodes.NodeSocketIO.SINK)
         self.node_socket_input.connect(
-            "socket_incoming", self.node_socket_connect)
+            "socket_incoming", self.node_socket_incoming)
 
     def remove(self, node):
         self.destroy()
+
+    def node_socket_incoming(self, socket, payload):
+        self.image = payload
+        print("Payload: ", payload.decode('utf8'))
+        
 
 
 class NumGen(GtkNodes.Node):
