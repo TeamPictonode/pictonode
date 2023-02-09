@@ -99,7 +99,7 @@ class PluginWindow(object):
         img_src_button.connect("clicked", self.add_image_src_node)
         hbox.add(img_src_button)
 
-        img_out_button: Gtk.Button = Gtk.Button(label="Add Image Source Node")
+        img_out_button: Gtk.Button = Gtk.Button(label="Add Image Output Node")
         img_out_button.connect("clicked", self.add_image_out_node)
         hbox.add(img_out_button)
 
@@ -133,11 +133,16 @@ class PluginWindow(object):
         self.node_view: GtkNodes.NodeView = GtkNodes.NodeView()
         scrolled_window.add(self.node_view)
 
+        # Adjustable panes between image viewport and node_view
+        paned = Gtk.Paned(orientation=Gtk.Orientation.VERTICAL)
+        paned.add1(image_frame)
+        paned.add2(frame)
+
         full_view: Gtk.Box = Gtk.Box.new(Gtk.Orientation.VERTICAL, 0)
         full_view.pack_start(menu_bar, False, False, 0)
         full_view.pack_start(image_frame, True, True, 20)
+        full_view.pack_start(paned, True, True, 0)
         full_view.pack_start(hbox, False, False, 0)
-        full_view.pack_start(frame, True, True, 0)
 
         self.window.add(full_view)
 
