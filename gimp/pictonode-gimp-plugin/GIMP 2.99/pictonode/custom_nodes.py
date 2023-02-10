@@ -145,7 +145,6 @@ class OutputNode(GtkNodes.Node):
     def node_socket_incoming(self, socket, payload):
         self.image = payload
         print("Payload: ", payload.decode('utf-8'))
-        
 
 
 class NumGen(GtkNodes.Node):
@@ -153,4 +152,3 @@ class NumGen(GtkNodes.Node):
 
     def __init__(self, *args, **kwds) -> None:
         super().__init__(*args, **kwds)
-        
