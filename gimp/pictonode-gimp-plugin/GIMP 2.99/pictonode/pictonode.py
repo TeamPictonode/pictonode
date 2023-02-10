@@ -4,6 +4,7 @@
 
 from httpclient import *
 from client import *
+import window
 
 import sys
 import threading
@@ -157,54 +158,11 @@ class Pictonode (Gimp.PlugIn):
                                    title=_("Pictonode"),
                                    role="es1-Python3")
 
-            dialog.add_button(_("_Cancel"), Gtk.ResponseType.CANCEL)
-            dialog.add_button(_("_Source"), Gtk.ResponseType.APPLY)
-            dialog.add_button(_("_OK"), Gtk.ResponseType.OK)
-
             win = Gtk.ApplicationWindow()
             win.set_title("Pictonode")
             win.set_default_size(400, 400)
 
-            grid = Gtk.Grid()
-
-            # grabs a pixbuf of the currently selected image and
-            image_display = Gtk.Image()
-            image_path = image.get_file().get_path()
-            image_display.set_from_file(image_path)
-            image_display.set_from_pixbuf(image_display.get_pixbuf())
-
-            button = Gtk.Button(label="Send To Daemon")
-            button.connect(
-                'clicked',
-                send_image_to_daemon,
-                drawable.get_buffer())
-
-            scrolled = Gtk.ScrolledWindow()
-            scrolled.add_with_viewport(image_display)
-            scrolled.set_min_content_height(500)
-            scrolled.set_min_content_width(400)
-
-            grid.attach(button, 0, 3, 2, 1)
-            grid.attach(scrolled, 0, 1, 100, 2)
-
-            win.add(grid)
-            win.show_all()
-
-            ''' geometry = Gdk.Geometry()
-            geometry.min_aspect = 0.5
-            geometry.max_aspect = 1.0
-            dialog.set_geometry_hints(None, geometry, Gdk.WindowHints.ASPECT)
-            '''
-
-            box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=2)
-            img = Gtk.Image.new_from_file(
-                'C:/Users/parke/Pictures/Camera Roll/example.jpg')
-
-            frame_rgb = Gtk.Frame(label='RGB image')
-            box.pack_start(frame_rgb, True, True, 0)
-
-            dialog.get_content_area().add(box)
-            box.show()
+            main_window = window.PluginWindow()
 
             while (True):
                 response = dialog.run()
