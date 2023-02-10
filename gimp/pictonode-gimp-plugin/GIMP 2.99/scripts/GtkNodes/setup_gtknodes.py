@@ -130,7 +130,7 @@ def build_gtknodes(target_dir: str, out_dir: str) -> bool:
     autogenexecp = sp.run(["chmod", "+x", "autogen.sh"], cwd=cwddir)
 
     # Run autogen.sh
-    autogen = sp.run(["./autogen.sh"],cwd=cwddir)
+    autogen = sp.run(["./autogen.sh"], cwd=cwddir)
     if autogen.returncode != 0:
         print("Failed to run autogen")
         return False
@@ -171,8 +171,10 @@ def build_gtknodes(target_dir: str, out_dir: str) -> bool:
         shutil.rmtree(out_dir)
 
         os.makedirs(out_dir, exist_ok=True)
-        shutil.copytree(path.join(cwddir, "src/.libs"), path.join(out_dir, "libs"))
-        shutil.copytree(path.join(cwddir, "introspection"), path.join(out_dir, "introspection"))
+        shutil.copytree(path.join(cwddir, "src/.libs"),
+                        path.join(out_dir, "libs"))
+        shutil.copytree(path.join(cwddir, "introspection"),
+                        path.join(out_dir, "introspection"))
     except Exception as e:
         print(f"Failed to copy the build output: {str(e)}")
         return False

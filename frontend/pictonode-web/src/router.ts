@@ -6,6 +6,7 @@ import Canvas from "./app/Canvas.vue";
 import Homepage from "./app/Homepage.vue";
 import Login from "./app/Login.vue";
 import Register from "./app/Register.vue";
+import Aboutpage from "./app/Aboutpage.vue";
 import * as VueRouter from "vue-router";
 
 const ROUTES = [
@@ -13,6 +14,7 @@ const ROUTES = [
   { path: "/canvas", component: Canvas },
   { path: "/login", component: Login },
   { path: "/register", component: Register },
+  { path: "/about", component: Aboutpage },
 ];
 
 export default VueRouter.createRouter({

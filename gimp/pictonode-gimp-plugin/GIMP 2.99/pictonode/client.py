@@ -16,8 +16,7 @@ class PluginClient:
         self.client.connect((self.LOCALHOST_IP, self.PORT))
         print("Plugin Socket connected to: ")
         print(
-            f"Local Host ({self.HOST_NAME}): {self.LOCALHOST_IP}",
-            f"On Port: {self.PORT}")
+            f"Local Host ({self.HOST_NAME}): {self.LOCALHOST_IP}", f"On Port: {self.PORT}")
 
     def close_connection_to_controller(self):
         self.client.close()
