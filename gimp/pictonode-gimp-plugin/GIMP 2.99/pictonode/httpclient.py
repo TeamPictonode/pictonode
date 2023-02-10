@@ -16,7 +16,7 @@ class HTTPClient():
         print(res.status)
 
     def send_pipeline(self, pipeline: dict):
-        """Send a given a SerializedPipeline to the daemon. 
+        """Send a given a SerializedPipeline to the daemon.
         Returns the resulting image."""
 
         pipeline = json.dumps(pipeline)

@@ -158,7 +158,6 @@ class Pictonode (Gimp.PlugIn):
                                    title=_("Pictonode"),
                                    role="es1-Python3")
 
-
             win = Gtk.ApplicationWindow()
             win.set_title("Pictonode")
             win.set_default_size(400, 400)
