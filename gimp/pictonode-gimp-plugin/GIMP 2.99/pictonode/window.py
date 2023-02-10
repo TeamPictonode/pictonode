@@ -118,17 +118,17 @@ class PluginWindow(object):
 
         # adds scrolled window in which the whole plugin will exist
         scrolled_window = Gtk.ScrolledWindow(hexpand=True, vexpand=True)
-        image_scrolled = Gtk.ScrolledWindow(hexpand=True, vexpand=True)
+        self.image_scrolled = Gtk.ScrolledWindow(hexpand=True, vexpand=True)
 
         scrolled_window.set_policy(
             Gtk.PolicyType.AUTOMATIC,
             Gtk.PolicyType.AUTOMATIC)
-        image_scrolled.set_policy(
+        self.image_scrolled.set_policy(
             Gtk.PolicyType.AUTOMATIC,
             Gtk.PolicyType.AUTOMATIC)
 
         frame.add(scrolled_window)
-        image_frame.add(image_scrolled)
+        image_frame.add(self.image_scrolled)
 
         self.node_view: GtkNodes.NodeView = GtkNodes.NodeView()
         scrolled_window.add(self.node_view)
@@ -169,12 +169,16 @@ class PluginWindow(object):
         self.node_view.show_all()
 
     def add_image_out_node(self, widget=None):
-        self.node_view.add(cn.OutputNode())
+        self.node_view.add(cn.OutputNode(self))
         self.node_view.show_all()
 
     def set_node_view(self, new_nv: GtkNodes.NodeView):
         self.node_view = new_nv
         self.node_view.show_all()
+
+    def update_image(self, image):
+        new_image = Gtk.Image.new_from_pixbuf(image)
+        self.image_scrolled.add(new_image)
 
     def save_graph(self, widget=None):
         save_dialog = Gtk.FileChooserDialog(

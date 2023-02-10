@@ -72,9 +72,6 @@ class ImgSrcNode(GtkNodes.Node):
         self.set_label("Image Source")
         self.connect("node_func_clicked", self.remove)
 
-        self.canvas: Gtk.DrawingArea = Gtk.DrawingArea()
-        self.canvas.connect("draw", self.draw_image)
-
         self.add_file_button: Gtk.Button = Gtk.Button(label="Open Image")
         self.add_file_button.connect("clicked", self.open_file)
 
@@ -106,16 +103,11 @@ class ImgSrcNode(GtkNodes.Node):
             fn = dialog.get_filename()
             dialog.destroy()
             print(fn)
-            self.draw_image(fn)
             self.filename = fn
             self.update_output()
 
         # close the window on "cancel"
         dialog.destroy()
-
-    # information on how to make this comes from
-    def draw_image(self, image_file):
-        pixbuf = GdkPixbuf.Pixbuf.new_from_file(image_file)
 
     def remove(self, node):
         self.destroy()
@@ -130,9 +122,12 @@ class ImgSrcNode(GtkNodes.Node):
 class OutputNode(GtkNodes.Node):
     __gtype_name__ = 'OutNode'
 
-    def __init__(self, *args, **kwds) -> None:
+    def __init__(self, parent_window, *args, **kwds) -> None:
         super().__init__(*args, **kwds)
 
+        self.image = None
+
+        self.parent_window = parent_window
         self.set_label("Image Output")
         self.connect("node_func_clicked", self.remove)
 
@@ -149,7 +144,7 @@ class OutputNode(GtkNodes.Node):
 
     def node_socket_incoming(self, socket, payload):
         self.image = payload
-        print("Payload: ", payload.decode('utf8'))
+        print("Payload: ", payload.decode('utf-8'))
         
 
 
