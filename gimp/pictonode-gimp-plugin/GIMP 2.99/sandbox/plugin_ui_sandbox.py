@@ -6,8 +6,6 @@
 import os
 import sys
 
-if sys.platform == "linux":
-    os.environ['GI_TYPELIB_PATH'] = '/usr/lib/x86_64-linux-gnu/girepository-1.0'
 
 # autopep8 off
 import gi  # noqa
