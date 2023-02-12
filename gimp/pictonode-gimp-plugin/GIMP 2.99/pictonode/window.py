@@ -2,6 +2,8 @@
 
 import custom_nodes as cn
 
+from . import node_parser
+
 from httpclient import *
 from client import *
 import window
@@ -86,6 +88,7 @@ class PluginWindow(object):
 
         open_graph_item = Gtk.MenuItem("Open Graph")
         file_menu.append(open_graph_item)
+        open_graph_item.connect("activate", self.__handle_open)
 
         save_graph_item = Gtk.MenuItem("save")
         file_menu.append(save_graph_item)
@@ -210,3 +213,32 @@ class PluginWindow(object):
 
         # close the dialog
         save_dialog.destroy()
+
+    def __handle_open(self):
+        # Open a file chooser dialog and select a .pict file
+        open_dialog = Gtk.FileChooserDialog(
+            "Open Node Graph",
+            self.window,
+            Gtk.FileChooserAction.OPEN,
+            (Gtk.STOCK_CANCEL,
+                Gtk.ResponseType.CANCEL,
+                Gtk.STOCK_OPEN,
+                Gtk.ResponseType.OK))
+
+        # Require .picto file types
+        file_type_filter = Gtk.FileFilter()
+        file_type_filter.set_name(".picto files")
+        file_type_filter.add_pattern("*.picto")
+
+        open_dialog.add_filter(file_type_filter)
+
+        # Run the window
+        response = open_dialog.run()
+
+        # If ok response, that means a file was chosen, open the node graph as
+        # that file
+        if response == Gtk.ResponseType.OK:
+            fn = open_dialog.get_filename()
+            open_dialog.destroy()
+            with open(fn, "r") as f:
+                node_parser.parseNodes(f.read(), self.node_view)

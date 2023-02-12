@@ -15,6 +15,7 @@ from typing import Union
 
 PipelineUnit = Union[ImageBuilder, int]
 
+
 def process(pipeline: str, images: ImageManager, target: str) -> None:
     """
     Processes a pipeline.
@@ -27,7 +28,7 @@ def process(pipeline: str, images: ImageManager, target: str) -> None:
     for node in pipeline.getNodes():
         node.setMetadata(PipelineMetadata(images))
 
-    outputNode = pipeline.getOutputNode() 
+    outputNode = pipeline.getOutputNode()
     if outputNode is None:
         raise Exception("No output node.")
 
@@ -51,6 +52,7 @@ class PipelineMetadata:
 
     def __init__(self, images: ImageManager):
         self.images = images
+
 
 def make_template_table() -> nodes.TemplateTable[PipelineUnit, PipelineMetadata]:
     table = nodes.TemplateTable()
