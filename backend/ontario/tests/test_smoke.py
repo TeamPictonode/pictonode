@@ -1,10 +1,11 @@
 # GNU AGPL v3 License
 # Written by John Nunley
 
-import ontario
 import os.path as path
 import pytest
 import tempfile
+
+from .. import ontario
 
 TEST_IMAGE_PATH = path.join(path.dirname(__file__), "assets", "test.png")
 
