@@ -64,3 +64,10 @@ class ImageBuilder:
 
     self.__nodes.append(node)
     return self
+
+  def process(self):
+    """
+    Processes the image.
+    """
+
+    self.__nodes[-1].process()
