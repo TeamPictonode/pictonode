@@ -26,7 +26,7 @@ A pipeline CAN serialize to and be deserialized from a JSON object. The root of 
 
 The node object is a two-field object. The `template` field MUST be a string that is the name of the node template. The `id` field is a unique numerical identifier for the node. The `id` field MUST be unique within the pipeline.
 
-The link object consists of its own unique `id` field. It also contains a `from` and `to` field, representing the nodes it goes from and to, respectively. These fields are numerical identifiers equivalent to the `id` fields of the nodes. There is also a `fromIndex` and `toIndex` field representing the index of the link in the `outputs` and `inputs` arrays of the nodes, respectively. These fields are used to determine which link is connected to which link. The `defaultValue` field describes the default value of the link. This only exists if the value was changed from the default stored in the link template.
+The link object consists of its own unique `id` field. It also contains a `from` and `to` field, representing the nodes it goes from and to, respectively. These fields are numerical identifiers equivalent to the `id` fields of the nodes. There is also a `fromIndex` and `toIndex` field representing the index of the link in the `outputs` and `inputs` arrays of the nodes, respectively. These fields are used to determine which link is connected to which link.
 
 The `output` field is an integer that contains the `id` of the node that is the output of the pipeline.
 
