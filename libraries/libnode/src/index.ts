@@ -408,6 +408,14 @@ export class Link<T, M> {
     this.toIndex = -1;
   }
 
+  __serDefaultValue(): T | undefined {
+    if (this.customDefault) {
+      return this.value;
+    } else {
+      return undefined;
+    }
+  }
+
   // Is this link currently dirty?
   public isDirty(): boolean {
     return this.dirty;
@@ -621,7 +629,7 @@ export class Pipeline<T, M> {
 export interface SerializedPipeline<M> {
   nodes: Array<SerializedNode<M>>;
   links: Array<SerializedLink<M>>;
-  output: number;
+  output: number | undefined;
 }
 
 export interface SerializedNode<M> {
@@ -633,6 +641,7 @@ export interface SerializedNode<M> {
 export type SerializedLink<M> = {
   id: number;
   metadata: M;
+  defaultValue: any | undefined;
 } & ({ from: number; fromIndex: number } | { from: undefined }) &
   ({ to: number; toIndex: number } | { to: undefined });
 
@@ -660,6 +669,7 @@ export function serializePipeline<T, M>(
         id: link.getId(),
         from: undefined,
         to: undefined,
+        defaultValue: link.__serDefaultValue(),
         metadata: link.getMetadata(),
       };
 
@@ -721,9 +731,14 @@ export function deserializePipeline<T, M>(
       link.metadata
     );
     newLink.__setId(link.id);
+    if (link.defaultValue !== undefined) {
+      newLink.set(link.defaultValue);
+    }
   });
 
-  pipeline.setOutput(serialized.output);
+  if (serialized.output !== undefined) {
+    pipeline.setOutput(serialized.output);
+  }
 
   return pipeline;
 }

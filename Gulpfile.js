@@ -29,13 +29,13 @@ const WEB = [
 ]
 
 // Paths for TS projects expected to be run on a NodeJS platform.
-const NODE = [
-  "backend/pictodaemon"
-]
+const NODE = []
 
 // Paths for Python projects.
 const PYTHON_PROJECTS = [
-  "gimp/pictonode-gimp-plugin"
+  "gimp/pictonode-gimp-plugin",
+  "backend/ontario",
+  "backend/ontario-web"
 ]
 
 // Paths for all TS projects.
