@@ -4,6 +4,7 @@
 
 from httpclient import *
 from client import *
+from manager import PictonodeManager
 import window
 
 import sys
@@ -109,9 +110,12 @@ class Pictonode (Gimp.PlugIn):
         procedure = Gimp.ImageProcedure.new(self, name,
                                             Gimp.PDBProcType.PLUGIN,
                                             self.run, None)
+        
         procedure.set_image_types("RGB*, GRAY*")
         procedure.set_sensitivity_mask(Gimp.ProcedureSensitivityMask.DRAWABLE |
-                                       Gimp.ProcedureSensitivityMask.DRAWABLES)
+                                       Gimp.ProcedureSensitivityMask.DRAWABLES |
+                                       Gimp.ProcedureSensitivityMask.NO_DRAWABLES)
+        
         procedure.set_documentation(_("Pictonode"),
                                     _("Launches Pictonode plugin"),
                                     name)
@@ -135,49 +139,22 @@ class Pictonode (Gimp.PlugIn):
             args,
             run_data):
 
-        node_view = GtkNodes.NodeView()
-
-        if n_drawables != 1:
-            msg = _("Procedure '{}' only works with one drawable.").format(
+        if run_mode == Gimp.RunMode.NONINTERACTIVE or run_mode == Gimp.RunMode.WITH_LAST_VALS:
+            msg = _("Procedure '{}' only works in INTERACTIVE mode.").format(
                 procedure.get_name())
             error = GLib.Error.new_literal(Gimp.PlugIn.error_quark(), msg, 0)
             return procedure.new_return_values(
                 Gimp.PDBStatusType.CALLING_ERROR, error)
-        else:
-            drawable = drawables[0]
-
-        if run_mode == Gimp.RunMode.INTERACTIVE:
-            gi.require_version('Gtk', '3.0')
-            from gi.repository import Gtk
-            gi.require_version('Gdk', '3.0')
-            from gi.repository import Gdk
+        
+        elif run_mode == Gimp.RunMode.INTERACTIVE:
+            PictonodeManager.instance().init(procedure, run_mode, image, n_drawables, drawables, args, run_data)
 
             GimpUi.init("pictonode.py")
-
-            dialog = GimpUi.Dialog(use_header_bar=True,
-                                   title=_("Pictonode"),
-                                   role="es1-Python3")
-
-            win = Gtk.ApplicationWindow()
-            win.set_title("Pictonode")
-            win.set_default_size(400, 400)
-
             main_window = window.PluginWindow()
 
-            while (True):
-                response = dialog.run()
-                if response == Gtk.ResponseType.OK:
-                    position = Gimp.get_pdb().run_procedure(
-                        'gimp-image-get-item-position', [image, drawable]).index(1)
-
-                    # close dialog
-                    dialog.destroy()
-                    break
-                else:
-                    dialog.destroy()
-                    return procedure.new_return_values(
-                        Gimp.PDBStatusType.CANCEL, GLib.Error())
-
+        else:
+            raise Exception(">:(")
+        
         return procedure.new_return_values(
             Gimp.PDBStatusType.SUCCESS, GLib.Error())
 
