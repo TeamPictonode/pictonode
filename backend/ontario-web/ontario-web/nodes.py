@@ -213,6 +213,15 @@ class Link(Generic[T, M]):
 
         return self.__metadata
 
+    def _getDefaultValue(self) -> Optional[T]:
+        """
+        Returns the default value for the link.
+        """
+
+        if self.__customDefault:
+            return None
+        return self.__value
+
 
 class NodeTemplate(Generic[T, M]):
     """
@@ -668,13 +677,15 @@ def serializePipeline(pipeline: Pipeline[T, M]) -> SerializedPipeline:
     nodes = []
 
     for link in pipeline.__links.values():
-        links.append({
+        linkSer = {
             "from": link.getFromId(),
             "fromIndex": link.getFromIndex(),
             "to": link.getToId(),
             "toIndex": link.getToIndex(),
             "metadata": link.getMetadata(),
-        })
+            "defaultValue": link._getDefaultValue(),
+        }
+        links.append(linkSer)
 
     for node in pipeline.__nodes.values():
         nodes.append({
@@ -706,13 +717,16 @@ def deserializePipeline(
         node.setId(serializedNode["id"])
 
     for serializedLink in serialized["links"]:
-        pipeline.link(
+        newLink = pipeline.link(
             serializedLink["from"],
             serializedLink["fromIndex"],
             serializedLink["to"],
             serializedLink["toIndex"],
             serializedLink["metadata"],
         )
+
+        if serializedLink.get("defaultValue") is not None:
+            newLink._setDefaultValue(serializedLink["defaultValue"])
 
     pipeline.setOutputNode(serialized["output"])
 
