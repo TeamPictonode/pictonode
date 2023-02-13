@@ -41,7 +41,6 @@ def create_app(test_config=None):
     def send_file(path):
         return app.send_static_file(path)
 
-
     # Set up a task scheduler
     scheduler = BackgroundScheduler()
     scheduler.start()
@@ -56,7 +55,6 @@ def create_app(test_config=None):
         hours=2,
         id="image_manager_clean_up",
     )
-
 
     app.teardown_appcontext(db.close_db)
 

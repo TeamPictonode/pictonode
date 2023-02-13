@@ -29,9 +29,7 @@ const WEB = [
 ]
 
 // Paths for TS projects expected to be run on a NodeJS platform.
-const NODE = [
-  "backend/pictodaemon"
-]
+const NODE = []
 
 // Paths for Python projects.
 const PYTHON_PROJECTS = [
