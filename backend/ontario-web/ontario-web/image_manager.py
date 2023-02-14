@@ -105,6 +105,13 @@ class ImageManager:
 
         return image_id
 
+    def image_path_for_id(self, image_id: int) -> str:
+        """
+        Returns the image path for the given image ID.
+        """
+
+        return self.__image_map[image_id].path
+
     def clean_up(self) -> None:
         """
         Cleans up the image manager.

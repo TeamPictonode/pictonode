@@ -229,7 +229,7 @@ class NodeTemplate(Generic[T, M]):
     """
 
     # Callback to call when the data is processed.
-    __onProcess: Callable[[List[Link[T, M]]], List[T]]
+    __onProcess: Callable[[List[Link[T, M]], M], List[T]]
 
     # Input link templates.
     __inputs: List[LinkTemplate[T, M]]
@@ -242,7 +242,7 @@ class NodeTemplate(Generic[T, M]):
 
     def __init__(
         self,
-        onProcess: Callable[[List[Link[T, M]]], List[T]],
+        onProcess: Callable[[List[Link[T, M]], M], List[T]],
         inputs: List[LinkTemplate[T, M]],
         outputs: List[LinkTemplate[T, M]],
         metadata: M
@@ -273,14 +273,14 @@ class NodeTemplate(Generic[T, M]):
 
         return self.__outputs
 
-    def process(self, inputs: List[Link[T, M]]) -> List[T]:
+    def process(self, inputs: List[Link[T, M]], metadata: M) -> List[T]:
         """
         Processes the node.
 
         Probably shouldn't call this unless you know what you're doing.
         """
 
-        return self.__onProcess(inputs)
+        return self.__onProcess(inputs, metadata)
 
 
 class TemplateTable(Generic[T, M]):
@@ -442,7 +442,7 @@ class Node(Generic[T, M], __HydrateTarget):
 
         # Process the node.
         template = self.__templateTable.getTemplate(self.__template)
-        outputs = template.process(self.__inputs)
+        outputs = template.process(self.__inputs, self.__metadata)
 
         # Set the outputs.
         for i in range(len(outputs)):
