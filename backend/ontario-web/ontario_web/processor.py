@@ -16,13 +16,13 @@ from typing import Union
 PipelineUnit = Union[ImageBuilder, int]
 
 
-def process(pipeline: str, images: ImageManager, target: str) -> None:
+def process(pipeline, images: ImageManager, target: str) -> None:
     """
     Processes a pipeline.
     """
 
     # Deserialize from JSON
-    pipeline = nodes.deserializePipeline(json.loads(pipeline), make_template_table())
+    pipeline = nodes.deserializePipeline(pipeline, make_template_table())
 
     # set metadata for all nodes
     context = ImageContext()

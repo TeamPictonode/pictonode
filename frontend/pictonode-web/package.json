@@ -12,12 +12,14 @@
     "@mdi/font": "^7.0.96",
     "@vue-flow/additional-components": "^1.2.4",
     "@vue-flow/core": "^1.4.1",
+    "axios": "^1.3.3",
     "libnode": "file:../../libraries/libnode",
     "vue": "^3.2.45",
     "vue-router": "^4.1.6",
     "vuetify": "^3.0.1"
   },
   "devDependencies": {
+    "@types/axios": "^0.14.0",
     "css-loader": "^6.7.2",
     "sass": "^1.56.1",
     "sass-loader": "^13.2.0",

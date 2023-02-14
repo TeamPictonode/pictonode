@@ -18,6 +18,8 @@ import {
   nodeToViewFlow,
 } from "./NodeTree";
 import getTemplates from "./Templates";
+import { serializePipeline } from "libnode";
+import { processPipeline } from "../../api";
 
 const pipeline = defaultPipeline();
 const elements = pipelineToVueFlow(pipeline);
@@ -112,17 +114,42 @@ export default defineComponent({
         ctx.fillStyle = "#FFFFFF";
         ctx.font = "30px Arial";
         ctx.fillText("No output node", 10, 50);
-      } else {
-        // Get the first input link and get the canvas from it.
-        const inputLink = outputNode.getInputs()[0];
-        const data = inputLink.get();
-        if (data.type !== NodeDataType.Image) {
-          throw new Error("Output node does not have an image input");
-        }
-        canvas = data.canvas;
-      }
 
-      this.$emit("canvas-update", canvas);
+        this.$emit("canvas-update", canvas);
+      } else {
+        // Parse the tree to a JSON format.
+        // @ts-ignore
+        const formatted = serializePipeline(this.pipeline);
+
+        // Replace default values with IDs.
+        for (const link of formatted.links) {
+          if ("defaultValue" in link && link.defaultValue) {
+            // @ts-ignore
+            link.defaultValue = link.defaultValue.id;
+          }
+        }       
+
+        // Run the API.
+        processPipeline(JSON.stringify(formatted)).then((image_file) => {
+          // Draw the image to the canvas.
+          const img = new Image();
+          // @ts-ignore
+          img.src = image_file;
+          img.onload = () => {
+            canvas = document.createElement("canvas");
+            canvas.width = img.width;
+            canvas.height = img.height;
+            const ctx = canvas.getContext("2d");
+
+            if (!ctx) {
+              throw new Error("Could not get 2d context");
+            }
+
+            ctx.drawImage(img, 0, 0);
+            this.$emit("canvas-update", canvas);
+          };
+        });
+      } 
     },
 
     onConnect(connection: Connection | Edge) {

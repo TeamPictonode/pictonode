@@ -87,55 +87,11 @@ function initializeTemplates() {
 type Link2 = Link<NodeData, NodeMetadata>;
 
 function composite(input: Array<Link2>): Array<NodeData> {
-  // Check both inputs.
-  if (input.length != 2) {
-    throw new Error("Composite node must have two inputs.");
-  }
-
-  const data1 = input[0].get();
-  const data2 = input[1].get();
-
-  // Convert both to images.
-  const image1 = transformToImage(data1);
-  const image2 = transformToImage(data2);
-
-  // Get the minimum width and height.
-  const width = Math.min(image1.width, image2.width);
-  const height = Math.min(image1.height, image2.height);
-
-  // Create a new canvas.
-  const canvas = document.createElement("canvas");
-  canvas.width = width;
-  canvas.height = height;
-
-  // Get the context.
-  const ctx = canvas.getContext("2d")!;
-
-  // Composite the images.
-  ctx.drawImage(image2, 0, 0, width, height);
-  ctx.drawImage(image1, 0, 0, width, height);
-
-  // Return the new image.
-  return [{ type: NodeDataType.Image, canvas }];
+  throw new Error("Not implemented.");
 }
 
 function transformToImage(data: NodeData): HTMLCanvasElement {
-  switch (data.type) {
-    case NodeDataType.Image:
-      return data.canvas;
-    case NodeDataType.Color:
-      const width = 10000;
-      const height = 10000;
-      const canvas = document.createElement("canvas");
-      canvas.width = width;
-      canvas.height = height;
-      const ctx = canvas.getContext("2d")!;
-      ctx.fillStyle = data.color;
-      ctx.fillRect(0, 0, width, height);
-      return canvas;
-    default:
-      throw new Error("Unknown node data type.");
-  }
+  throw new Error("Not implemented.");
 }
 
 function ntMeta(
@@ -163,32 +119,44 @@ function defaultImage(): NodeData {
   const canvas = document.createElement("canvas");
   canvas.width = 100;
   canvas.height = 100;
-  const ctx = canvas.getContext("2d")!;
-  ctx.fillStyle = "#FF4433";
-  ctx.fillRect(0, 0, 100, 100);
+  const ctx = canvas.getContext("2d");
+  if (ctx === null) {
+    throw new Error("Could not get context.");
+  }
 
-  // Write black text saying "error".
+  ctx.fillStyle = "#FF00FF";
+  ctx.fillRect(0, 0, 100, 100);
+  
+  // Write "default image"
   ctx.fillStyle = "#000000";
   ctx.font = "20px Arial";
-  ctx.fillText("Error", 10, 50);
+  ctx.fillText("default image", 10, 50);
 
-  return { type: NodeDataType.Image, canvas };
+  return {
+    type: NodeDataType.Image,
+    image: canvas,
+  }
 }
 
 function noOutputImage(): NodeData {
   const canvas = document.createElement("canvas");
-  canvas.width = 200;
+  canvas.width = 100;
   canvas.height = 100;
-  const ctx = canvas.getContext("2d")!;
+  const ctx = canvas.getContext("2d");
+  if (ctx === null) {
+    throw new Error("Could not get context.");
+  }
 
-  // Black background.
+  ctx.fillStyle = "#FF00FF";
+  ctx.fillRect(0, 0, 100, 100);
+  
+  // Write "no output image"
   ctx.fillStyle = "#000000";
-  ctx.fillRect(0, 0, 200, 100);
-
-  // White text saying "no image selected".
-  ctx.fillStyle = "#FFFFFF";
   ctx.font = "20px Arial";
-  ctx.fillText("No image selected", 10, 50);
+  ctx.fillText("no output image", 10, 50);
 
-  return { type: NodeDataType.Image, canvas };
+  return {
+    type: NodeDataType.Image,
+    image: canvas,
+  }
 }

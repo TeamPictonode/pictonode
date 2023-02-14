@@ -1,10 +1,11 @@
+from typing import Tuple
 import os
 import configparser
 import window
 import threading
 
 # autopep8 off
-import gi # noqa
+import gi  # noqa
 gi.require_version("GIRepository", "2.0")
 from gi.repository import GIRepository  # noqa
 
@@ -27,6 +28,7 @@ gi.require_version('Gimp', '3.0')
 from gi.repository import Gimp  # noqa
 
 gi.require_version("Gtk", "3.0")
+from gi.repository import Gtk  # noqa
 from gi.repository import Gtk # noqa
 
 gi.require_version("Gdk", "3.0")
@@ -73,7 +75,7 @@ class PictonodeManager(metaclass=SingletonConstruction):
         self.drawables = drawables
         self.args = args
         self.run_data = run_data
-        
+
         self.settings = {}
         self.local_projects = {}
         self.initial_image = image
@@ -156,7 +158,7 @@ class PictonodeManager(metaclass=SingletonConstruction):
             name, ext = os.path.splitext(os.path.basename(xcfpath))
             self.local_projects.update({name:xcfpath})
         self.__update_projects_ini()
-    
+
     @threadsafe
     def __load_local_project(self, name):
         if name in self.local_projects.keys():
@@ -228,8 +230,10 @@ class PictonodeManager(metaclass=SingletonConstruction):
 
     @threadsafe
     def __update_xcf_image_association(self):
-        self.images_with_xcf = set(filter(lambda img: img.get_xcf_file(), Gimp.list_images()))
-        self.images_without_xcf = set(Gimp.list_images()) - self.images_with_xcf
+        self.images_with_xcf = set(
+            filter(lambda img: img.get_xcf_file(), Gimp.list_images()))
+        self.images_without_xcf = set(
+            Gimp.list_images()) - self.images_with_xcf
 
         self.images_with_xcf = list(self.images_with_xcf)
         self.images_without_xcf = list(self.images_without_xcf)
@@ -275,7 +279,7 @@ class PictonodeManager(metaclass=SingletonConstruction):
         save_dialog.add_filter(file_type_filter)
         save_dialog.set_do_overwrite_confirmation(True)
 
-        while(True):
+        while (True):
             response = save_dialog.run()
 
             if response == Gtk.ResponseType.OK:
@@ -287,13 +291,16 @@ class PictonodeManager(metaclass=SingletonConstruction):
                     fo = Gio.File.new_for_path(fn)
                     #Gimp.file_save(self.run_mode, image, image.list_layers(), f)
                     Gimp.get_pdb().run_procedure("gimp-xcf-save", [GObject.Value(Gimp.RunMode, Gimp.RunMode.NONINTERACTIVE),
-                                                          GObject.Value(Gimp.Image, image),
-                                                          GObject.Value(GObject.TYPE_INT, len(image.list_layers())),
-                                                          GObject.Value(Gimp.ObjectArray.new(Gimp.Drawable, image.list_layers(), False)),
-                                                          GObject.Value(Gio.File, fo)])
+                                                                   GObject.Value(
+                                                                       Gimp.Image, image),
+                                                                   GObject.Value(GObject.TYPE_INT, len(
+                                                                       image.list_layers())),
+                                                                   GObject.Value(Gimp.ObjectArray.new(
+                                                                       Gimp.Drawable, image.list_layers(), False)),
+                                                                   GObject.Value(Gio.File, fo)])
                     break
                 else:
-                    #should display and error popup here
+                    # should display and error popup here
                     pass
             elif response == Gtk.ResponseType.CANCEL:
                 break
@@ -307,15 +314,18 @@ class PictonodeManager(metaclass=SingletonConstruction):
     def __repr__(self):
         return self.__image_xcf_association_to_str() + '\n' + self.__local_projects_to_str()
 
+
 def is_xcf(filepath):
     base, ext = os.path.splitext(filepath)
     ext.lower()
     return ext == ".xcf"
 
+
 def sanitize_filepath(filepath):
     if not is_xcf(filepath):
         return filepath + ".xcf"
     return filepath
+
 
 def filepath_is_valid(filepath):
     path = os.path.abspath(filepath)
