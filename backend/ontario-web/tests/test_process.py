@@ -11,18 +11,23 @@ def _open_file(path):
         return file.read()
 
 def test_process(client):
-    # Open two image files to composite.
-    image1 = _open_file(path.join(path.dirname(__file__), "assets", "test.png"))
-
     # Upload it to the client twice
     # Note: /api/upload_image takes a form with a file named "image"
-    def upload_image(image):
-      response = client.post('/api/upload_image', data={'image': (image, 'test.png')})
+    def upload_image(p):
+      data = dict(
+        image = (open(p, 'rb'), p)
+      )
+      response = client.post(
+        '/api/upload_image',
+        content_type='multipart/form-data',
+        data=data
+      )
       assert response.status_code == 200
       return response.json['id']
 
-    image1_id = upload_image(image1)
-    image2_id = upload_image(image1)
+    p = path.join(path.dirname(__file__), "assets", "test-image.png")
+    image1_id = upload_image(p)
+    image2_id = upload_image(p)
 
     # Create a pipeline
     pipeline = f"""
