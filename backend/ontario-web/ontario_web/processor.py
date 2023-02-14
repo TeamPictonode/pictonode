@@ -9,7 +9,7 @@ import tempfile
 from .image_manager import ImageManager
 from . import nodes
 
-from ontario import ImageContext, ImageBuilder
+from .ontario import ImageContext, ImageBuilder
 
 from typing import Union
 
@@ -89,5 +89,18 @@ def make_template_table() -> nodes.TemplateTable[PipelineUnit, PipelineMetadata]
         ]
     )
     table.addTemplate("output", outputNode)
+
+    # Composite node that composes two images
+    compositeNode = nodes.NodeTemplate(
+        lambda args, _: args[0].composite(args[1]),
+        [
+            nodes.LinkTemplate(None, None),
+            nodes.LinkTemplate(None, None)
+        ],
+        [
+            nodes.LinkTemplate(None, None)
+        ]
+    )
+    table.addTemplate("composite", compositeNode)
 
     return table

@@ -2,8 +2,7 @@
 # Written by John Nunley
 
 from abc import ABC, abstractmethod
-from collections.abc import List, Dict
-from typing import TypeVar, Generic, Callable, Optional, Any, Union
+from typing import TypeVar, Generic, Callable, Optional, Any, Union, List, Dict
 
 MAX_NODES = 1 << 24
 
@@ -11,7 +10,7 @@ T = TypeVar('T')
 M = TypeVar('M')
 
 
-class __HydrateTarget(ABC):
+class _HydrateTarget(ABC):
     """
     A target for hydrating a node.
     """
@@ -33,7 +32,7 @@ class __HydrateTarget(ABC):
         pass
 
 
-class __NoNode(__HydrateTarget):
+class _NoNode(_HydrateTarget):
     """
     A stand-in for a node that doesn't exist.
     """
@@ -90,10 +89,10 @@ class Link(Generic[T, M]):
     __id: int
 
     # The node this link is coming from.
-    __from: __HydrateTarget
+    __from: _HydrateTarget
 
     # The node this link is going to.
-    __to: __HydrateTarget
+    __to: _HydrateTarget
 
     # The index of the link in the from node.
     __fromIndex: int
@@ -116,8 +115,8 @@ class Link(Generic[T, M]):
     def __init__(self, template: LinkTemplate[T, M], metadata: M, id: int):
         self.__template = template
         self.__id = id
-        self.__from = __NoNode()
-        self.__to = __NoNode()
+        self.__from = _NoNode()
+        self.__to = _NoNode()
         self.__fromIndex = -1
         self.__toIndex = -1
         self.__metadata = metadata
@@ -144,20 +143,20 @@ class Link(Generic[T, M]):
     def isToOccupied(self) -> bool:
         return not self.__to.isNoNode()
 
-    def setFrom(self, node: __HydrateTarget, index: int):
+    def setFrom(self, node: _HydrateTarget, index: int):
         self.__from = node
         self.__fromIndex = index
 
-    def setTo(self, node: __HydrateTarget, index: int):
+    def setTo(self, node: _HydrateTarget, index: int):
         self.__to = node
         self.__toIndex = index
 
     def clearFrom(self):
-        self.__from = __NoNode()
+        self.__from = _NoNode()
         self.__fromIndex = -1
 
     def clearTo(self):
-        self.__to = __NoNode()
+        self.__to = _NoNode()
         self.__toIndex = -1
 
     def isDirty(self):
@@ -316,7 +315,7 @@ class TemplateTable(Generic[T, M]):
         return list(self.__nodeTemplates.keys())
 
 
-class Node(Generic[T, M], __HydrateTarget):
+class Node(Generic[T, M], _HydrateTarget):
     """
     A node in the graph.
     """

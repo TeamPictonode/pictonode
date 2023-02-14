@@ -2,3 +2,4 @@ output/
 node_modules
 lib
 build/
+**/__pycache__

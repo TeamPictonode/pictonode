@@ -2,7 +2,7 @@
 # Written by John Nunley
 
 # autopep8 off
-import ontario
+from . import ontario
 import os
 import datetime
 from typing import Dict
