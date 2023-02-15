@@ -1,5 +1,7 @@
 import os
-import errno
+import configparser
+import window
+import threading
 
 # autopep8 off
 import gi # noqa
@@ -27,37 +29,41 @@ from gi.repository import Gimp  # noqa
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk # noqa
 
+gi.require_version("Gdk", "3.0")
+from gi.repository import Gdk
+
 gi.require_version("Gio", "2.0")
 from gi.repository import Gio  # noqa
 
 gi.require_version("GObject", "2.0")
 from gi.repository import GObject # noqa
-
-from typing import Tuple
-PictonodeProject = Tuple[int, int]
+from gi.repository.GdkPixbuf import Pixbuf # noqa
 
 # autopep8 on
+"""Ensure object __calls__ are threadsafe to always return the same class instance"""
+__cls_lock = threading.Lock()
+class SingletonConstruction(type):
+    _instances = {}
+    def __call__(cls, *args, **kwargs):
+        if cls not in cls._instances:
+            with __cls_lock:
+                if cls not in cls._instances:
+                    cls._instances[cls] = super(SingletonConstruction, cls).__call__(*args, **kwargs)
+        return cls._instances[cls]
+            
+"""Ensure object methods mutating the manager are thread safe"""
+__pm_lock = threading.RLock()
+def threadsafe(fn):
+    def new(*args, **kwargs):
+        with __pm_lock:
+            try:
+                r = fn(*args, **kwargs)
+            except Exception as e:
+                raise e
+        return r
+    return new
 
-class Singleton:
-    def __init__(self, decorated):
-        self._decorated = decorated
-
-    def instance(self):
-        try:
-            return self._instance
-        except:
-            self._instance = self._decorated()
-            return self._instance
-
-    def __call__(self):
-        raise TypeError("Singletons must be accessess through instance()")
-    
-    def __instancecheck__(self, __instance):
-        return isinstance(__instance, self._decorated)
-    
-
-@Singleton
-class PictonodeManager:
+class PictonodeManager(metaclass=SingletonConstruction):
     def init(self, procedure, run_mode, image, n_drawables, drawables, args, run_data):
         self.procedure = procedure
         self.run_mode = run_mode
@@ -67,37 +73,190 @@ class PictonodeManager:
         self.args = args
         self.run_data = run_data
         
-        self.local_projects = []
+        self.settings = {}
+        self.local_projects = {}
         self.initial_image = image
+
+        self.settings_ini = {}
+        self.projects_ini = {}
+        self.settings_ini_path = os.path.realpath(os.path.dirname(os.path.abspath(__file__)) + "/cache/settings.ini")
+        self.projects_ini_path = os.path.realpath(os.path.dirname(os.path.abspath(__file__)) + "/cache/projects.ini")
+        self.__load_settings_ini()
+        self.__load_projects_ini()
+
         self.images_with_xcf = []
         self.images_without_xcf = []
-        '''
-        /pictonode/config/.config ui
-        /pictonode/local/.list_of_local_projects.
-        '''
         self.__update_xcf_image_association()
-        self.__print_image_xcf_association()
 
-    def __load_local_projects_list(self):
-        return [""]
+        for img in self.images_with_xcf:
+            self.__add_local_project(img)
+
+    def run(self):
+        ''' This run() will be gutted just checking out some pocs for parker'''
+        win = Gtk.Window()
+        win.set_default_size(128, 256)
+        win.set_title("Projects")
+
+        hints = Gdk.Geometry()
+        hints.min_width = 128
+        hints.max_width = 256
+        hints.min_height = 192
+        hints.max_height = 512
+
+        win.set_geometry_hints(None, hints, Gdk.WindowHints.MAX_SIZE | Gdk.WindowHints.MIN_SIZE)
+        liststore = Gtk.ListStore(Pixbuf, str)
+        iconview = Gtk.IconView.new()
+        iconview.set_model(liststore)
+        iconview.set_pixbuf_column(0)
+        iconview.set_text_column(1)
+        iconview.set_item_width(64)
+
+        frame = Gtk.Frame.new()
+        scrolled_window = Gtk.ScrolledWindow(hexpand=False, vexpand=True)
+        scrolled_window.set_policy(
+            Gtk.PolicyType.AUTOMATIC,
+            Gtk.PolicyType.AUTOMATIC)
+        frame.add(scrolled_window)
+        scrolled_window.add(iconview)
+        win.add(frame)
+
+        icons = []
+        for img in self.images_with_xcf:
+            icons.append(os.path.splitext(os.path.basename(img.get_xcf_file().get_path()))[0])
+
+        for i, img in enumerate(self.images_with_xcf):
+            #pixbuf = Gtk.IconTheme.get_default().load_icon(icon, 64, 0)
+            pixbuf = img.get_thumbnail(64,64,1)
+            liststore.append([pixbuf, icons[i]])
+
+        
+        headerbar = Gtk.HeaderBar()
+        headerbar.set_title("")
+        headerbar.set_subtitle("")
+        headerbar.set_show_close_button(False)
+        headerbar.set_has_subtitle(False)
+
+        win.set_titlebar(headerbar)
+        #win.add(iconview)
+        win.connect("destroy", Gtk.main_quit)
+        win.show_all()
+        #GimpUi.init("pictonode.py")
+        main_window = window.PluginWindow()
+        Gtk.main()
+        #icon toolbar
+        pass
+
+#we should disambiguate between loaded local projects and unloaded
+
+    @threadsafe
+    def __add_local_project(self, image):
+        if image in self.images_with_xcf:
+            xcfpath = image.get_xcf_file().get_path()
+            name, ext = os.path.splitext(os.path.basename(xcfpath))
+            self.local_projects.update({name:xcfpath})
+        self.__update_projects_ini()
     
+    @threadsafe
+    def __load_local_project(self, name):
+        if name in self.local_projects.keys():
+            print(self.local_projects[name])
+            fn = Gio.File.new_for_path(self.local_projects[name])
+            image = Gimp.file_load(Gimp.RunMode.INTERACTIVE, fn)
+            #image = Gimp.get_pdb().run_procedure("gimp-file-load", [GObject.Value(Gimp.RunMode, Gimp.RunMode.INTERACTIVE), GObject.Value(Gio.File, fn)])
+            display = Gimp.get_pdb().run_procedure("gimp-display-new", [GObject.Value(Gimp.Image, image)])
+            #Gimp.get_pdb().run_procedure("gimp-display-present", [GObject.Value(Gimp.Display, display)])
+            image.clean_all()
+            self.images_with_xcf.append(image)
+    @threadsafe
+    def __update_settings_ini(self):
+        self.settings_ini["SETTINGS"] = self.settings
+        # Plus any other sections to update
+        self.__save_settings_ini()
+
+    @threadsafe
+    def __update_projects_ini(self):
+        self.projects_ini["PROJECTS"] = self.local_projects
+        # Plus any other sections to update
+        self.__save_projects_ini()
+
+    @threadsafe
+    def __load_settings_ini(self):
+        settings_ini = configparser.SafeConfigParser()
+        settings_ini.read(self.settings_ini_path)
+        self.settings_ini = settings_ini
+        try:
+            self.settings = dict(self.settings_ini["SETTINGS"])
+        except Exception as e:
+            if isinstance(e, KeyError):
+                self.__save_settings_ini(default=True)
+                self.__load_settings_ini()
+
+    @threadsafe
+    def __load_projects_ini(self):
+        projects_ini = configparser.SafeConfigParser()
+        projects_ini.read(self.projects_ini_path)
+        self.projects_ini = projects_ini
+        try:
+            self.local_projects = dict(self.projects_ini["PROJECTS"])
+        except Exception as e:
+            if isinstance(e, KeyError):
+                self.__save_projects_ini(default=True)
+                self.__load_projects_ini()
+
+    @threadsafe
+    def __save_settings_ini(self, default=False):
+        os.makedirs(os.path.dirname(self.settings_ini_path), exist_ok=True)
+        with open(self.settings_ini_path, "w") as ini:
+            if default:
+                default = configparser.SafeConfigParser()
+                default["SETTINGS"] = {}
+                default.write(ini)
+            else:
+                self.settings_ini.write(ini)
+
+    @threadsafe
+    def __save_projects_ini(self, default=False):
+        os.makedirs(os.path.dirname(self.projects_ini_path), exist_ok=True)
+        with open(self.projects_ini_path, "w") as ini:
+            if default:
+                default = configparser.SafeConfigParser()
+                default["PROJECTS"] = {}
+                default.write(ini)
+            else:
+                self.projects_ini.write(ini)
+
+    @threadsafe
     def __update_xcf_image_association(self):
         self.images_with_xcf = set(filter(lambda img: img.get_xcf_file(), Gimp.list_images()))
         self.images_without_xcf = set(Gimp.list_images()) - self.images_with_xcf
 
-    def __print_image_xcf_association(self):
-        print("Images associated with an xcf:")
+        self.images_with_xcf = list(self.images_with_xcf)
+        self.images_without_xcf = list(self.images_without_xcf)
+
+    @threadsafe
+    def __image_xcf_association_to_str(self):
+        msg = f"Images associated with an xcf: {len(self.images_with_xcf)}\n" 
         for i, img in enumerate(self.images_with_xcf):
-            print(i + 1, img.get_xcf_file().get_path())
-        print("Images NOT associated with an xcf")
+            msg += f"{i + 1}: {img.get_xcf_file().get_path()}\n"
+        msg += f"Images NOT associated with an xcf: {len(self.images_without_xcf)}\n"
         for i, img in enumerate(self.images_without_xcf):
-            print(i + 1, img.get_file().get_path())
-        
+            msg += f"{i + 1}: {img.get_file().get_path()}\n"
+        return msg
+    
+    @threadsafe
+    def __local_projects_to_str(self):
+        msg = f"Registered local projects: {len(self.local_projects)}\n"
+        for i, (name, path) in enumerate(self.local_projects.items()):
+            msg += f"{i + 1}: {name} @ {path}\n"
+        return msg
+    
+    @threadsafe
     def __associate_images_with_xcf(self):
         for img in self.images_without_xcf:
             self.__save_image_to_xcf_dialog(img)
-    
-    def __save__image_to_xcf_dialog(self, image):
+
+    @threadsafe
+    def __save_image_to_xcf_dialog(self, image):
         save_dialog = Gtk.FileChooserDialog(
             "Save unsaved image to xcf",
             None,
@@ -140,6 +299,13 @@ class PictonodeManager:
 
         save_dialog.destroy()
 
+    @threadsafe
+    def __load_image_from_xcf(self, filepath):
+        pass
+
+    def __repr__(self):
+        return self.__image_xcf_association_to_str() + '\n' + self.__local_projects_to_str()
+
 def is_xcf(filepath):
     base, ext = os.path.splitext(filepath)
     ext.lower()
@@ -152,4 +318,6 @@ def sanitize_filepath(filepath):
 
 def filepath_is_valid(filepath):
     path = os.path.abspath(filepath)
-    return not (path in PictonodeManager.instance().local_projects)
+    #should change this, we shouldn't try and access members directly
+    #even if its just a read
+    return not (path in PictonodeManager().local_projects)
