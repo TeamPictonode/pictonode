@@ -39,7 +39,7 @@ def create_app(test_config=None):
 
     # Host all files in the "public" folder
     @app.route("/<path:path>")
-    def send_file(path):
+    def host_file(path):
         return app.send_static_file(path)
 
     # Set up a task scheduler
@@ -76,9 +76,11 @@ def create_app(test_config=None):
         # The body of the request should be a JSON pipeline
         pipeline = request.get_json()
         id = random.randint(0, 1000000000)
-        processor.process(pipeline, im, f"/tmp/ontario/out{id}.webp")
+        filename = f"/tmp/ontario/out{id}.webp"
+        print(filename)
+        processor.process(pipeline, im, filename)
 
         # The body of the response should be the output image
-        return send_file(f"/tmp/ontario/out{id}.webp", mimetype="image/webp")
+        return send_file(filename)
 
     return app

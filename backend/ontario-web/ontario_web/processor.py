@@ -22,11 +22,12 @@ def process(pipeline: str, images: ImageManager, target: str) -> None:
     """
 
     # Deserialize from JSON
-    pipeline = nodes.deserializePipeline(json.loads(pipeline))
+    pipeline = nodes.deserializePipeline(json.loads(pipeline), make_template_table())
 
     # set metadata for all nodes
+    context = ImageContext()
     for node in pipeline.getNodes():
-        node.setMetadata(PipelineMetadata(images))
+        node.setMetadata(PipelineMetadata(images, context))
 
     outputNode = pipeline.getOutputNode()
     if outputNode is None:
@@ -36,7 +37,7 @@ def process(pipeline: str, images: ImageManager, target: str) -> None:
     output = outputNode.getOutputs()[0]
     img = output.getValue()
     if not isinstance(img, ImageBuilder):
-        raise Exception("Output is not an image.")
+        raise Exception(f"Output is not an image; got {type(img)}, {repr(img)}")
 
     # Save to file
     img.save_to_file(target).process()
@@ -53,13 +54,9 @@ class PipelineMetadata:
     # Image context
     context: ImageContext
 
-    # Path to save to
-    target: str
-
-    def __init__(self, images: ImageManager, context: ImageContext, target: str):
+    def __init__(self, images: ImageManager, context: ImageContext):
         self.images = images
         self.context = context
-        self.target = target
 
 
 def make_template_table() -> nodes.TemplateTable[PipelineUnit, PipelineMetadata]:
@@ -67,39 +64,57 @@ def make_template_table() -> nodes.TemplateTable[PipelineUnit, PipelineMetadata]
 
     # Input node that loads an image from disk
     inputNode = nodes.NodeTemplate(
-        lambda args, metadata: ImageBuilder(
-            metadata.context).load_from_file(args[0]),
+        lambda args, metadata: [ImageBuilder(
+            metadata.context).load_from_file(args[0].getValue())],
         [
             nodes.LinkTemplate(None, -1)
         ],
         [
             nodes.LinkTemplate(None, None)
-        ]
+        ],
+        None
     )
     table.addTemplate("input", inputNode)
 
     # Output node that saves an image to disk
     outputNode = nodes.NodeTemplate(
-        lambda args, _: args[0],
+        lambda args, _: [args[0].getValue()],
         [
-            nodes.LinkTemplate(None, None)
+            nodes.LinkTemplate(None, "foobar")
         ],
         [
             nodes.LinkTemplate(None, -1)
-        ]
+        ],
+        None
     )
     table.addTemplate("output", outputNode)
 
+    def raise_(args, meta):
+        raise Exception(f"Not implemented. {args[0].getValue()}")
+
+    def load(arg, meta) -> ImageBuilder:
+        val = arg.getValue()
+        #print(f"Load: {val}")
+        if isinstance(val, ImageBuilder):
+            return val
+        return ImageBuilder(meta.context).load_from_file(val)
+
+    def composite(args, meta):
+        val = load(args[0], meta).composite(load(args[1], meta))
+        #nprint(f"Composite: {val}")
+        return val
+
     # Composite node that composes two images
     compositeNode = nodes.NodeTemplate(
-        lambda args, _: args[0].composite(args[1]),
+        lambda args, meta: [composite(args, meta)],
         [
             nodes.LinkTemplate(None, None),
             nodes.LinkTemplate(None, None)
         ],
         [
-            nodes.LinkTemplate(None, None)
-        ]
+            nodes.LinkTemplate(None, "foobar")
+        ],
+        None
     )
     table.addTemplate("composite", compositeNode)
 
