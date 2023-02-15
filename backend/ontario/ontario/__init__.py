@@ -123,7 +123,13 @@ class ImageBuilder:
         self.__nodes.append(node)
         return node.get_property("buffer")
 
-    def composite(self, other: "ImageBuilder", opacity: float, x: float, y: float, scale: float) -> "ImageBuilder":
+    def composite(
+            self,
+            other: "ImageBuilder",
+            opacity: float,
+            x: float,
+            y: float,
+            scale: float) -> "ImageBuilder":
         """
         Composites two images.
         """
