@@ -65,9 +65,15 @@ class ImageBuilder:
         elif file_ext == '.exr':
             node = self._parent.create_child("gegl:exr-load")
 
+        elif file_ext == '.webp':
+            node = self.__parent.create_child("gegl:webp-load")
+
         elif file_ext == '.svg':
             # TODO
             pass
+
+        else:
+            print("Error: Wrong file format")
 
         # add node to node list
         self.__nodes.append(node)
@@ -117,12 +123,20 @@ class ImageBuilder:
         self.__nodes.append(node)
         return node.get_property("buffer")
 
-    def composite(self, other: "ImageBuilder") -> "ImageBuilder":
+    def composite(self, other: "ImageBuilder", opacity: float, x: float, y: float, scale: float) -> "ImageBuilder":
         """
         Composites two images.
         """
 
-        # TODO: implement gegl:layer operation
+        node = self.__parent.create_child("gegl:layer")
+        node.set_property("opacity", opacity)
+        node.set_property("x", x)
+        node.set_property("y", y)
+        node.set_property("scale", scale)
+
+        # Connect the last node to the save node.
+        self.__nodes[-1].connect_to("output", node, "input")
+        other.__nodes[-1].connect_to("output", node, "aux")
         return self
 
     def invert(self) -> "ImageBuilder":
