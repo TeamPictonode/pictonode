@@ -147,10 +147,10 @@ class Pictonode (Gimp.PlugIn):
                 Gimp.PDBStatusType.CALLING_ERROR, error)
         
         elif run_mode == Gimp.RunMode.INTERACTIVE:
-            PictonodeManager.instance().init(procedure, run_mode, image, n_drawables, drawables, args, run_data)
+            PictonodeManager().init(procedure, run_mode, image, n_drawables, drawables, args, run_data)
 
             GimpUi.init("pictonode.py")
-            main_window = window.PluginWindow()
+            PictonodeManager().run()
 
         else:
             raise Exception(">:(")
