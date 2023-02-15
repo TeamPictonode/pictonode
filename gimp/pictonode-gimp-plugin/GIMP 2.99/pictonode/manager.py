@@ -318,4 +318,6 @@ def sanitize_filepath(filepath):
 
 def filepath_is_valid(filepath):
     path = os.path.abspath(filepath)
-    return not (path in PictonodeManager.local_projects)
+    #should change this, we shouldn't try and access members directly
+    #even if its just a read
+    return not (path in PictonodeManager().local_projects)
