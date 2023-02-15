@@ -41,21 +41,22 @@ from gi.repository.GdkPixbuf import Pixbuf # noqa
 
 # autopep8 on
 """Ensure object __calls__ are threadsafe to always return the same class instance"""
-__cls_lock = threading.Lock()
+_cls_lock = threading.Lock()
 class SingletonConstruction(type):
     _instances = {}
     def __call__(cls, *args, **kwargs):
         if cls not in cls._instances:
-            with __cls_lock:
+            global _cls_lock
+            with _cls_lock:
                 if cls not in cls._instances:
                     cls._instances[cls] = super(SingletonConstruction, cls).__call__(*args, **kwargs)
         return cls._instances[cls]
             
 """Ensure object methods mutating the manager are thread safe"""
-__pm_lock = threading.RLock()
+_pm_lock = threading.RLock()
 def threadsafe(fn):
     def new(*args, **kwargs):
-        with __pm_lock:
+        with _pm_lock:
             try:
                 r = fn(*args, **kwargs)
             except Exception as e:
