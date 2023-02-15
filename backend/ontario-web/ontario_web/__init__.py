@@ -75,7 +75,6 @@ def create_app(test_config=None):
         # The body of the request should be an image
         image = request.files["image"]
         new_id = im.add_image(image.filename)
-        os.remove(image.filename)
         return {"id": new_id}
 
     # For /api/process, take the body of the request and process it

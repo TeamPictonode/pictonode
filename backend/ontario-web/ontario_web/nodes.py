@@ -622,6 +622,7 @@ class Pipeline(Generic[T, M]):
         toId: int,
         toIndex: int,
         meta: M,
+        id = None,
     ) -> Link[T, M]:
         """
         Link two nodes together and return the link object.
@@ -637,6 +638,11 @@ class Pipeline(Generic[T, M]):
         #    raise ValueError("Input is occupied")
 
         link = to_node._linkFrom(from_node, fromIndex, toIndex, meta)
+        if not id:
+            id = self.__nextId
+            self.__nextId += 1
+        link.setId(id)
+        #print(link.getId())
         self.__links[link.getId()] = link
         return link
 
@@ -749,7 +755,8 @@ def deserializePipeline(
             serializedLink["fromIndex"],
             serializedLink["to"],
             serializedLink["toIndex"],
-            serializedLink.get("metadata", None)
+            serializedLink.get("metadata", None),
+            serializedLink.get("id", None),
         )
 
         if serializedLink.get("defaultValue") is not None:
