@@ -64,12 +64,13 @@ from gi.repository import GdkPixbuf  # noqa
 # First, define different node types using GtkNodes.Node as a base type
 # implement gegl node operations using ontario backend
 
+
 class ImgSrcNode(GtkNodes.Node):
     __gtype_name__ = 'SrcNode'
 
     def __init__(self, *args, **kwds) -> None:
         super().__init__(*args, **kwds)
 
-        # build an image contexts 
-        # add nodes to it 
-        # 
+        # build an image contexts
+        # add nodes to it
+        pass
