@@ -1,11 +1,12 @@
 # GNU AGPL v3 License
-# Written by John Nunley
+# Written by John Nunley and Parker Nelms
 
 # autopep8 off
 from typing import List
 from gi.repository import Gegl
 import gi
 gi.require_version('Gegl', '0.4')
+import os
 # autopep8 on
 
 
@@ -22,6 +23,10 @@ class ImageContext:
 
     def __init__(self):
         self._parent = Gegl.Node()
+
+    def reset_context(self):
+        for child in self._parent.get_children():
+            self._parent.remove_child(child)
 
 
 class ImageBuilder:
@@ -41,41 +46,59 @@ class ImageBuilder:
 
     def load_from_file(self, path: str) -> "ImageBuilder":
         """
-        Loads an image from a file.
+        Loads an image file to create a source node.
+        Currently only supports .png, .jpg, and .exr
         """
 
-        node = Gegl.Node()
-        node.set_property("operation", "gegl:load")
-        node.set_property("path", path)
-        self.__parent.add_child(node)
-        self.__nodes.append(node)
-        return self
+        # get file extention
+        split_ext: tuple = os.path.splitext(path)
+        file_ext: str = split_ext[-1]
+        file_ext = file_ext.lower()
 
-    def save_to_file(self, path: str) -> "ImageBuilder":
-        """
-        Saves an image to a file.
-        """
+        # add node as a child to the image context
+        if file_ext == '.png':
+            node = self._parent.create_child("gegl:png-load")
+        
+        elif file_ext == '.jpg' or file_ext == '.jpeg':
+            node = self._parent.create_child("gegl:jpg-load")
 
-        node = Gegl.Node()
-        node.set_property("operation", "gegl:save")
-        node.set_property("path", path)
-        self.__parent.add_child(node)
+        elif file_ext == '.exr':
+            node = self._parent.create_child("gegl:exr-load")
 
-        # Connect the last node to the save node.
-        self.__nodes[-1].connect_to("output", node, "input")
+        elif file_ext == '.svg':
+            # TODO
+            pass
 
+        # add node to node list
         self.__nodes.append(node)
         return self
 
     def load_from_buffer(self, buffer: Gegl.Buffer) -> "ImageBuilder":
         """
-        Loads an image from a buffer.
+        Loads a buffer to create a source node.
         """
 
-        node = Gegl.Node()
-        node.set_property("operation", "gegl:buffer-source")
+        # create new source buffer node
+        node = self.__parent.create_child("gegl:gegl-load")
         node.set_property("buffer", buffer)
-        self.__parent.add_child(node)
+
+        # add node to node list
+        self.__nodes.append(node)
+        return self
+
+    def save_to_file(self, path: str) -> "ImageBuilder":
+        """
+        Saves an image of arbitrary type to a file.
+        """
+
+        # create generic image save node (uses different save handlers,
+        # depending on file type)
+        node = self.__parent.create_child("gegl:save")
+        node.set_property("path", path)
+
+        # Connect the last node to the save node.
+        self.__nodes[-1].link(node)
+
         self.__nodes.append(node)
         return self
 
@@ -89,7 +112,7 @@ class ImageBuilder:
         self.__parent.add_child(node)
 
         # Connect the last node to the save node.
-        self.__nodes[-1].connect_to("output", node, "input")
+        self.__nodes[-1].link(node)
 
         self.__nodes.append(node)
         return node.get_property("buffer")
@@ -99,15 +122,7 @@ class ImageBuilder:
         Composites two images.
         """
 
-        node = Gegl.Node()
-        node.set_property("operation", "gegl:over")
-        self.__parent.add_child(node)
-
-        # Connect the last node to the save node.
-        self.__nodes[-1].connect_to("output", node, "aux")
-        other.__nodes[-1].connect_to("output", node, "input")
-
-        self.__nodes.append(node)
+        # TODO: implement gegl:layer operation
         return self
 
     def invert(self) -> "ImageBuilder":
@@ -115,13 +130,13 @@ class ImageBuilder:
         Inverts an image.
         """
 
-        node = Gegl.Node()
-        node.set_property("operation", "gegl:invert")
-        self.__parent.add_child(node)
+        # create child node invert
+        node = self.__parent.create_child("gegl:invert")
 
-        # Connect the last node to the save node.
-        self.__nodes[-1].connect_to("output", node, "input")
+        # Connect the last node to the new node.
+        self.__nodes[-1].link(node)
 
+        # add new node to node list
         self.__nodes.append(node)
         return self
 
@@ -130,16 +145,14 @@ class ImageBuilder:
         Crops an image.
         """
 
-        node = Gegl.Node()
-        node.set_property("operation", "gegl:crop")
+        node = self.__parent.create_child("gegl:crop")
         node.set_property("x", x)
         node.set_property("y", y)
         node.set_property("width", width)
         node.set_property("height", height)
-        self.__parent.add_child(node)
 
         # Connect the last node to the save node.
-        self.__nodes[-1].connect_to("output", node, "input")
+        self.__nodes[-1].link(node)
 
         self.__nodes.append(node)
         return self
@@ -149,47 +162,37 @@ class ImageBuilder:
         Flips an image.
         """
 
-        node = Gegl.Node()
-        node.set_property("operation", "gegl:flip")
-        node.set_property("horizontal", horizontal)
-        node.set_property("vertical", vertical)
-        self.__parent.add_child(node)
+        # TODO: need to implement transform operations, namely "gegl:reflect"
 
-        # Connect the last node to the save node.
-        self.__nodes[-1].connect_to("output", node, "input")
-
-        self.__nodes.append(node)
         return self
 
-    def rotate(self, angle: float) -> "ImageBuilder":
+    def rotate(self, origin_x: float, origin_y: float, degrees: float) -> "ImageBuilder":
         """
         Rotates an image.
         """
 
-        node = Gegl.Node()
-        node.set_property("operation", "gegl:rotate")
-        node.set_property("angle", angle)
-        self.__parent.add_child(node)
+        node = self.__parent.create_child("gegl:rotate")
+        node.set_property("origin-x", origin_x)
+        node.set_property("origin-y", origin_x)
+        node.set_property("degrees", degrees)
 
         # Connect the last node to the save node.
-        self.__nodes[-1].connect_to("output", node, "input")
+        self.__nodes[-1].link(node)
 
         self.__nodes.append(node)
         return self
 
-    def resize(self, width: int, height: int) -> "ImageBuilder":
+    def resize(self, width: float, height: float) -> "ImageBuilder":
         """
         Resizes an image.
         """
 
-        node = Gegl.Node()
-        node.set_property("operation", "gegl:resize")
-        node.set_property("width", width)
-        node.set_property("height", height)
-        self.__parent.add_child(node)
+        node = self.__parent.create_child("gegl:scale-sizes")
+        node.set_property("x", width)
+        node.set_property("y", height)
 
         # Connect the last node to the save node.
-        self.__nodes[-1].connect_to("output", node, "input")
+        self.__nodes[-1].link(node)
 
         self.__nodes.append(node)
         return self
@@ -199,49 +202,41 @@ class ImageBuilder:
         Color balances an image.
         """
 
-        node = Gegl.Node()
-        node.set_property("operation", "gegl:color-balance")
-        node.set_property("cyan-red", cyan_red)
-        node.set_property("magenta-green", magenta_green)
-        node.set_property("yellow-blue", yellow_blue)
-        self.__parent.add_child(node)
+        # TODO: need to implement a few different operation, namely "gegl:component-extract"
+        # to separate channels and then compositing to combine. May need to be done in the gtk node side
 
-        # Connect the last node to the save node.
-        self.__nodes[-1].connect_to("output", node, "input")
-
-        self.__nodes.append(node)
         return self
 
     def brightness_contrast(self, brightness: float, contrast: float) -> "ImageBuilder":
         """
         Brightness and contrast an image.
+
+        Note: -5 <= Contrast <= 5
+        Note: -3 <= Brightness <= 3
         """
 
-        node = Gegl.Node()
-        node.set_property("operation", "gegl:brightness-contrast")
-        node.set_property("brightness", brightness)
+        node = self.__parent.create_child("gegl:brightness-contrast")
         node.set_property("contrast", contrast)
-        self.__parent.add_child(node)
+        node.set_property("brightness", brightness)
 
         # Connect the last node to the save node.
-        self.__nodes[-1].connect_to("output", node, "input")
+        self.__nodes[-1].link(node)
 
         self.__nodes.append(node)
         return self
 
-    def hue_saturation(self, hue: float, saturation: float) -> "ImageBuilder":
+    def hue_chroma_lightness(self, hue: float, chroma: float, lightness: float) -> "ImageBuilder":
         """
-        Hue and saturation an image.
+        Hue, chroma, and lightness an image.
         """
 
-        node = Gegl.Node()
-        node.set_property("operation", "gegl:hue-saturation")
+        node = self.__parent.creat_child("gegl:hue-chroma")
         node.set_property("hue", hue)
-        node.set_property("saturation", saturation)
-        self.__parent.add_child(node)
+        node.set_property("chroma", chroma)
+        node.set_property("lightness", lightness)
 
         # Connect the last node to the save node.
-        self.__nodes[-1].connect_to("output", node, "input")
+        self.__nodes[-1].link(node)
 
         self.__nodes.append(node)
         return self
@@ -251,15 +246,7 @@ class ImageBuilder:
         Curves an image.
         """
 
-        node = Gegl.Node()
-        node.set_property("operation", "gegl:curves")
-        node.set_property("curve", curve)
-        self.__parent.add_child(node)
-
-        # Connect the last node to the save node.
-        self.__nodes[-1].connect_to("output", node, "input")
-
-        self.__nodes.append(node)
+        # TODO: once again will have to use something like "gegl:contrast-curve" and component extraction
         return self
 
     def unsharp_mask(self, radius: float, amount: float) -> "ImageBuilder":
@@ -267,30 +254,27 @@ class ImageBuilder:
         Unsharp masks an image.
         """
 
-        node = Gegl.Node()
-        node.set_property("operation", "gegl:unsharp-mask")
-        node.set_property("radius", radius)
-        node.set_property("amount", amount)
-        self.__parent.add_child(node)
+        node = self.__parent.create_child("gegl:unsharp-mask")
+        node.set_property("std-dev", radius)
+        node.set_property("scale", amount)
 
         # Connect the last node to the save node.
-        self.__nodes[-1].connect_to("output", node, "input")
+        self.__nodes[-1].link(node)
 
         self.__nodes.append(node)
         return self
 
-    def gaussian_blur(self, radius: float) -> "ImageBuilder":
+    def gaussian_blur(self, x: float, y: float) -> "ImageBuilder":
         """
         Gaussian blurs an image.
         """
 
-        node = Gegl.Node()
-        node.set_property("operation", "gegl:gaussian-blur")
-        node.set_property("radius", radius)
-        self.__parent.add_child(node)
+        node = self.__parent.create_child("gegl:gaussian-blur")
+        node.set_property("std-dev-x", x)
+        node.set_property("std-dev-y", y)
 
         # Connect the last node to the save node.
-        self.__nodes[-1].connect_to("output", node, "input")
+        self.__nodes[-1].link(node)
 
         self.__nodes.append(node)
         return self
