@@ -35,7 +35,7 @@ export default defineComponent({
         </router-link>
       </v-toolbar-title>
       <v-spacer />
-      <v-menu left bottom>
+      <v-menu rounded="pill" slide-x left bottom>
         <template #activator="{ props }">
           <v-btn icon v-bind="props">
             <v-icon>mdi-dots-vertical</v-icon>
@@ -44,14 +44,13 @@ export default defineComponent({
 
         <v-list>
           <v-list-item>
-            <router-link to="/login" tag="v-btn">
-              <v-btn> Login </v-btn>
+            <router-link to="/login" tag="v-btn" style="color: black">
+              <v-btn rounded="pill" color="#e1e9d0"> Login </v-btn>
             </router-link>
           </v-list-item>
           <v-list-item>
-            <router-link to="/register" tag="v-btn"
-              ><v-btn> Register </v-btn></router-link
-            >
+            <router-link to="/register" tag="v-btn" style="color: black">
+              <v-btn rounded="pill" color="#e1e9d0"> Register </v-btn></router-link>
           </v-list-item>
           <v-list-item> Settings (TODO) </v-list-item>
         </v-list>
