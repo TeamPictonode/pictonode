@@ -43,7 +43,7 @@ def test_composite():
     context = ontario.ImageContext()
     builder = ontario.ImageBuilder(context)
     builder.load_from_file(TEST_IMAGE_PATH)
-    builder.composite(builder.load_from_file(TEST_IMAGE_PATH))
+    builder.composite(builder.load_from_file(TEST_IMAGE_PATH), 0, 0, 0, 1)
     builder.process()
 
 
@@ -79,7 +79,7 @@ def test_rotate():
     context = ontario.ImageContext()
     builder = ontario.ImageBuilder(context)
     builder.load_from_file(TEST_IMAGE_PATH)
-    builder.rotate(90)
+    builder.rotate(50, 50, 90)
     builder.process()
 
 
@@ -103,7 +103,7 @@ def test_hue_saturation():
     context = ontario.ImageContext()
     builder = ontario.ImageBuilder(context)
     builder.load_from_file(TEST_IMAGE_PATH)
-    builder.hue_saturation(0.5, 0.5)
+    builder.hue_chroma_lightness(30, 30, 30)
     builder.process()
 
 
