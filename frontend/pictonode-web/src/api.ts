@@ -20,11 +20,11 @@ export function uploadImage(file: File): Promise<number> {
   );
 }
 
-export function processPipeline(pipeline: string): Promise<File> {
+export function processPipeline(pipeline: any): Promise<File> {
   // The body of the returning request will be an image file.
   return API.post(
     "/process",
-    { pipeline },
+    pipeline,
     { responseType: "blob" }
   ).then((response) => response.data);
 }

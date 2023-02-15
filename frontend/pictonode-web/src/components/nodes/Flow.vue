@@ -127,14 +127,16 @@ export default defineComponent({
             // @ts-ignore
             link.defaultValue = link.defaultValue.id;
           }
-        }       
+        }
+        
+        formatted.output = outputNode.getId();
 
         // Run the API.
-        processPipeline(JSON.stringify(formatted)).then((image_file) => {
-          // Draw the image to the canvas.
+        processPipeline(formatted).then((image_file) => {
+          // Conver the image_file `Blob` to a canvas
           const img = new Image();
-          // @ts-ignore
-          img.src = image_file;
+          img.src = URL.createObjectURL(image_file);
+
           img.onload = () => {
             canvas = document.createElement("canvas");
             canvas.width = img.width;
