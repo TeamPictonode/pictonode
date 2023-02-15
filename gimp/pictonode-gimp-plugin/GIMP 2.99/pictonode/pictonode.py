@@ -110,12 +110,12 @@ class Pictonode (Gimp.PlugIn):
         procedure = Gimp.ImageProcedure.new(self, name,
                                             Gimp.PDBProcType.PLUGIN,
                                             self.run, None)
-        
+
         procedure.set_image_types("RGB*, GRAY*")
         procedure.set_sensitivity_mask(Gimp.ProcedureSensitivityMask.DRAWABLE |
                                        Gimp.ProcedureSensitivityMask.DRAWABLES |
                                        Gimp.ProcedureSensitivityMask.NO_DRAWABLES)
-        
+
         procedure.set_documentation(_("Pictonode"),
                                     _("Launches Pictonode plugin"),
                                     name)
@@ -145,16 +145,17 @@ class Pictonode (Gimp.PlugIn):
             error = GLib.Error.new_literal(Gimp.PlugIn.error_quark(), msg, 0)
             return procedure.new_return_values(
                 Gimp.PDBStatusType.CALLING_ERROR, error)
-        
+
         elif run_mode == Gimp.RunMode.INTERACTIVE:
-            PictonodeManager().init(procedure, run_mode, image, n_drawables, drawables, args, run_data)
+            PictonodeManager().init(procedure, run_mode, image,
+                                             n_drawables, drawables, args, run_data)
 
             GimpUi.init("pictonode.py")
             PictonodeManager().run()
 
         else:
             raise Exception(">:(")
-        
+
         return procedure.new_return_values(
             Gimp.PDBStatusType.SUCCESS, GLib.Error())
 

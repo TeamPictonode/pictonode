@@ -2,8 +2,7 @@
 # Written by John Nunley
 
 from abc import ABC, abstractmethod
-from collections.abc import List, Dict
-from typing import TypeVar, Generic, Callable, Optional, Any, Union
+from typing import TypeVar, Generic, Callable, Optional, Any, Union, List, Dict
 
 MAX_NODES = 1 << 24
 
@@ -11,7 +10,7 @@ T = TypeVar('T')
 M = TypeVar('M')
 
 
-class __HydrateTarget(ABC):
+class _HydrateTarget(ABC):
     """
     A target for hydrating a node.
     """
@@ -33,7 +32,7 @@ class __HydrateTarget(ABC):
         pass
 
 
-class __NoNode(__HydrateTarget):
+class _NoNode(_HydrateTarget):
     """
     A stand-in for a node that doesn't exist.
     """
@@ -45,7 +44,11 @@ class __NoNode(__HydrateTarget):
         return False
 
     def hydrate(self):
+        #print("No node to hydrate.")
         pass
+
+    def __repr__(self):
+        return "NoNode"
 
 
 class LinkTemplate(Generic[T, M]):
@@ -90,10 +93,10 @@ class Link(Generic[T, M]):
     __id: int
 
     # The node this link is coming from.
-    __from: __HydrateTarget
+    __from: _HydrateTarget
 
     # The node this link is going to.
-    __to: __HydrateTarget
+    __to: _HydrateTarget
 
     # The index of the link in the from node.
     __fromIndex: int
@@ -105,10 +108,10 @@ class Link(Generic[T, M]):
     __metadata: M
 
     # The value of the link.
-    __value: T
+    _value: T
 
     # Whether or not the link needs to be hydrated.
-    __dirty: bool
+    _dirty: bool
 
     # Is the link using a custom value?
     __customDefault: bool
@@ -116,13 +119,13 @@ class Link(Generic[T, M]):
     def __init__(self, template: LinkTemplate[T, M], metadata: M, id: int):
         self.__template = template
         self.__id = id
-        self.__from = __NoNode()
-        self.__to = __NoNode()
+        self.__from = _NoNode()
+        self.__to = _NoNode()
         self.__fromIndex = -1
         self.__toIndex = -1
         self.__metadata = metadata
-        self.__value = template.getDefaultValue()
-        self.__dirty = True
+        self._value = template.getDefaultValue()
+        self._dirty = True
         self.__customDefault = False
 
     def getId(self) -> int:
@@ -144,20 +147,20 @@ class Link(Generic[T, M]):
     def isToOccupied(self) -> bool:
         return not self.__to.isNoNode()
 
-    def setFrom(self, node: __HydrateTarget, index: int):
+    def setFrom(self, node: _HydrateTarget, index: int):
         self.__from = node
         self.__fromIndex = index
 
-    def setTo(self, node: __HydrateTarget, index: int):
+    def setTo(self, node: _HydrateTarget, index: int):
         self.__to = node
         self.__toIndex = index
 
     def clearFrom(self):
-        self.__from = __NoNode()
+        self.__from = _NoNode()
         self.__fromIndex = -1
 
     def clearTo(self):
-        self.__to = __NoNode()
+        self.__to = _NoNode()
         self.__toIndex = -1
 
     def isDirty(self):
@@ -165,15 +168,16 @@ class Link(Generic[T, M]):
         Is the link dirty?
         """
 
-        return self.__dirty
+        return self._dirty
 
     def hydrate(self):
         """
         Hydrates the link.
         """
 
+        #print(f"Hydrating link, {self.__from} -> {self.__to}")
         self.__from.hydrate()
-        self.__to.hydrate()
+        #print(f"Finished hydrating link, {self.__from} -> {self.__to}")
 
     def getValue(self) -> T:
         """
@@ -181,16 +185,16 @@ class Link(Generic[T, M]):
         """
 
         self.hydrate()
-        return self.__value
+        return self._value
 
     def setValue(self, value: T):
         """
         Sets the value of the link.
         """
 
-        self.__value = value
+        self._value = value
         self.__customDefault = True
-        self.__dirty = True
+        self._dirty = True
 
     def getFromIndex(self) -> int:
         """
@@ -220,7 +224,7 @@ class Link(Generic[T, M]):
 
         if self.__customDefault:
             return None
-        return self.__value
+        return self._value
 
 
 class NodeTemplate(Generic[T, M]):
@@ -229,7 +233,7 @@ class NodeTemplate(Generic[T, M]):
     """
 
     # Callback to call when the data is processed.
-    __onProcess: Callable[[List[Link[T, M]]], List[T]]
+    __onProcess: Callable[[List[Link[T, M]], M], List[T]]
 
     # Input link templates.
     __inputs: List[LinkTemplate[T, M]]
@@ -242,7 +246,7 @@ class NodeTemplate(Generic[T, M]):
 
     def __init__(
         self,
-        onProcess: Callable[[List[Link[T, M]]], List[T]],
+        onProcess: Callable[[List[Link[T, M]], M], List[T]],
         inputs: List[LinkTemplate[T, M]],
         outputs: List[LinkTemplate[T, M]],
         metadata: M
@@ -273,14 +277,14 @@ class NodeTemplate(Generic[T, M]):
 
         return self.__outputs
 
-    def process(self, inputs: List[Link[T, M]]) -> List[T]:
+    def process(self, inputs: List[Link[T, M]], metadata: M) -> List[T]:
         """
         Processes the node.
 
         Probably shouldn't call this unless you know what you're doing.
         """
 
-        return self.__onProcess(inputs)
+        return self.__onProcess(inputs, metadata)
 
 
 class TemplateTable(Generic[T, M]):
@@ -316,7 +320,7 @@ class TemplateTable(Generic[T, M]):
         return list(self.__nodeTemplates.keys())
 
 
-class Node(Generic[T, M], __HydrateTarget):
+class Node(Generic[T, M], _HydrateTarget):
     """
     A node in the graph.
     """
@@ -355,24 +359,28 @@ class Node(Generic[T, M], __HydrateTarget):
         lastLinkId = id + MAX_NODES
 
         self.__inputs = []
-        for linkTemplate in template.getInputs():
-            self.__inputs.append(
-                Link(
+        for i, linkTemplate in enumerate(template.getInputs()):
+            link = Link(
                     linkTemplate,
                     lastLinkId,
                     metadata,
-                )
+            )
+            link.setTo(self, i)
+            self.__inputs.append(
+                link 
             )
             lastLinkId += MAX_NODES
 
         self.__outputs = []
-        for linkTemplate in template.getOutputs():
-            self.__outputs.append(
-                Link(
+        for i, linkTemplate in enumerate(template.getOutputs()):
+            link = Link(
                     linkTemplate,
                     lastLinkId,
                     metadata,
-                )
+            )
+            link.setFrom(self, i)
+            self.__outputs.append(
+                link
             )
             lastLinkId += MAX_NODES
 
@@ -418,17 +426,26 @@ class Node(Generic[T, M], __HydrateTarget):
 
         return self.__outputs
 
-    def _setId(self, id: int):
+    def setId(self, id: int):
         """
         (UNSTABLE) Sets the ID number of the node.
         """
 
         self.__id = id
 
+    def setMetadata(self, metadata: M):
+        """
+        (UNSTABLE) Sets the metadata for the node.
+        """
+
+        self.__metadata = metadata
+
     def isNoNode(self) -> bool:
         return False
 
     def hydrate(self):
+        #print("Hydrating node", self.__id)
+
         # Figure out if we are dirty.
         is_dirty = False
         for link in self.__inputs:
@@ -442,11 +459,14 @@ class Node(Generic[T, M], __HydrateTarget):
 
         # Process the node.
         template = self.__templateTable.getTemplate(self.__template)
-        outputs = template.process(self.__inputs)
+        outputs = template.process(self.__inputs, self.__metadata)
 
         # Set the outputs.
         for i in range(len(outputs)):
-            self.__outputs[i].setData(outputs[i])
+            self.__outputs[i]._value = outputs[i]
+            self.__outputs[i]._dirty = False
+
+        #print("Done hydrating node", self.__id)
 
     def _setOutputLink(self, link: Link[T, M], index: int):
         """
@@ -501,9 +521,9 @@ class Node(Generic[T, M], __HydrateTarget):
 
         link = self.__inputs[to_index]
         from_node.__outputs[from_index] = link
-        link.__setFrom(from_node, from_index)
-        link.__setTo(self, to_index)
-        link.__setMetadata(meta)
+        link.setFrom(from_node, from_index)
+        link.setTo(self, to_index)
+        link.setMetadata(meta)
         return link
 
     def _unlinkFrom(
@@ -550,6 +570,9 @@ class Node(Generic[T, M], __HydrateTarget):
 
         return self.__outputs[index].isToOccupied()
 
+    def __repr__(self):
+        return f"Node({self.__template}, {self.__id})"
+
 
 class Pipeline(Generic[T, M]):
     """
@@ -578,14 +601,18 @@ class Pipeline(Generic[T, M]):
         self.__nextId = 0
         self.__outputId = None
 
-    def createNode(self, template: str, metadata: M) -> Node[T, M]:
+    def createNode(self, template: str, metadata: M, id=None) -> Node[T, M]:
         """
         Creates a node.
         """
 
         node = Node(self.__templateTable, template, metadata, self.__nextId)
-        self.__nodes[self.__nextId] = node
-        self.__nextId += MAX_NODES
+        if not id:
+            id = self.__nextId
+            self.__nextId += 1
+        else:
+            self.__nextId = max(self.__nextId, id + 1)
+        self.__nodes[id] = node
         return node
 
     def link(
@@ -595,6 +622,7 @@ class Pipeline(Generic[T, M]):
         toId: int,
         toIndex: int,
         meta: M,
+        id = None,
     ) -> Link[T, M]:
         """
         Link two nodes together and return the link object.
@@ -603,13 +631,18 @@ class Pipeline(Generic[T, M]):
         from_node = self.__nodes[fromId]
         to_node = self.__nodes[toId]
 
-        if from_node.isOutputOccupied(fromIndex):
-            raise ValueError("Output is occupied")
+        #if from_node.isOutputOccupied(fromIndex):
+        #    raise ValueError(f"Output is occupied: {fromId} {fromIndex} {toId} {toIndex}")
 
-        if to_node.isInputOccupied(toIndex):
-            raise ValueError("Input is occupied")
+        #if to_node.isInputOccupied(toIndex):
+        #    raise ValueError("Input is occupied")
 
         link = to_node._linkFrom(from_node, fromIndex, toIndex, meta)
+        if not id:
+            id = self.__nextId
+            self.__nextId += 1
+        link.setId(id)
+        #print(link.getId())
         self.__links[link.getId()] = link
         return link
 
@@ -713,7 +746,7 @@ def deserializePipeline(
 
     for serializedNode in serialized["nodes"]:
         node = pipeline.createNode(
-            serializedNode["template"], serializedNode["metadata"])
+            serializedNode["template"], serializedNode.get("metadata", None))
         node.setId(serializedNode["id"])
 
     for serializedLink in serialized["links"]:
@@ -722,11 +755,12 @@ def deserializePipeline(
             serializedLink["fromIndex"],
             serializedLink["to"],
             serializedLink["toIndex"],
-            serializedLink["metadata"],
+            serializedLink.get("metadata", None),
+            serializedLink.get("id", None),
         )
 
         if serializedLink.get("defaultValue") is not None:
-            newLink._setDefaultValue(serializedLink["defaultValue"])
+            newLink.setValue(serializedLink["defaultValue"])
 
     pipeline.setOutputNode(serialized["output"])
 

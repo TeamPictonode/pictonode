@@ -3,9 +3,9 @@
 
 # autopep8 off
 from typing import List
-from gi.repository import Gegl
 import gi
 gi.require_version('Gegl', '0.4')
+from gi.repository import Gegl
 import os
 # autopep8 on
 

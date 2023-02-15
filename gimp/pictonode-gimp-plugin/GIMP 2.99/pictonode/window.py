@@ -159,8 +159,8 @@ class PluginWindow(object):
 
     def do_quit(self, widget=None, data=None):
         Gtk.main_quit()
-        #can't call sys.exit(0) during plugin runtime if window is closed, it'll kill the whole plugin process
-        #sys.exit(0)
+        # can't call sys.exit(0) during plugin runtime if window is closed, it'll kill the whole plugin process
+        # sys.exit(0)
 
     def save(self):
         self.node_view.save("node_structure.xml")

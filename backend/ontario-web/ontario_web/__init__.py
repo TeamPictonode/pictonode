@@ -2,6 +2,7 @@
 # Written by John Nunley
 
 import os
+from os import path as os_path
 
 from . import db
 from . import image_manager
@@ -10,13 +11,17 @@ from . import processor
 from flask import Flask, request, send_file
 
 import atexit
+import random
 
 from apscheduler.schedulers.background import BackgroundScheduler
 
 
 def create_app(test_config=None):
+    # Public directory
+    public_dir = os_path.join(os_path.dirname(__file__), "..", "public")
+
     # Create and configure the app
-    app = Flask(__name__, instance_relative_config=True)
+    app = Flask(__name__, instance_relative_config=True, static_folder=public_dir)
     app.config.from_mapping(
         SECRET_KEY="ontario",
         # TODO: not sqlite
@@ -38,8 +43,13 @@ def create_app(test_config=None):
 
     # Host all files in the "public" folder
     @app.route("/<path:path>")
-    def send_file(path):
+    def host_file(path):
         return app.send_static_file(path)
+
+    # Root goes to index.html
+    @app.route("/")
+    def index():
+        return app.send_static_file("index.html")
 
     # Set up a task scheduler
     scheduler = BackgroundScheduler()
@@ -65,7 +75,6 @@ def create_app(test_config=None):
         # The body of the request should be an image
         image = request.files["image"]
         new_id = im.add_image(image.filename)
-        os.remove(image.filename)
         return {"id": new_id}
 
     # For /api/process, take the body of the request and process it
@@ -74,9 +83,12 @@ def create_app(test_config=None):
     def process():
         # The body of the request should be a JSON pipeline
         pipeline = request.get_json()
-        processor.process(pipeline, im, "/tmp/ontario/out.webp")
+        id = random.randint(0, 1000000000)
+        filename = f"/tmp/ontario/out{id}.webp"
+        print(filename)
+        processor.process(pipeline, im, filename)
 
         # The body of the response should be the output image
-        return send_file("/tmp/ontario/out.webp", mimetype="image/webp")
+        return send_file(filename)
 
     return app

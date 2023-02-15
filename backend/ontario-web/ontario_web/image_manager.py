@@ -2,7 +2,7 @@
 # Written by John Nunley
 
 # autopep8 off
-import ontario
+from . import ontario
 import os
 import datetime
 from typing import Dict
@@ -76,9 +76,6 @@ class ImageManager:
         Adds an image to the image manager.
         """
 
-        # Get the image size.
-        image_size = os.path.getsize(path)
-
         # Create a new image ID.
         image_id = self.__last_image_id
         self.__last_image_id += 1
@@ -91,6 +88,9 @@ class ImageManager:
         context = ontario.ImageContext()
         ontario.ImageBuilder(context).load_from_file(
             path).save_to_file(image_path).process()
+        
+        # get the image size
+        image_size = os.path.getsize(image_path)
 
         # Add the image to the image map.
         image_info = _ImageInfo(image_id, image_path, image_size)
@@ -104,6 +104,13 @@ class ImageManager:
             self.__clean_up()
 
         return image_id
+
+    def image_path_for_id(self, image_id: int) -> str:
+        """
+        Returns the image path for the given image ID.
+        """
+
+        return self.__image_map[image_id].path
 
     def clean_up(self) -> None:
         """
