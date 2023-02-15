@@ -2,11 +2,11 @@
 # Written by John Nunley and Parker Nelms
 
 # autopep8 off
-from typing import List
 import gi
-gi.require_version('Gegl', '0.4')
-from gi.repository import Gegl
+from typing import List
 import os
+gi.require_version('Gegl', '0.4')
+from gi.repository import Gegl  # noqa
 # autopep8 on
 
 
@@ -58,7 +58,7 @@ class ImageBuilder:
         # add node as a child to the image context
         if file_ext == '.png':
             node = self._parent.create_child("gegl:png-load")
-        
+
         elif file_ext == '.jpg' or file_ext == '.jpeg':
             node = self._parent.create_child("gegl:jpg-load")
 
@@ -166,7 +166,11 @@ class ImageBuilder:
 
         return self
 
-    def rotate(self, origin_x: float, origin_y: float, degrees: float) -> "ImageBuilder":
+    def rotate(
+            self,
+            origin_x: float,
+            origin_y: float,
+            degrees: float) -> "ImageBuilder":
         """
         Rotates an image.
         """
@@ -197,17 +201,25 @@ class ImageBuilder:
         self.__nodes.append(node)
         return self
 
-    def color_balance(self, cyan_red: float, magenta_green: float, yellow_blue: float) -> "ImageBuilder":
+    def color_balance(
+            self,
+            cyan_red: float,
+            magenta_green: float,
+            yellow_blue: float) -> "ImageBuilder":
         """
         Color balances an image.
         """
 
         # TODO: need to implement a few different operation, namely "gegl:component-extract"
-        # to separate channels and then compositing to combine. May need to be done in the gtk node side
+        # to separate channels and then compositing to combine. May need to be
+        # done in the gtk node side
 
         return self
 
-    def brightness_contrast(self, brightness: float, contrast: float) -> "ImageBuilder":
+    def brightness_contrast(
+            self,
+            brightness: float,
+            contrast: float) -> "ImageBuilder":
         """
         Brightness and contrast an image.
 
@@ -225,7 +237,11 @@ class ImageBuilder:
         self.__nodes.append(node)
         return self
 
-    def hue_chroma_lightness(self, hue: float, chroma: float, lightness: float) -> "ImageBuilder":
+    def hue_chroma_lightness(
+            self,
+            hue: float,
+            chroma: float,
+            lightness: float) -> "ImageBuilder":
         """
         Hue, chroma, and lightness an image.
         """
@@ -246,7 +262,8 @@ class ImageBuilder:
         Curves an image.
         """
 
-        # TODO: once again will have to use something like "gegl:contrast-curve" and component extraction
+        # TODO: once again will have to use something like
+        # "gegl:contrast-curve" and component extraction
         return self
 
     def unsharp_mask(self, radius: float, amount: float) -> "ImageBuilder":
@@ -279,7 +296,16 @@ class ImageBuilder:
         self.__nodes.append(node)
         return self
 
-    def perspective_transform(self, x0: float, y0: float, x1: float, y1: float, x2: float, y2: float, x3: float, y3: float) -> "ImageBuilder":
+    def perspective_transform(
+            self,
+            x0: float,
+            y0: float,
+            x1: float,
+            y1: float,
+            x2: float,
+            y2: float,
+            x3: float,
+            y3: float) -> "ImageBuilder":
         """
         Perspective transforms an image.
         """
