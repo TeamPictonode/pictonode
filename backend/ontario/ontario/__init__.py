@@ -284,22 +284,7 @@ class ImageBuilder:
         Perspective transforms an image.
         """
 
-        node = Gegl.Node()
-        node.set_property("operation", "gegl:perspective-transform")
-        node.set_property("x0", x0)
-        node.set_property("y0", y0)
-        node.set_property("x1", x1)
-        node.set_property("y1", y1)
-        node.set_property("x2", x2)
-        node.set_property("y2", y2)
-        node.set_property("x3", x3)
-        node.set_property("y3", y3)
-        self.__parent.add_child(node)
-
-        # Connect the last node to the save node.
-        self.__nodes[-1].connect_to("output", node, "input")
-
-        self.__nodes.append(node)
+        # TODO: involves the use of several transform operations.
         return self
 
     def process(self):
