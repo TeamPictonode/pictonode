@@ -2,6 +2,7 @@
 # Written by John Nunley
 
 import os
+from os import path as os_path
 
 from . import db
 from . import image_manager
@@ -16,8 +17,11 @@ from apscheduler.schedulers.background import BackgroundScheduler
 
 
 def create_app(test_config=None):
+    # Public directory
+    public_dir = os_path.join(os_path.dirname(__file__), "..", "public")
+
     # Create and configure the app
-    app = Flask(__name__, instance_relative_config=True)
+    app = Flask(__name__, instance_relative_config=True, static_folder=public_dir)
     app.config.from_mapping(
         SECRET_KEY="ontario",
         # TODO: not sqlite
@@ -41,6 +45,11 @@ def create_app(test_config=None):
     @app.route("/<path:path>")
     def host_file(path):
         return app.send_static_file(path)
+
+    # Root goes to index.html
+    @app.route("/")
+    def index():
+        return app.send_static_file("index.html")
 
     # Set up a task scheduler
     scheduler = BackgroundScheduler()

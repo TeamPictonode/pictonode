@@ -22,7 +22,12 @@ def webpackAt(p: str):
   res = sp.run(["npx", "webpack"], cwd=p, check=True, env=env)
 
   if res.returncode != 0:
-    raise Exception("Webpack failed")  
+    raise Exception("Webpack failed")
+
+def copyFile(from_: str, to_: str):
+  with open(from_, "rb") as f:
+    with open(to_, "wb") as f2:
+      f2.write(f.read()) 
 
 def main():
   if len(sys.argv) != 2:
@@ -34,41 +39,14 @@ def main():
 
   os.makedirs(webRoot, exist_ok=True)
 
-  # Get the paths to the frontend and backend
+  # Get the paths to the frontend
   frontend = path.join(path.dirname(__file__), "..", "frontend", "pictonode-web")
-  backend = path.join(path.dirname(__file__), "..", "backend", "web-backend")
+  backend = path.join(path.dirname(__file__), "..", "backend", "ontario-web")
 
-  # Compile the frontend and backend
+  # Compile the frontend
   webpackAt(frontend)
-  webpackAt(backend)
 
-  # Open "backend.js" in the web root
-  backendJs = path.join(webRoot, "backend.js")
-  with open(backendJs, "w") as f:
-    # Import the external libraries
-    EXTERNALS = [
-      "sharp",
-      "express",
-      "pg",
-      "fs",
-      "path",
-      "os"
-    ]
-
-    for e in EXTERNALS:
-      f.write(f"var {e} = require('{e}');\n")
-    
-    # Write the entire backend
-    with open(path.join(backend, "dist", "index.js"), "r") as f2:
-      f.write(f2.read())
-
-  # Copy out deployed.json package and install all dependencies
-  scriptDir = path.dirname(__file__)
-  shutil.copy(path.join(scriptDir, "deployed.json"), path.join(webRoot, "package.json"))
-  shutil.copy(path.join(scriptDir, ".env"), path.join(webRoot, ".env"))
-  res = sp.run(["npm", "install", "--production"], cwd=webRoot, check=True)
-  if res.returncode != 0:
-    raise Exception("Failed to install dependencies")
+  shutil.copytree(path.join(backend, "ontario_web"), path.join(webRoot, "ontario_web")) 
 
   # Make a "public" directory
   public = path.join(webRoot, "public")
