@@ -23,3 +23,9 @@ export default defineComponent({
     </v-main>
   </v-app>
 </template>
+
+<style>
+#pictonode {
+  background-image: linear-gradient(to top, #c6d4e9, #bddde9, #bfe3e2, #cce7d7, #e1e9d0);
+}
+</style>

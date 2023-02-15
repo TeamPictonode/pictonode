@@ -23,14 +23,14 @@ export default defineComponent({
 
 <template>
   <v-layout>
-    <v-app-bar pictonode>
+    <v-app-bar color="#e1e9d0" pictonode>
       <v-app-bar-nav-icon @click.stop="drawer = !drawer"></v-app-bar-nav-icon>
       <v-toolbar-title>
-        <router-link to="/" tag="v-btn">
+        <router-link to="/" tag="v-btn" style="color:black;">
           <v-btn> Pictonode </v-btn>
         </router-link>
 
-        <router-link class="text-body-1" to="/about" tag="v-btn">
+        <router-link class="text-body-1" to="/about" tag="v-btn" style="color:black;">
           <v-btn> About Page </v-btn>
         </router-link>
       </v-toolbar-title>
@@ -57,7 +57,7 @@ export default defineComponent({
         </v-list>
       </v-menu>
     </v-app-bar>
-    <v-navigation-drawer v-model="drawer">
+    <v-navigation-drawer color="#e1e9d0" v-model="drawer">
       <v-list>
         <v-list-item
           prepend-icon="mdi-account"
@@ -69,3 +69,6 @@ export default defineComponent({
     </v-navigation-drawer>
   </v-layout>
 </template>
+
+<style>
+</style>
