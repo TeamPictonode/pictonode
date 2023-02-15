@@ -1,16 +1,16 @@
-# GNU AGPL v3 License
+#  GNU AGPL v3 License
 # Written by John Nunley
 
 import os.path as path
 import pytest
 import tempfile
 
-from .. import ontario
+import ontario
+#from ..ontario import ImageBuilder, ImageContext
 
 TEST_IMAGE_PATH = path.join(path.dirname(__file__), "assets", "test.png")
 
 
-@pytest.fixture
 def test_load_from_file():
     """
     Tests the load_from_file method.
@@ -22,7 +22,6 @@ def test_load_from_file():
     builder.process()
 
 
-@pytest.fixture
 def test_save_to_file():
     """
     Tests the save_to_file method.
@@ -36,7 +35,6 @@ def test_save_to_file():
         builder.process()
 
 
-@pytest.fixture
 def test_composite():
     """
     Tests the composite method.
@@ -49,7 +47,6 @@ def test_composite():
     builder.process()
 
 
-@pytest.fixture
 def test_invert():
     """
     Tests the invert method.
@@ -62,7 +59,6 @@ def test_invert():
     builder.process()
 
 
-@pytest.fixture
 def test_crop():
     """
     Tests the crop method.
@@ -75,20 +71,6 @@ def test_crop():
     builder.process()
 
 
-@pytest.fixture
-def test_flip():
-    """
-    Tests the flip method.
-    """
-
-    context = ontario.ImageContext()
-    builder = ontario.ImageBuilder(context)
-    builder.load_from_file(TEST_IMAGE_PATH)
-    builder.flip()
-    builder.process()
-
-
-@pytest.fixture
 def test_rotate():
     """
     Tests the rotate method.
@@ -101,7 +83,6 @@ def test_rotate():
     builder.process()
 
 
-@pytest.fixture
 def test_color_balance():
     """
     Tests the color_balance method.
@@ -114,7 +95,6 @@ def test_color_balance():
     builder.process()
 
 
-@pytest.fixture
 def test_hue_saturation():
     """
     Tests the hue_saturation method.
@@ -127,7 +107,6 @@ def test_hue_saturation():
     builder.process()
 
 
-@pytest.fixture
 def test_unsharp_mask():
     """
     Tests the unsharp_mask method.
@@ -139,15 +118,3 @@ def test_unsharp_mask():
     builder.unsharp_mask(0.5, 0.5)
     builder.process()
 
-
-@pytest.fixture
-def test_guassian_blur():
-    """
-    Tests the guassian_blur method.
-    """
-
-    context = ontario.ImageContext()
-    builder = ontario.ImageBuilder(context)
-    builder.load_from_file(TEST_IMAGE_PATH)
-    builder.guassian_blur(0.5)
-    builder.process()

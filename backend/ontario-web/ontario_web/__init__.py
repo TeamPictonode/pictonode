@@ -10,6 +10,7 @@ from . import processor
 from flask import Flask, request, send_file
 
 import atexit
+import random
 
 from apscheduler.schedulers.background import BackgroundScheduler
 
@@ -38,7 +39,7 @@ def create_app(test_config=None):
 
     # Host all files in the "public" folder
     @app.route("/<path:path>")
-    def send_file(path):
+    def host_file(path):
         return app.send_static_file(path)
 
     # Set up a task scheduler
@@ -74,9 +75,12 @@ def create_app(test_config=None):
     def process():
         # The body of the request should be a JSON pipeline
         pipeline = request.get_json()
-        processor.process(pipeline, im, "/tmp/ontario/out.webp")
+        id = random.randint(0, 1000000000)
+        filename = f"/tmp/ontario/out{id}.webp"
+        print(filename)
+        processor.process(pipeline, im, filename)
 
         # The body of the response should be the output image
-        return send_file("/tmp/ontario/out.webp", mimetype="image/webp")
+        return send_file(filename)
 
     return app

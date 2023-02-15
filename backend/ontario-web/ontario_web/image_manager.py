@@ -2,7 +2,7 @@
 # Written by John Nunley
 
 # autopep8 off
-import ontario
+from . import ontario
 import os
 import datetime
 from typing import Dict
@@ -104,6 +104,13 @@ class ImageManager:
             self.__clean_up()
 
         return image_id
+
+    def image_path_for_id(self, image_id: int) -> str:
+        """
+        Returns the image path for the given image ID.
+        """
+
+        return self.__image_map[image_id].path
 
     def clean_up(self) -> None:
         """
