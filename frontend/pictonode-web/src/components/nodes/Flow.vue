@@ -125,6 +125,8 @@ export default defineComponent({
         for (const link of formatted.links) {
           if ("defaultValue" in link && link.defaultValue) {
             // @ts-ignore
+            console.log(`Exposing id: ${link.defaultValue.id}`)
+            // @ts-ignore
             link.defaultValue = link.defaultValue.id;
           }
         }
@@ -132,25 +134,29 @@ export default defineComponent({
         formatted.output = outputNode.getId();
 
         // Run the API.
-        processPipeline(formatted).then((image_file) => {
-          // Conver the image_file `Blob` to a canvas
-          const img = new Image();
-          img.src = URL.createObjectURL(image_file);
+        try {
+          processPipeline(formatted).then((image_file) => {
+            // Conver the image_file `Blob` to a canvas
+            const img = new Image();
+            img.src = URL.createObjectURL(image_file);
 
-          img.onload = () => {
-            const canvas2 = document.createElement("canvas");
-            canvas2.width = img.width;
-            canvas2.height = img.height;
-            const ctx = canvas2.getContext("2d");
+            img.onload = () => {
+              const canvas2 = document.createElement("canvas");
+              canvas2.width = img.width;
+              canvas2.height = img.height;
+              const ctx = canvas2.getContext("2d");
 
-            if (!ctx) {
-              throw new Error("Could not get 2d context");
-            }
+              if (!ctx) {
+                throw new Error("Could not get 2d context");
+              }
 
-            ctx.drawImage(img, 0, 0);
-            this.$emit("canvas-update", canvas2);
-          };
-        });
+              ctx.drawImage(img, 0, 0);
+              this.$emit("canvas-update", canvas2);
+            };
+          });
+        } catch (e) {
+          console.log(e);
+        }
       } 
     },
 
@@ -189,6 +195,10 @@ export default defineComponent({
           const oldSourceValue = oldSourceNode
             .getOutputs()
             .indexOf(targetNode.getInputs()[targetValue]);
+
+          console.log(
+            `Unlinking ${oldSourceId} ${oldSourceValue} -> ${targetId} ${targetValue}`
+          )
 
           this.pipeline.unlink(
             oldSourceId,

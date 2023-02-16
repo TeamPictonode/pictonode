@@ -87,7 +87,7 @@ function initializeTemplates() {
 type Link2 = Link<NodeData, NodeMetadata>;
 
 function composite(input: Array<Link2>): Array<NodeData> {
-  throw new Error("Not implemented.");
+  return [input[0].get()]
 }
 
 function transformToImage(data: NodeData): HTMLCanvasElement {

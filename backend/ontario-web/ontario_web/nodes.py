@@ -227,6 +227,9 @@ class Link(Generic[T, M]):
             return None
         return self._value
 
+    def __repr__(self):
+        return f"Link({self.__from} -> {self.__to})"
+
 
 class NodeTemplate(Generic[T, M]):
     """
@@ -447,20 +450,11 @@ class Node(Generic[T, M], _HydrateTarget):
     def hydrate(self):
         print("Hydrating node", self.__id)
 
-        # Figure out if we are dirty.
-        is_dirty = False
-        for link in self.__inputs:
-            if link.isDirty():
-                is_dirty = True
-                break
-
-        # If we are dirty, process the node.
-        if not is_dirty:
-            return
-
         # Process the node.
+        print(f"Links are {self.__inputs}")
         template = self.__templateTable.getTemplate(self.__template)
         outputs = template.process(self.__inputs, self.__metadata)
+        # print(f"Called hydrate, got {outputs}")
 
         # Set the outputs.
         for i in range(len(outputs)):
@@ -751,6 +745,9 @@ def deserializePipeline(
         node.setId(serializedNode["id"])
 
     for serializedLink in serialized["links"]:
+        if not "from" in serializedLink or not "to" in serializedLink:
+            continue
+
         newLink = pipeline.link(
             serializedLink["from"],
             serializedLink["fromIndex"],

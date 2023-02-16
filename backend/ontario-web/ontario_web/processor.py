@@ -37,7 +37,7 @@ def process(pipeline, images: ImageManager, target: str) -> None:
         raise Exception("No output node.")
 
     # Get the output
-    output = outputNode.getOutputs()[0]
+    output = outputNode.getInputs()[0]
     img = output.getValue()
     if isinstance(img, int):
         img = ImageBuilder(context).load_from_file(images.image_path_for_id(img))
@@ -105,7 +105,13 @@ def make_template_table() -> nodes.TemplateTable[PipelineUnit, PipelineMetadata]
         return ImageBuilder(meta.context).load_from_file(img_path)
 
     def composite(args, meta):
-        val = load(args[0], meta).composite(load(args[1], meta))
+        val = load(args[0], meta).composite(
+            load(args[1], meta),
+            1.0,
+            0.0,
+            0.0,
+            1.0
+        )
         #nprint(f"Composite: {val}")
         return val
         # TODO
