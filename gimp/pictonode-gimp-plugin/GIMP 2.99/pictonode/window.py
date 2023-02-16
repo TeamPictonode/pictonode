@@ -67,7 +67,7 @@ frame {
 
 class PluginWindow(object):
 
-    def __init__(self, drawables: list):
+    def __init__(self, layers: list):
         self.window: Gtk.Window = Gtk.Window.new(Gtk.WindowType.TOPLEVEL)
         self.window.set_border_width(20)
         self.window.set_title("Pictonode")
@@ -75,7 +75,7 @@ class PluginWindow(object):
         self.buffer_map = {}
 
         # set drawables from project
-        self.drawables = drawables
+        self.layers = layers
 
         # make menu bar
         menu_bar = Gtk.MenuBar.new()
@@ -83,6 +83,10 @@ class PluginWindow(object):
         # create menus on the bar
         file_menu = Gtk.Menu.new()
         about_menu = Gtk.Menu.new()
+
+        # create context menu
+        context_menu: Gtk.Menu = Gtk.Menu()
+
 
         # add menu items to file menu
         file_menu_item = Gtk.MenuItem("File")
@@ -157,10 +161,6 @@ class PluginWindow(object):
         self.window.set_default_size(900, 500)
         self.window.show_all()
         Gtk.main()
-
-    def add_node(self, node_type: GtkNodes.Node, widget=None):
-        self.node_view.add(node_type)
-        self.node_view.show_all()
 
     def do_quit(self, widget=None, data=None):
         Gtk.main_quit()

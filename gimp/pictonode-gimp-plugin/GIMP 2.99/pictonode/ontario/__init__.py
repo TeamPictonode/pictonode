@@ -136,6 +136,9 @@ class ImageBuilder:
         Composites two images.
         """
 
+        # TODO
+
+        '''
         node = self.__parent.create_child("gegl:layer")
         node.set_property("opacity", opacity)
         node.set_property("x", x)
@@ -145,7 +148,7 @@ class ImageBuilder:
         # Connect the last node to the save node.
         self.__nodes[-1].connect_to("output", node, "input")
         other.__nodes[-1].connect_to("output", node, "aux")
-        return self
+        return self'''
 
     def invert(self) -> "ImageBuilder":
         """
