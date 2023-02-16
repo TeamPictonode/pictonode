@@ -138,17 +138,17 @@ export default defineComponent({
           img.src = URL.createObjectURL(image_file);
 
           img.onload = () => {
-            canvas = document.createElement("canvas");
-            canvas.width = img.width;
-            canvas.height = img.height;
-            const ctx = canvas.getContext("2d");
+            const canvas2 = document.createElement("canvas");
+            canvas2.width = img.width;
+            canvas2.height = img.height;
+            const ctx = canvas2.getContext("2d");
 
             if (!ctx) {
               throw new Error("Could not get 2d context");
             }
 
             ctx.drawImage(img, 0, 0);
-            this.$emit("canvas-update", canvas);
+            this.$emit("canvas-update", canvas2);
           };
         });
       } 

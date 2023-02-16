@@ -3,6 +3,7 @@
 
 import os
 from os import path as os_path
+import tempfile
 
 from . import db
 from . import image_manager
@@ -74,8 +75,15 @@ def create_app(test_config=None):
     def upload_image():
         # The body of the request should be an image
         image = request.files["image"]
-        new_id = im.add_image(image.filename)
-        return {"id": new_id}
+
+        # Save the image to the disk
+        with tempfile.TemporaryDirectory() as dir:
+            ext = os_path.splitext(image.filename)[1]
+            p = os_path.join(dir, f"image.{ext}")
+            with open(p, "wb") as file:
+                file.write(image.read())
+            new_id = im.add_image(p)
+            return {"id": new_id}
 
     # For /api/process, take the body of the request and process it
     # as a JSON pipeline, using the "processor" module
@@ -85,8 +93,8 @@ def create_app(test_config=None):
         pipeline = request.get_json()
         id = random.randint(0, 1000000000)
         filename = f"/tmp/ontario/out{id}.webp"
-        print(filename)
         processor.process(pipeline, im, filename)
+        print(filename)
 
         # The body of the response should be the output image
         return send_file(filename)

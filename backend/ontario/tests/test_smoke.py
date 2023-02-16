@@ -8,7 +8,7 @@ import tempfile
 import ontario
 #from ..ontario import ImageBuilder, ImageContext
 
-TEST_IMAGE_PATH = path.join(path.dirname(__file__), "assets", "test.png")
+TEST_IMAGE_PATH = path.join(path.dirname(__file__), "assets", "test-image.png")
 
 
 def test_load_from_file():
@@ -31,7 +31,7 @@ def test_save_to_file():
         context = ontario.ImageContext()
         builder = ontario.ImageBuilder(context)
         builder.load_from_file(TEST_IMAGE_PATH)
-        builder.save_to_file(file)
+        builder.save_to_file(file.name)
         builder.process()
 
 

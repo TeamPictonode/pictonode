@@ -44,7 +44,7 @@ class _NoNode(_HydrateTarget):
         return False
 
     def hydrate(self):
-        #print("No node to hydrate.")
+        print("No node to hydrate.")
         pass
 
     def __repr__(self):
@@ -175,16 +175,17 @@ class Link(Generic[T, M]):
         Hydrates the link.
         """
 
-        #print(f"Hydrating link, {self.__from} -> {self.__to}")
+        print(f"Hydrating link, {self.__from} -> {self.__to}")
         self.__from.hydrate()
-        #print(f"Finished hydrating link, {self.__from} -> {self.__to}")
+        print(f"Finished hydrating link, {self.__from} -> {self.__to}")
 
     def getValue(self) -> T:
         """
         Returns the value of the link.
         """
 
-        self.hydrate()
+        if not self.__customDefault:
+            self.hydrate()
         return self._value
 
     def setValue(self, value: T):
@@ -444,7 +445,7 @@ class Node(Generic[T, M], _HydrateTarget):
         return False
 
     def hydrate(self):
-        #print("Hydrating node", self.__id)
+        print("Hydrating node", self.__id)
 
         # Figure out if we are dirty.
         is_dirty = False
@@ -466,7 +467,7 @@ class Node(Generic[T, M], _HydrateTarget):
             self.__outputs[i]._value = outputs[i]
             self.__outputs[i]._dirty = False
 
-        #print("Done hydrating node", self.__id)
+        print("Done hydrating node", self.__id)
 
     def _setOutputLink(self, link: Link[T, M], index: int):
         """
@@ -642,7 +643,7 @@ class Pipeline(Generic[T, M]):
             id = self.__nextId
             self.__nextId += 1
         link.setId(id)
-        #print(link.getId())
+        print(link.getId())
         self.__links[link.getId()] = link
         return link
 
@@ -761,6 +762,7 @@ def deserializePipeline(
 
         if serializedLink.get("defaultValue") is not None:
             newLink.setValue(serializedLink["defaultValue"])
+            newLink._dirty = True
 
     pipeline.setOutputNode(serialized["output"])
 
