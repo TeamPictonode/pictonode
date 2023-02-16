@@ -122,8 +122,8 @@ export default defineComponent({
 <style lang="scss">
 .nodeStyle {
   border-radius: 5px;
-  color: #fff;
-  background-color: #555;
+  color: black;
+  background-color: #bddde9;
   padding: 10px;
   text-align: center;
   border: 1px solid #333;
