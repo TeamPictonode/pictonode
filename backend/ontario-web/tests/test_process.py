@@ -28,15 +28,17 @@ def test_process(client):
       assert response.status_code == 200
       return response.json['id']
 
-    p = path.join(path.dirname(__file__), "assets", "test-image.png")
+    p1 = path.join(path.dirname(__file__), "assets", "test1.png")
+    p2 = path.join(path.dirname(__file__), "assets", "test2.png")
+
     # Copy the file to a temporary location
     # This is necessary because the file is opened in the upload_image function
     # and cannot be opened again
     with tempfile.TemporaryDirectory() as temp:
         newpath = path.join(temp, "test-image.png")
-        shutil.copy(p, newpath)
+        shutil.copy(p1, newpath)
         image1_id = upload_image(newpath)
-        shutil.copy(p, newpath)
+        shutil.copy(p2, newpath)
         image2_id = upload_image(newpath)
 
     # Create a pipeline
@@ -92,3 +94,5 @@ def test_process(client):
     # Process the pipeline
     response = client.post('/api/process', json=pipeline)
     assert response.status_code == 200
+
+

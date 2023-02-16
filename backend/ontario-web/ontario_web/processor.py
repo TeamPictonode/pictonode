@@ -37,7 +37,7 @@ def process(pipeline, images: ImageManager, target: str) -> None:
         raise Exception("No output node.")
 
     # Get the output
-    output = outputNode.getInputs()[0]
+    output = outputNode.getOutputs()[0]
     img = output.getValue()
     if isinstance(img, int):
         img = ImageBuilder(context).load_from_file(images.image_path_for_id(img))
@@ -130,5 +130,19 @@ def make_template_table() -> nodes.TemplateTable[PipelineUnit, PipelineMetadata]
         None
     )
     table.addTemplate("composite", compositeNode)
+
+    # Invert node that inverts an image
+    invertNode = nodes.NodeTemplate(
+        lambda args, meta: [load(args[0], meta).invert()],
+        [
+            nodes.LinkTemplate(None, None)
+        ],
+        [
+            nodes.LinkTemplate(None, "foobar")
+
+        ],
+        None
+    )
+    table.addTemplate("invert", invertNode)
 
     return table

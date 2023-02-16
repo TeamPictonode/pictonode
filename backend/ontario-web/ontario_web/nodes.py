@@ -31,6 +31,14 @@ class _HydrateTarget(ABC):
 
         pass
 
+    @abstractmethod
+    def templateName(self) -> str:
+        """
+        Returns the name of the template.
+        """
+
+        pass
+
 
 class _NoNode(_HydrateTarget):
     """
@@ -46,6 +54,9 @@ class _NoNode(_HydrateTarget):
     def hydrate(self):
         print("No node to hydrate.")
         pass
+
+    def templateName(self) -> str:
+        return "__none__"
 
     def __repr__(self):
         return "NoNode"
@@ -114,7 +125,7 @@ class Link(Generic[T, M]):
     _dirty: bool
 
     # Is the link using a custom value?
-    __customDefault: bool
+    _customDefault: bool
 
     def __init__(self, template: LinkTemplate[T, M], metadata: M, id: int):
         self.__template = template
@@ -126,7 +137,7 @@ class Link(Generic[T, M]):
         self.__metadata = metadata
         self._value = template.getDefaultValue()
         self._dirty = True
-        self.__customDefault = False
+        self._customDefault = False
 
     def getId(self) -> int:
         """
@@ -184,7 +195,7 @@ class Link(Generic[T, M]):
         Returns the value of the link.
         """
 
-        if not self.__customDefault:
+        if not (self._customDefault and self.__from.templateName() == "input"):
             self.hydrate()
         return self._value
 
@@ -194,7 +205,7 @@ class Link(Generic[T, M]):
         """
 
         self._value = value
-        self.__customDefault = True
+        self._customDefault = True
         self._dirty = True
 
     def getFromIndex(self) -> int:
@@ -223,7 +234,7 @@ class Link(Generic[T, M]):
         Returns the default value for the link.
         """
 
-        if self.__customDefault:
+        if self._customDefault:
             return None
         return self._value
 
@@ -452,6 +463,8 @@ class Node(Generic[T, M], _HydrateTarget):
 
         # Process the node.
         print(f"Links are {self.__inputs}")
+        for link in self.__inputs:
+            link.getValue()
         template = self.__templateTable.getTemplate(self.__template)
         outputs = template.process(self.__inputs, self.__metadata)
         # print(f"Called hydrate, got {outputs}")
@@ -567,6 +580,9 @@ class Node(Generic[T, M], _HydrateTarget):
 
     def __repr__(self):
         return f"Node({self.__template}, {self.__id})"
+
+    def templateName(self) -> str:
+        return self.__template
 
 
 class Pipeline(Generic[T, M]):

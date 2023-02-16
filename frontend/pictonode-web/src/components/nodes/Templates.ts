@@ -77,11 +77,32 @@ function initializeTemplates() {
     ntMeta("Color Input", "Input", SpecialNodeType.ColorInput)
   );
 
+  // Invert node.
+  const invertNode = new NodeTemplate<NodeData, NodeMetadata>(
+    (input: Array<Link<NodeData, NodeMetadata>>) => {
+      return [input[0].get()];
+    },
+    [
+      new LinkTemplate(
+        ltMeta("Input Image", NodeDataType.Image),
+        defaultImage()
+      ),
+    ],
+    [
+      new LinkTemplate(
+        ltMeta("Inverted Image", NodeDataType.Image),
+        defaultImage()
+      ),
+    ],
+    ntMeta("Invert", "Transforms", SpecialNodeType.PureFunction)
+  );
+
   // Add all of the nodes.
   TEMPLATES.addTemplate("output", outputNode);
   TEMPLATES.addTemplate("composite", compositeNode);
   TEMPLATES.addTemplate("input", inputNode);
   TEMPLATES.addTemplate("color-input", colorInputNode);
+  TEMPLATES.addTemplate("invert", invertNode);
 }
 
 type Link2 = Link<NodeData, NodeMetadata>;
