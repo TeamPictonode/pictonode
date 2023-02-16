@@ -42,6 +42,8 @@ from gi.repository import GObject # noqa
 from gi.repository.GdkPixbuf import Pixbuf # noqa
 
 # autopep8 on
+
+
 """Ensure object __calls__ are threadsafe to always return the same class instance"""
 _cls_lock = threading.Lock()
 class SingletonConstruction(type):
@@ -53,7 +55,8 @@ class SingletonConstruction(type):
                 if cls not in cls._instances:
                     cls._instances[cls] = super(SingletonConstruction, cls).__call__(*args, **kwargs)
         return cls._instances[cls]
-            
+
+
 """Ensure object methods mutating the manager are thread safe"""
 _pm_lock = threading.RLock()
 def threadsafe(fn):
@@ -65,6 +68,7 @@ def threadsafe(fn):
                 raise e
         return r
     return new
+
 
 class PictonodeManager(metaclass=SingletonConstruction):
     def init(self, procedure, run_mode, image, n_drawables, drawables, args, run_data):
@@ -94,8 +98,15 @@ class PictonodeManager(metaclass=SingletonConstruction):
         for img in self.images_with_xcf:
             self.__add_local_project(img)
 
+        self.main_window: window.PluginWindow
+
     def run(self):
+
         ''' This run() will be gutted just checking out some pocs for parker'''
+        theme_name = "Yaru"
+        settings = Gtk.Settings.get_default()
+        settings.set_property("gtk-theme-name", theme_name)
+
         win = Gtk.Window()
         win.set_default_size(128, 256)
         win.set_title("Projects")
@@ -128,11 +139,10 @@ class PictonodeManager(metaclass=SingletonConstruction):
             icons.append(os.path.splitext(os.path.basename(img.get_xcf_file().get_path()))[0])
 
         for i, img in enumerate(self.images_with_xcf):
-            #pixbuf = Gtk.IconTheme.get_default().load_icon(icon, 64, 0)
-            pixbuf = img.get_thumbnail(64,64,1)
+            # pixbuf = Gtk.IconTheme.get_default().load_icon(icon, 64, 0)
+            pixbuf = img.get_thumbnail(64, 64, 1)
             liststore.append([pixbuf, icons[i]])
 
-        
         headerbar = Gtk.HeaderBar()
         headerbar.set_title("")
         headerbar.set_subtitle("")
@@ -140,16 +150,16 @@ class PictonodeManager(metaclass=SingletonConstruction):
         headerbar.set_has_subtitle(False)
 
         win.set_titlebar(headerbar)
-        #win.add(iconview)
+        # win.add(iconview)
         win.connect("destroy", Gtk.main_quit)
         win.show_all()
-        #GimpUi.init("pictonode.py")
-        main_window = window.PluginWindow()
+        # GimpUi.init("pictonode.py")
+        self.main_window = window.PluginWindow(self.image)
         Gtk.main()
-        #icon toolbar
+        # icon toolbar
         pass
 
-#we should disambiguate between loaded local projects and unloaded
+    # we should disambiguate between loaded local projects and unloaded
 
     @threadsafe
     def __add_local_project(self, image):
