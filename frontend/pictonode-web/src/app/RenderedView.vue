@@ -63,9 +63,10 @@ export default defineComponent({
 </script>
 
 <template>
-  <v-card ref="toplevel" class="mx-auto" id="rendered-view" tile>
-    <p>Image View</p>
-    <canvas ref="inner" width="200" height="100" />
+  <v-card ref="toplevel" class="mx-auto" id="rendered-view" tile color="#e1e9d0">
+    <canvas ref="inner" width="200" height="100">
+      <v-tooltip activator="parent" location="top">Try Uploading an Image to the Image input</v-tooltip>
+    </canvas>
   </v-card>
 </template>
 
