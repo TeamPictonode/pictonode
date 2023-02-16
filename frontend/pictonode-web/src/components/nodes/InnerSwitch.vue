@@ -30,6 +30,7 @@ export default defineComponent({
 
       // Upload to the server.
       uploadImage(imageBlob).then((id) => {
+        console.log(`id: ${id}`);
         this.node.getOutputs()[0].set({
           type: NodeDataType.Image,
           id,

@@ -21,6 +21,9 @@ def process(pipeline, images: ImageManager, target: str) -> None:
     Processes a pipeline.
     """
 
+    if isinstance(pipeline, str):
+        pipeline = json.loads(pipeline)
+
     # Deserialize from JSON
     pipeline = nodes.deserializePipeline(pipeline, make_template_table())
 
@@ -36,6 +39,8 @@ def process(pipeline, images: ImageManager, target: str) -> None:
     # Get the output
     output = outputNode.getOutputs()[0]
     img = output.getValue()
+    if isinstance(img, int):
+        img = ImageBuilder(context).load_from_file(images.image_path_for_id(img))
     if not isinstance(img, ImageBuilder):
         raise Exception(f"Output is not an image; got {type(img)}, {repr(img)}")
 
@@ -64,7 +69,7 @@ def make_template_table() -> nodes.TemplateTable[PipelineUnit, PipelineMetadata]
 
     # Input node that loads an image from disk
     inputNode = nodes.NodeTemplate(
-        lambda args, metadata: [load(args[0], metadata)],
+        lambda args, metadata: [args[0].getValue()],
         [
             nodes.LinkTemplate(None, -1)
         ],
@@ -100,10 +105,17 @@ def make_template_table() -> nodes.TemplateTable[PipelineUnit, PipelineMetadata]
         return ImageBuilder(meta.context).load_from_file(img_path)
 
     def composite(args, meta):
-        #val = load(args[0], meta).composite(load(args[1], meta))
+        val = load(args[0], meta).composite(
+            load(args[1], meta),
+            1.0,
+            0.0,
+            0.0,
+            1.0
+        )
         #nprint(f"Composite: {val}")
+        return val
         # TODO
-        return load(args[0], meta)
+        #return load(args[0], meta)
 
     # Composite node that composes two images
     compositeNode = nodes.NodeTemplate(
@@ -118,5 +130,19 @@ def make_template_table() -> nodes.TemplateTable[PipelineUnit, PipelineMetadata]
         None
     )
     table.addTemplate("composite", compositeNode)
+
+    # Invert node that inverts an image
+    invertNode = nodes.NodeTemplate(
+        lambda args, meta: [load(args[0], meta).invert()],
+        [
+            nodes.LinkTemplate(None, None)
+        ],
+        [
+            nodes.LinkTemplate(None, "foobar")
+
+        ],
+        None
+    )
+    table.addTemplate("invert", invertNode)
 
     return table

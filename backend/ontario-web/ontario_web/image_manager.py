@@ -85,10 +85,18 @@ class ImageManager:
         image_path = os.path.join(
             self.__root, f"{image_id}.{self.__extension}")
 
+        if not os.path.exists(path):
+            raise Exception(f"Source image {path} does not exist.")
+        if os.stat(path).st_size == 0:
+            raise Exception(f"Source image {path} is empty.")
+
         # Transcode the image from its current format to the desired format.
         context = ontario.ImageContext()
         ontario.ImageBuilder(context).load_from_file(
             path).save_to_file(image_path).process()
+
+        if not os.path.exists(image_path):
+            raise Exception(f"Image {image_path} does not exist.")
         
         # get the image size
         image_size = os.path.getsize(image_path)

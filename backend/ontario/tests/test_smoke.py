@@ -8,7 +8,9 @@ import tempfile
 import ontario
 #from ..ontario import ImageBuilder, ImageContext
 
-TEST_IMAGE_PATH = path.join(path.dirname(__file__), "assets", "test.png")
+TEST_IMAGE_PATH = path.join(path.dirname(__file__), "assets", "test-image.png")
+TEST_IMAGE1_PATH = path.join(path.dirname(__file__), "assets", "test1.png")
+TEST_IMAGE2_PATH = path.join(path.dirname(__file__), "assets", "test2.png")
 
 
 def test_load_from_file():
@@ -31,7 +33,7 @@ def test_save_to_file():
         context = ontario.ImageContext()
         builder = ontario.ImageBuilder(context)
         builder.load_from_file(TEST_IMAGE_PATH)
-        builder.save_to_file(file)
+        builder.save_to_file(file.name)
         builder.process()
 
 
@@ -42,8 +44,8 @@ def test_composite():
 
     context = ontario.ImageContext()
     builder = ontario.ImageBuilder(context)
-    builder.load_from_file(TEST_IMAGE_PATH)
-    builder.composite(builder.load_from_file(TEST_IMAGE_PATH), 0, 0, 0, 1)
+    builder.load_from_file(TEST_IMAGE1_PATH)
+    builder.composite(builder.load_from_file(TEST_IMAGE2_PATH), 0, 0, 0, 1)
     builder.process()
 
 

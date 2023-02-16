@@ -21,6 +21,7 @@ export default defineComponent({
   methods: {
     onCanvasUpdate(canvas: HTMLCanvasElement) {
       console.log("updated img canvas");
+      console.log(canvas);
       this.img = canvas;
       this.ticks += 1;
     },

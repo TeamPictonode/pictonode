@@ -77,7 +77,7 @@ class ImageBuilder:
             pass
 
         else:
-            print("Error: Wrong file format")
+            print(f"Error: Wrong file format: {file_ext}")
 
         # add node to node list
         self.__nodes.append(node)
