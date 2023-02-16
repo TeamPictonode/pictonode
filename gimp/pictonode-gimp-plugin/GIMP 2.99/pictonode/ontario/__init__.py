@@ -117,7 +117,7 @@ class ImageBuilder:
         Saves an image to a buffer.
         """
 
-        node = self.__parent.create_child("gegl:buffer-sink")
+        node = self.__parent.create_child("gegl:write-buffer")
         node.set_property("buffer", shadow)
         # Connect the last node to the save node.
         self.__nodes[-1].link(node)
@@ -156,7 +156,7 @@ class ImageBuilder:
         """
 
         # create child node invert
-        node = self.__parent.create_child("gegl:invert")
+        node = self.__parent.create_child("gegl:invert-linear")
 
         # Connect the last node to the new node.
         self.__nodes[-1].link(node)

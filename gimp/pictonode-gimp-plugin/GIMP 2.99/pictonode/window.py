@@ -84,10 +84,6 @@ class PluginWindow(object):
         file_menu = Gtk.Menu.new()
         about_menu = Gtk.Menu.new()
 
-        # create context menu
-        context_menu: Gtk.Menu = Gtk.Menu()
-
-
         # add menu items to file menu
         file_menu_item = Gtk.MenuItem("File")
         file_menu_item.set_submenu(file_menu)
@@ -99,18 +95,6 @@ class PluginWindow(object):
         save_graph_item = Gtk.MenuItem("save")
         file_menu.append(save_graph_item)
         save_graph_item.connect("activate", self.save_graph)
-
-        # create node menu
-        hbox: Gtk.Box = Gtk.Box.new(Gtk.Orientation.HORIZONTAL, 0)
-
-        # add node options
-        img_src_button: Gtk.Button = Gtk.Button(label="Add Image Source Node")
-        img_src_button.connect("clicked", self.add_image_src_node)
-        hbox.add(img_src_button)
-
-        img_out_button: Gtk.Button = Gtk.Button(label="Add Image Output Node")
-        img_out_button.connect("clicked", self.add_image_out_node)
-        hbox.add(img_out_button)
 
         # create a css provider to change the frame background
         css_provider = Gtk.CssProvider()
@@ -142,6 +126,9 @@ class PluginWindow(object):
         self.node_view: GtkNodes.NodeView = GtkNodes.NodeView()
         scrolled_window.add(self.node_view)
 
+        # create context menu in node view
+        self.node_view.connect("button-press-event", self.on_button_press)
+
         # Adjustable panes between image viewport and node_view
         paned = Gtk.Paned(orientation=Gtk.Orientation.VERTICAL)
         paned.add1(image_frame)
@@ -151,7 +138,6 @@ class PluginWindow(object):
         full_view.pack_start(menu_bar, False, False, 0)
         full_view.pack_start(image_frame, True, True, 20)
         full_view.pack_start(paned, True, True, 0)
-        full_view.pack_start(hbox, False, False, 0)
 
         self.window.add(full_view)
 
@@ -167,6 +153,38 @@ class PluginWindow(object):
         # can't call sys.exit(0) during plugin runtime if window is closed, it'll kill the whole plugin process
         # sys.exit(0)
 
+    def on_button_press(self, widget, event):
+        if event.button == 3:
+            # create menu and menu items
+            menu = Gtk.Menu()
+
+            submenu_item = Gtk.MenuItem(label="Add Nodes")
+            submenu = Gtk.Menu()
+
+            sub_item1 = Gtk.MenuItem(label="Image Source Node")
+            sub_item2 = Gtk.MenuItem(label="Image Output Node")
+            sub_item3 = Gtk.MenuItem(label="Image Invert Node")
+
+            # connect menu items here
+            sub_item1.connect("activate", self.add_image_src_node)
+            sub_item2.connect("activate", self.add_image_out_node)
+            sub_item3.connect("activate", self.add_image_invert_node)
+
+            # add items to submenu
+            submenu.append(sub_item1)
+            submenu.append(sub_item2)
+            submenu.append(sub_item3)
+
+            # add submenu to menu item
+            submenu_item.set_submenu(submenu)
+
+            # add menu item to menu
+            menu.append(submenu_item)
+
+            # make menu popup
+            menu.show_all()
+            menu.popup(None, None, None, None, event.button, event.time)
+
     def save(self):
         self.node_view.save("node_structure.xml")
 
@@ -176,6 +194,10 @@ class PluginWindow(object):
 
     def add_image_out_node(self, widget=None):
         self.node_view.add(cn.OutputNode(self))
+        self.node_view.show_all()
+
+    def add_image_invert_node(self, widget=None):
+        self.node_view.add(cn.InvertNode(self))
         self.node_view.show_all()
 
     def set_node_view(self, new_nv: GtkNodes.NodeView):

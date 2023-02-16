@@ -88,11 +88,14 @@ class ImgSrcNode(GtkNodes.Node):
 
         # create dropdown with layers
         self.list_store = Gtk.ListStore(str, int)
+        self.list_store.append(["Select a Layer", -1])
         for i, d in enumerate(self.layers):
-            self.list_store.append(["Layer ", i])
+            self.list_store.append(["Layer: " + d.get_name(), i])
             print("Layer: ", d)
 
         self.layer_combobox = Gtk.ComboBox.new_with_model_and_entry(self.list_store)
+        self.layer_combobox.set_entry_text_column(0)
+        self.layer_combobox.set_active(0)
 
         # add gtk widgets to node widget
         self.item_add(self.layer_combobox, GtkNodes.NodeSocketIO.DISABLE)
@@ -194,9 +197,6 @@ class OutputNode(GtkNodes.Node):
         self.destroy()
 
     def process(self):
-        print(self.incoming_buffer)
-        print(self.filename)
-        print(self.node_window)
         if self.incoming_buffer and self.filename:
             print("Saving... ", self.incoming_buffer)
             # use ontario backend for image processing
@@ -223,10 +223,11 @@ class InvertNode(GtkNodes.Node):
         self.node_window = node_window
         self.buffer_id = str(uuid.uuid1())
         self.buffer = None
+        self.layer = None
 
         # initialize our image context for the gegl nodes
-        self.image_context = None
-        self.image_builder = None
+        self.image_context = ontario.ImageContext()
+        self.image_builder = ontario.ImageBuilder(self.image_context)
 
         self.set_label("Image Invert")
         self.connect("node_func_clicked", self.remove)
@@ -283,30 +284,42 @@ class InvertNode(GtkNodes.Node):
     def remove(self, node):
         self.destroy()
 
-    def process(self):
+    def process_input(self):
+        if self.incoming_buffer:
+            print("Saving... ", self.incoming_buffer)
+            # use ontario backend for image processing
+            self.image_builder.load_from_buffer(self.incoming_buffer)
+            self.image_builder.invert()
+            self.image_builder.save_to_buffer(self.incoming_buffer)
+            self.image_builder.process()
+            self.buffer = self.incoming_buffer
+
+        return False
+
+    def process_ouput(self):
         if self.buffer:
             print("Buffer: ", self.buffer)
             self.node_window.buffer_map[self.buffer_id] = [self.buffer,
                                                            self.layer]
             return True
-
         return False
 
-    def update_output(self):
-        # initialize our image context for the gegl nodes
-        self.image_context = ontario.ImageContext()
-        self.image_builder = ontario.ImageBuilder(self.image_context)
-        did_process = self.process()
+    def node_socket_connect(self, sink, source):
+        did_process = self.process_ouput()
         if did_process:
             self.node_socket_output.write(bytes(self.buffer_id, 'utf8'))
-
-    def node_socket_connect(self, sink, source):
-        self.update_output()
 
     def node_socket_incoming(self, socket, payload):
         self.image_context.reset_context()
         self.incoming_buffer_id = payload.decode('utf-8')
         print("Buffer ID incoming: ", self.incoming_buffer_id)
+
         self.incoming_buffer = self.node_window.buffer_map.get(
             self.incoming_buffer_id)[0]
+
+        self.layer = self.node_window.buffer_map.get(
+            self.incoming_buffer_id)[1]
+
         print("Incoming: ", self.incoming_buffer)
+
+        self.process_input()
