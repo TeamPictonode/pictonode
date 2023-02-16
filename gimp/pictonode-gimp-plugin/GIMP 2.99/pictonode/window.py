@@ -1,7 +1,7 @@
 # This file was written by Parker Nelms and Stephen Foster.
 
 import custom_nodes as cn
-
+from manager import *
 from httpclient import *
 from client import *
 import window
@@ -67,10 +67,15 @@ frame {
 
 class PluginWindow(object):
 
-    def __init__(self):
+    def __init__(self, drawables: list):
         self.window: Gtk.Window = Gtk.Window.new(Gtk.WindowType.TOPLEVEL)
         self.window.set_border_width(20)
         self.window.set_title("Pictonode")
+
+        self.buffer_map = {}
+
+        # set drawables from project
+        self.drawables = drawables
 
         # make menu bar
         menu_bar = Gtk.MenuBar.new()
@@ -166,7 +171,7 @@ class PluginWindow(object):
         self.node_view.save("node_structure.xml")
 
     def add_image_src_node(self, widget=None):
-        self.node_view.add(cn.ImgSrcNode())
+        self.node_view.add(cn.ImgSrcNode(self))
         self.node_view.show_all()
 
     def add_image_out_node(self, widget=None):
