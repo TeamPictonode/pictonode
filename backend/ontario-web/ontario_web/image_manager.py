@@ -39,6 +39,7 @@ class ImageManager:
     __image_lifetime: datetime.timedelta
 
     def __init__(self, root: str, max_file_size: int, extension: str):
+        os.makedirs(root, exist_ok=True)
         self.__root = root
         self.__max_file_size = max_file_size
         self.__current_file_size = 0

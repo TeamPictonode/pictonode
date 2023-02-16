@@ -64,8 +64,7 @@ def make_template_table() -> nodes.TemplateTable[PipelineUnit, PipelineMetadata]
 
     # Input node that loads an image from disk
     inputNode = nodes.NodeTemplate(
-        lambda args, metadata: [ImageBuilder(
-            metadata.context).load_from_file(args[0].getValue())],
+        lambda args, metadata: [load(args[0], metadata)],
         [
             nodes.LinkTemplate(None, -1)
         ],
@@ -97,12 +96,14 @@ def make_template_table() -> nodes.TemplateTable[PipelineUnit, PipelineMetadata]
         #print(f"Load: {val}")
         if isinstance(val, ImageBuilder):
             return val
-        return ImageBuilder(meta.context).load_from_file(val)
+        img_path = meta.images.image_path_for_id(val)
+        return ImageBuilder(meta.context).load_from_file(img_path)
 
     def composite(args, meta):
-        val = load(args[0], meta).composite(load(args[1], meta))
+        #val = load(args[0], meta).composite(load(args[1], meta))
         #nprint(f"Composite: {val}")
-        return val
+        # TODO
+        return load(args[0], meta)
 
     # Composite node that composes two images
     compositeNode = nodes.NodeTemplate(
