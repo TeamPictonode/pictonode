@@ -268,7 +268,7 @@ class ImageBuilder:
         Hue, chroma, and lightness an image.
         """
 
-        node = self.__parent.creat_child("gegl:hue-chroma")
+        node = self.__parent.create_child("gegl:hue-chroma")
         node.set_property("hue", hue)
         node.set_property("chroma", chroma)
         node.set_property("lightness", lightness)
