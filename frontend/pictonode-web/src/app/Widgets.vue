@@ -81,7 +81,7 @@ export default defineComponent({
       <div v-for="item in items" :key="item.name">
         <v-list-item-group color="primary">
           <v-list-item v-for="value in item.values" :key="value.templateName">
-            <v-btn rounded="pill" color="#e1e9d0" plain @click="() => addNode(value)">
+            <v-btn rounded="pill" color="#e1e9d0" size="x-large" plain @click="() => addNode(value)">
               {{ value.name }}
               <v-tooltip activator="parent" location="top">add tooltip</v-tooltip>
             </v-btn>
