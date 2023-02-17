@@ -117,10 +117,17 @@ class ImgSrcNode(GtkNodes.Node):
             self.layer = self.layers[id]
             self.buffer = self.layer.get_buffer()
 
+        did_process = self.process()
+        if did_process:
+            self.node_socket_output.write(bytes(self.buffer_id, 'utf8'))
+
     def remove(self, node):
         self.destroy()
 
     def process(self):
+        # initialize our image context for the gegl nodes
+        self.image_context = ontario.ImageContext()
+        self.image_builder = ontario.ImageBuilder(self.image_context)
         if self.buffer:
             print("Buffer: ", self.buffer)
             self.node_window.buffer_map[self.buffer_id] = [self.buffer,
@@ -130,9 +137,6 @@ class ImgSrcNode(GtkNodes.Node):
         return False
 
     def node_socket_connect(self, sink, source):
-        # initialize our image context for the gegl nodes
-        self.image_context = ontario.ImageContext()
-        self.image_builder = ontario.ImageBuilder(self.image_context)
         did_process = self.process()
         if did_process:
             self.node_socket_output.write(bytes(self.buffer_id, 'utf8'))
@@ -286,7 +290,6 @@ class InvertNode(GtkNodes.Node):
 
     def process_input(self):
         if self.incoming_buffer:
-            print("Saving... ", self.incoming_buffer)
             # use ontario backend for image processing
             self.image_builder.load_from_buffer(self.incoming_buffer)
             self.image_builder.invert()
@@ -303,6 +306,9 @@ class InvertNode(GtkNodes.Node):
                                                            self.layer]
             return True
         return False
+
+    def value_update(self):
+
 
     def node_socket_connect(self, sink, source):
         did_process = self.process_ouput()
