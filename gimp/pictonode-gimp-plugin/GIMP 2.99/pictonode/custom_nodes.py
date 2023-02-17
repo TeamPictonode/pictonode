@@ -308,12 +308,12 @@ class InvertNode(GtkNodes.Node):
         return False
 
     def value_update(self):
-
-
-    def node_socket_connect(self, sink, source):
         did_process = self.process_ouput()
         if did_process:
             self.node_socket_output.write(bytes(self.buffer_id, 'utf8'))
+
+    def node_socket_connect(self, sink, source):
+        self.value_update
 
     def node_socket_incoming(self, socket, payload):
         self.image_context.reset_context()
