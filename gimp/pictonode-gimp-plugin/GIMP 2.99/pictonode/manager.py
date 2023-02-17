@@ -125,6 +125,9 @@ class PictonodeManager(metaclass=SingletonConstruction):
         iconview.set_text_column(1)
         iconview.set_item_width(64)
 
+        layers = self.image.list_layers()
+        print(layers)
+
         frame = Gtk.Frame.new()
         scrolled_window = Gtk.ScrolledWindow(hexpand=False, vexpand=True)
         scrolled_window.set_policy(
@@ -154,7 +157,7 @@ class PictonodeManager(metaclass=SingletonConstruction):
         win.connect("destroy", Gtk.main_quit)
         win.show_all()
         # GimpUi.init("pictonode.py")
-        self.main_window = window.PluginWindow(self.image)
+        self.main_window = window.PluginWindow(self.image.list_layers())
         Gtk.main()
         # icon toolbar
         pass
