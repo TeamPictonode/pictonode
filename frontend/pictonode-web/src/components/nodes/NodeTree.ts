@@ -22,6 +22,7 @@ export type NodeMetadata =
       name: string;
       category: string;
       special: SpecialNodeType;
+      tooltip: string;
     }
   | {
       metatype: MetadataType.Link;

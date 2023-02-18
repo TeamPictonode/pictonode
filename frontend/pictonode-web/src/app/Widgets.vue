@@ -12,6 +12,7 @@ import { MetadataType } from "../components/nodes/NodeTree";
 interface Item {
   templateName: string;
   name: string;
+  tooltip: string;
 }
 
 interface Category {
@@ -33,6 +34,7 @@ function categorize(): Category[] {
 
     const category = metadata.category;
     const name = metadata.name;
+    const tooltip = metadata.tooltip;
 
     if (!catmap.has(category)) {
       catmap.set(category, {
@@ -46,6 +48,7 @@ function categorize(): Category[] {
       cat.values.push({
         templateName,
         name,
+        tooltip,
       });
     }
   }
@@ -72,33 +75,6 @@ export default defineComponent({
     addNode(item: Item) {
       this.$emit("input", [...this.pendingTemplates, item.templateName]);
     },
-
-    getTooltip(item: string): string {
-      console.log(item)
-      if(item == "Output"){
-        return "I am an output node!";
-      }
-
-      else if(item == "Composite") {
-        return "I layer one input node on top of the other!";
-      }
-
-      else if(item == "Image Input") {
-        return "Try uploading an image to me!"
-      }
-
-      else if(item == "Color Input") {
-        return "I add color to an input node"
-      }
-
-      else if(item == "Invert") {
-        return "I invert Values of an input image!"
-      }
-
-      else {
-        return "nothing to say here"
-      }
-    }
   },
 });
 </script>
@@ -111,7 +87,7 @@ export default defineComponent({
           <v-list-item v-for="value in item.values" :key="value.templateName">
             <v-btn rounded="pill" color="#e1e9d0" size="x-large" plain @click="() => addNode(value)">
               {{ value.name }}
-              <v-tooltip activator="parent" location="top">{{ getTooltip(value.name) }}</v-tooltip>
+              <v-tooltip activator="parent" location="top">{{ value.tooltip }}</v-tooltip>
             </v-btn>
           </v-list-item>
         </v-list-item-group>
