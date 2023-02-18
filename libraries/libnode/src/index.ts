@@ -100,7 +100,7 @@ export class LinkTemplate<T, M> {
 
   public getDefaultValue(): T {
     return this.defaultValue;
-  }
+  } 
 }
 
 // A node in the graph.
@@ -263,10 +263,14 @@ export class Node<T, M> implements HydrateTarget {
   ): Link<T, M> {
     /* eslint-disable @typescript-eslint/no-non-null-assertion */
     const link = this.inputs[toIndex]!;
+
+    const fromValue = from.outputs[fromIndex]!.get(); 
+
     from.outputs[fromIndex] = link;
     link.__setFrom(from, fromIndex);
     link.__setTo(this, toIndex);
     link.__setMetadata(meta);
+    link.set(fromValue);
     return link;
   }
 
@@ -406,6 +410,14 @@ export class Link<T, M> {
   __clearTo(): void {
     this.to = NO_NODE;
     this.toIndex = -1;
+  }
+
+  __serDefaultValue(): T | undefined {
+    if (this.customDefault) {
+      return this.value;
+    } else {
+      return undefined;
+    }
   }
 
   // Is this link currently dirty?
@@ -621,7 +633,7 @@ export class Pipeline<T, M> {
 export interface SerializedPipeline<M> {
   nodes: Array<SerializedNode<M>>;
   links: Array<SerializedLink<M>>;
-  output: number;
+  output: number | undefined;
 }
 
 export interface SerializedNode<M> {
@@ -633,6 +645,7 @@ export interface SerializedNode<M> {
 export type SerializedLink<M> = {
   id: number;
   metadata: M;
+  defaultValue: any | undefined;
 } & ({ from: number; fromIndex: number } | { from: undefined }) &
   ({ to: number; toIndex: number } | { to: undefined });
 
@@ -660,6 +673,7 @@ export function serializePipeline<T, M>(
         id: link.getId(),
         from: undefined,
         to: undefined,
+        defaultValue: link.__serDefaultValue(),
         metadata: link.getMetadata(),
       };
 
@@ -721,9 +735,14 @@ export function deserializePipeline<T, M>(
       link.metadata
     );
     newLink.__setId(link.id);
+    if (link.defaultValue !== undefined) {
+      newLink.set(link.defaultValue);
+    }
   });
 
-  pipeline.setOutput(serialized.output);
+  if (serialized.output !== undefined) {
+    pipeline.setOutput(serialized.output);
+  }
 
   return pipeline;
 }

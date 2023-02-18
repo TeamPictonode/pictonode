@@ -7,6 +7,7 @@
 <script lang="ts">
 import { defineComponent } from "vue";
 import { Node, SpecialNodeType, MetadataType, NodeDataType } from "./NodeTree";
+import { uploadImage } from "../../api";
 
 export default defineComponent({
   props: {
@@ -27,35 +28,14 @@ export default defineComponent({
       // @ts-ignore
       const imageBlob = this.$refs.imageInput.files[0];
 
-      // Convert it to a canvas.
-      const reader = new FileReader();
-      reader.readAsDataURL(imageBlob);
-      reader.onload = (e) => {
-        const img = new Image();
-        img.onload = () => {
-          // Create a canvas.
-          const canvas = document.createElement("canvas");
-          canvas.width = img.width;
-          canvas.height = img.height;
-
-          // Draw the image on the canvas.
-          const ctx = canvas.getContext("2d");
-          if (!ctx) {
-            throw new Error("Could not get canvas context");
-          }
-
-          ctx.drawImage(img, 0, 0);
-
-          this.node.getOutputs()[0].set({
-            type: NodeDataType.Image,
-            canvas,
-          });
-          this.$emit("input-update");
-        };
-
-        // @ts-ignore
-        img.src = e.target!.result;
-      };
+      // Upload to the server.
+      uploadImage(imageBlob).then((id) => {
+        console.log(`id: ${id}`);
+        this.node.getOutputs()[0].set({
+          type: NodeDataType.Image,
+          id,
+        });
+      });
     },
 
     onColorInputUpdate(color: string) {

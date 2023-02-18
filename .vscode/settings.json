@@ -1,5 +1,7 @@
 {
     "cmake.sourceDirectory": "${workspaceFolder}/gimp/pictonode-gimp-plugin",
     "cmake.configureOnOpen": true,
-    "editor.tabSize": 2
+    "editor.tabSize": 2,
+    "python.linting.flake8Enabled": true,
+    "python.linting.enabled": true
 }

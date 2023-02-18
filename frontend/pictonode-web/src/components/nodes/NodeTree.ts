@@ -51,7 +51,11 @@ export enum SpecialNodeType {
 export type NodeData =
   | {
       type: NodeDataType.Image;
-      canvas: HTMLCanvasElement;
+      id: number;
+    } |
+    {
+      type: NodeDataType.Image;
+      image: HTMLCanvasElement;
     }
   | {
       type: NodeDataType.Color;

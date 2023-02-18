@@ -10,7 +10,7 @@ import { defineComponent } from "vue";
 function update(canvas: HTMLCanvasElement, img: HTMLCanvasElement | undefined) {
   const ctx = canvas.getContext("2d");
   if (ctx) {
-    console.log(`got img: ${img}`);
+    console.log(img);
     if (img) {
       console.log("drawing image");
 
