@@ -12,6 +12,7 @@ import { MetadataType } from "../components/nodes/NodeTree";
 interface Item {
   templateName: string;
   name: string;
+  tooltip: string;
 }
 
 interface Category {
@@ -33,6 +34,7 @@ function categorize(): Category[] {
 
     const category = metadata.category;
     const name = metadata.name;
+    const tooltip = metadata.tooltip;
 
     if (!catmap.has(category)) {
       catmap.set(category, {
@@ -46,6 +48,7 @@ function categorize(): Category[] {
       cat.values.push({
         templateName,
         name,
+        tooltip,
       });
     }
   }
@@ -67,6 +70,7 @@ export default defineComponent({
       items: categorize(),
     };
   },
+
   methods: {
     addNode(item: Item) {
       this.$emit("input", [...this.pendingTemplates, item.templateName]);
@@ -76,14 +80,14 @@ export default defineComponent({
 </script>
 
 <template>
-  <v-card class="mx-auto" max-width="300" id="widgets" tile>
+  <v-card class="mx-auto" max-width="300" id="widgets" tile color="#bddde9">
     <v-list>
       <div v-for="item in items" :key="item.name">
-        <v-subheader>{{ item.name }}</v-subheader>
         <v-list-item-group color="primary">
           <v-list-item v-for="value in item.values" :key="value.templateName">
-            <v-btn plain @click="() => addNode(value)">
+            <v-btn rounded="pill" color="#e1e9d0" size="x-large" plain @click="() => addNode(value)">
               {{ value.name }}
+              <v-tooltip activator="parent" location="top">{{ value.tooltip }}</v-tooltip>
             </v-btn>
           </v-list-item>
         </v-list-item-group>

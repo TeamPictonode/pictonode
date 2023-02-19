@@ -29,7 +29,7 @@ function initializeTemplates() {
     (_) => [],
     [new LinkTemplate(ltMeta("Viewport", NodeDataType.Image), noOutputImage())],
     [],
-    ntMeta("Output", "Output", SpecialNodeType.OutputNode)
+    ntMeta("Output", "Output", SpecialNodeType.OutputNode, "I am an output node!")
   );
 
   // Composite two images together.
@@ -48,7 +48,7 @@ function initializeTemplates() {
         defaultImage()
       ),
     ],
-    ntMeta("Composite", "Composites", SpecialNodeType.PureFunction)
+    ntMeta("Composite", "Composites", SpecialNodeType.PureFunction, "I layer one input node on top of the other!")
   );
 
   // Image input node.
@@ -61,7 +61,7 @@ function initializeTemplates() {
         defaultImage()
       ),
     ],
-    ntMeta("Image Input", "Input", SpecialNodeType.ImageInput)
+    ntMeta("Image Input", "Input", SpecialNodeType.ImageInput, "Try uploading an image to me!")
   );
 
   // Color input node.
@@ -74,7 +74,7 @@ function initializeTemplates() {
         color: "#FF00FF",
       }),
     ],
-    ntMeta("Color Input", "Input", SpecialNodeType.ColorInput)
+    ntMeta("Color Input", "Input", SpecialNodeType.ColorInput, "I add color to an input node")
   );
 
   // Invert node.
@@ -94,7 +94,7 @@ function initializeTemplates() {
         defaultImage()
       ),
     ],
-    ntMeta("Invert", "Transforms", SpecialNodeType.PureFunction)
+    ntMeta("Invert", "Transforms", SpecialNodeType.PureFunction, "I invert Values of an input image!")
   );
 
   // Add all of the nodes.
@@ -118,12 +118,14 @@ function transformToImage(data: NodeData): HTMLCanvasElement {
 function ntMeta(
   name: string,
   category: string,
-  special: SpecialNodeType
+  special: SpecialNodeType,
+  tooltip: string,
 ): NodeMetadata {
   return {
     metatype: MetadataType.NodeTemplate,
     name,
     special,
+    tooltip,
     category,
   };
 }

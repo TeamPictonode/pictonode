@@ -243,6 +243,6 @@ export default defineComponent({
 <style scoped>
 .vue-flow {
   border: 1px solid black;
-  background-color: gray;
+  background-color: #03303f;
 }
 </style>
