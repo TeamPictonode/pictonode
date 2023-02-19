@@ -125,6 +125,19 @@ class ImageBuilder:
         self.__nodes.append(node)
         return shadow
 
+    def save_to_pixbuf(self, pixbuf):
+        """
+        Saves a gegl buffer to a GdkPixbuf.
+        """
+
+        node = self.__parent.create_child("gegl:save-pixbuf")
+        node.set_property("pixbuf", pixbuf)
+        # Connect the last node to the save node.
+        self.__nodes[-1].link(node)
+
+        self.__nodes.append(node)
+        return pixbuf
+
     def composite(
             self,
             other: "ImageBuilder",

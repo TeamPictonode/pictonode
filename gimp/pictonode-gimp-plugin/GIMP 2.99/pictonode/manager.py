@@ -41,6 +41,9 @@ gi.require_version("GObject", "2.0")
 from gi.repository import GObject # noqa
 from gi.repository.GdkPixbuf import Pixbuf # noqa
 
+gi.require_version("cairo", "1.0")
+from gi.repository import cairo # noqa
+
 # autopep8 on
 
 
