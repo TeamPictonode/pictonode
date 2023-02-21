@@ -186,6 +186,7 @@ class PictonodeManager(metaclass=SingletonConstruction):
             #Gimp.get_pdb().run_procedure("gimp-display-present", [GObject.Value(Gimp.Display, display)])
             image.clean_all()
             self.images_with_xcf.append(image)
+
     @threadsafe
     def __update_settings_ini(self):
         self.settings_ini["SETTINGS"] = self.settings

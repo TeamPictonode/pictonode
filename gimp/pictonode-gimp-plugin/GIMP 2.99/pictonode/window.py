@@ -9,6 +9,7 @@ import window
 import sys
 import threading
 import os
+import json
 
 # autopep8 off
 import gi
@@ -125,7 +126,10 @@ class PluginWindow(object):
         self.image_scrolled = Gtk.ScrolledWindow(hexpand=True, vexpand=True)
 
         # add image to image scrolled window
-        self.image = Gtk.Image()
+        # TODO: add zooming and panning - need to do some cairo drawing 
+        self.image = Gtk.Image.new_from_file("/tmp/gimp/temp.png")
+        self.image.set_hexpand(True)
+        self.image.set_vexpand(True)
         self.image_scrolled.add_with_viewport(self.image)
 
         scrolled_window.set_policy(
@@ -177,14 +181,18 @@ class PluginWindow(object):
             submenu_item = Gtk.MenuItem(label="Add Nodes")
             submenu = Gtk.Menu()
 
-            sub_item1 = Gtk.MenuItem(label="Image Source Node")
-            sub_item2 = Gtk.MenuItem(label="Image Output Node")
-            sub_item3 = Gtk.MenuItem(label="Image Invert Node")
+            sub_item1 = Gtk.MenuItem(label="Source Node")
+            sub_item2 = Gtk.MenuItem(label="Output Node")
+            sub_item3 = Gtk.MenuItem(label="Invert Node")
+            sub_item4 = Gtk.MenuItem(label="Composite Node")
+            sub_item5 = Gtk.MenuItem(label="Blur Node")
 
             # connect menu items here
             sub_item1.connect("activate", self.add_image_src_node)
             sub_item2.connect("activate", self.add_image_out_node)
             sub_item3.connect("activate", self.add_image_invert_node)
+            sub_item4.connect("activate", self.add_image_comp_node)
+            sub_item5.connect("activate", self.add_image_blur_node)
 
             # disable output node option if one already exists
             if self.has_output_node:
@@ -194,6 +202,8 @@ class PluginWindow(object):
             submenu.append(sub_item1)
             submenu.append(sub_item2)
             submenu.append(sub_item3)
+            submenu.append(sub_item4)
+            submenu.append(sub_item5)
 
             # add submenu to menu item
             submenu_item.set_submenu(submenu)
@@ -204,9 +214,6 @@ class PluginWindow(object):
             # make menu popup
             menu.show_all()
             menu.popup(None, None, None, None, event.button, event.time)
-
-    def save(self):
-        self.node_view.save("node_structure.xml")
 
     def output_node_lock(self, has_out_node: bool):
         ''' User should only ever be allowed one output node at any time '''
@@ -228,11 +235,22 @@ class PluginWindow(object):
         self.node_view.add(cn.InvertNode(self))
         self.node_view.show_all()
 
+    def add_image_comp_node(self, widget=None):
+        self.node_view.add(cn.CompositeNode(self))
+        self.node_view.show_all()
+
+    def add_image_blur_node(self, widget=None):
+        self.node_view.add(cn.BlurNode(self))
+        self.node_view.show_all()
+
     def set_node_view(self, new_nv: GtkNodes.NodeView):
         self.node_view = new_nv
         self.node_view.show_all()
 
     def save_graph(self, widget=None):
+
+        # TODO: add json with attributes for each node
+
         save_dialog = Gtk.FileChooserDialog(
             "Save Node Graph",
             self.window,
@@ -263,7 +281,7 @@ class PluginWindow(object):
         # close the dialog
         save_dialog.destroy()
 
-    def display_output(self, pixbuf):
+    def display_output(self):
         '''
         Handles drawing a Gegl Buffer to the main display
         Meant to be called by an output node object
@@ -272,5 +290,5 @@ class PluginWindow(object):
         # TODO: draw checker pattern with same dimensions as image
         # Draw image over the checkered background
 
-        # Create Cairo Surface from GdkPixbuf
-        self.image = Gtk.Image.new_from_pixbuf(pixbuf)
+        # Create Gtk.Image from file (to change to pixbuf later)
+        self.image.set_from_file("/tmp/gimp/temp.png")
