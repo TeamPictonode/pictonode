@@ -12,6 +12,37 @@ gi.require_version('Gegl', '0.4')
 # autopep8 on
 
 
+class _ImageInfo:
+    """
+    A class for storing image information.
+    """
+
+    # The image ID.
+    id: int
+
+    # The image path.
+    path: str
+
+    # The image size.
+    size: int
+
+    # The image creation time.
+    creation_time: datetime.datetime
+
+    def __init__(self, id: int, path: str, size: int):
+        self.id = id
+        self.path = path
+        self.size = size
+        self.creation_time = datetime.datetime.now()
+
+    def delete(self) -> None:
+        """
+        Deletes the image.
+        """
+
+        os.remove(self.path)
+
+
 class ImageManager:
     """
     Manages the images on disk.
@@ -27,7 +58,7 @@ class ImageManager:
     __current_file_size: int
 
     # Map between numerical image IDs and their file paths.
-    __image_map: Dict[int, str]
+    __image_map: Dict[int, _ImageInfo]
 
     # The last image ID.
     __last_image_id: int
@@ -127,34 +158,3 @@ class ImageManager:
         """
 
         self.__clean_up()
-
-
-class _ImageInfo:
-    """
-    A class for storing image information.
-    """
-
-    # The image ID.
-    id: int
-
-    # The image path.
-    path: str
-
-    # The image size.
-    size: int
-
-    # The image creation time.
-    creation_time: datetime.datetime
-
-    def __init__(self, id: int, path: str, size: int):
-        self.id = id
-        self.path = path
-        self.size = size
-        self.creation_time = datetime.datetime.now()
-
-    def delete(self) -> None:
-        """
-        Deletes the image.
-        """
-
-        os.remove(self.path)
