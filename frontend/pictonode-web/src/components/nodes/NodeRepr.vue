@@ -8,7 +8,7 @@
 import { Handle, Position } from "@vue-flow/core";
 import { defineComponent } from "vue";
 
-import { NodeTemplate } from "./NodeTypes";
+import { NodeTemplate, SpecificData } from "./NodeTypes";
 
 export default defineComponent({
   components: { Handle },
@@ -34,7 +34,9 @@ export default defineComponent({
       return component;
     }
   },
-  emits: ["needs-reprocess", "updateNodeInternals"],
+  emits: {
+    "needs-reprocess": (data: SpecificData) => true,
+  },
   props: {
     data: {
       type: Object as () => { node: NodeTemplate },
@@ -42,9 +44,9 @@ export default defineComponent({
     }
   },
   methods: {
-    onNeedsReprocess() {
+    onNeedsReprocess(data: SpecificData) {
       console.log("needs reprocess");
-      this.$emit("needs-reprocess");
+      this.$emit("needs-reprocess", data);
     },
   },
 });
@@ -63,7 +65,7 @@ export default defineComponent({
 
   <div class="nodeStyle">
     <p>{{ data.node.displayName || `Unnamed Node` }}</p>
-    <innerBlock node="node" />
+    <innerBlock node="node" @updated="onNeedsReprocess" />
   </div>
 
   <Handle

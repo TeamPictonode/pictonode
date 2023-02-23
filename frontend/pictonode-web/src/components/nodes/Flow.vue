@@ -10,7 +10,7 @@ import { Controls } from "@vue-flow/additional-components";
 import { defineComponent, defineProps, defineEmits } from "vue";
 import NodeRepr from "./NodeRepr.vue";
 import { processPipeline } from "../../api";
-import { nodeTemplates } from "./NodeTypes";
+import { nodeTemplates, SpecificData, SpecificDataType } from "./NodeTypes";
 
 const { onConnect, addEdges, addNodes, project, getNodes, getEdges } = useVueFlow({
   nodes: [
@@ -96,6 +96,13 @@ const processCanvas = () => {
   })
 };
 
+const specificDataMap = new Map<string, SpecificData>();
+
+const nodeNeedsReprocess = (id: string, data: SpecificData) => {
+  specificDataMap.set(id, data);
+  processCanvas();
+};
+
 type SerializedPipeline = {
   nodes: SerializedNode[];
   edges: SerializedEdge[];
@@ -140,11 +147,18 @@ function _getPipeline(): SerializedPipeline {
       to: parseInt(vueFlowEdge.target!),
       fromIndex: sourceHandle,
       toIndex: targetHandle,
-      defaultValue: undefined,
-      metadata: {}
+      defaultValue: undefined as any,
+      metadata: {/* TODO: set metadata */}
     };
     
-    // TODO: set DefaultValue
+    // TODO: set DefaultValue in all possible cases
+    // Get the specific data for this item.
+    const specificData = specificDataMap.get(vueFlowEdge.source!);
+    if (specificData) {
+      if (specificData.type == SpecificDataType.InputImage) {
+        baseEdge.defaultValue = specificData.imageId;
+      }
+    }
 
     return baseEdge;
   });
@@ -161,7 +175,7 @@ function _getPipeline(): SerializedPipeline {
   <VueFlow id="nodeContainer">
     <Controls />
     <template #node-repr="props">
-      <NodeRepr v-bind="props" @needs-reprocess="processCanvas" />
+      <NodeRepr v-bind="props" @needs-reprocess="data => nodeNeedsReprocess(props.id, data)" />
     </template>
   </VueFlow>
 </template>

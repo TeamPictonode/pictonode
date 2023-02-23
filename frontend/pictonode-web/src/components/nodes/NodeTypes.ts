@@ -57,7 +57,10 @@ const emptyComponent = defineComponent<NodeTemplatePropsType, {}, {}>({
   template: `
     <div class="node">
     </div>
-  `
+  `,
+  emits: {
+    updated: (data: SpecificData) => true
+  }
 });
 
 export const nodeTemplates: Record<string, NodeTemplate> = {
