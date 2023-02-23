@@ -4,240 +4,222 @@
   This file in its entirety was written by John Nunley and Grace Meredith.
 -->
 
-<script lang="ts">
-import { Position, VueFlow, Connection, Edge, addEdge } from "@vue-flow/core";
+<script lang="ts" setup>
+import { Position, VueFlow, Connection, Edge, useVueFlow } from "@vue-flow/core";
 import { Controls } from "@vue-flow/additional-components";
-import { defineComponent } from "vue";
+import { defineComponent, defineProps, defineEmits, watch, ref } from "vue";
 import NodeRepr from "./NodeRepr.vue";
-import {
-  defaultPipeline,
-  pipelineToVueFlow,
-  SpecialNodeType,
-  MetadataType,
-  NodeDataType,
-  nodeToViewFlow,
-} from "./NodeTree";
-import getTemplates from "./Templates";
-import { serializePipeline } from "libnode";
 import { processPipeline } from "../../api";
+import { nodeTemplates, SpecificData, SpecificDataType } from "./NodeTypes";
 
-const pipeline = defaultPipeline();
-const elements = pipelineToVueFlow(pipeline);
+let id = 0;
 
-console.log(elements);
+const elements = ref([
+  _templateToNode("input", 100, 100),
+  _templateToNode("output", 300, 100),
+  {
+    id: "1000000",
+    source: "0",
+    target: "1",
+    sourceHandle: "output-0",
+    targetHandle: "input-0",
+    data: {
+      realId: 1000000,
+      isEdge: true,
+    }
+  }
+]);
 
-export default defineComponent({
-  components: { NodeRepr, VueFlow, Controls },
-  props: {
-    pendingTemplates: {
-      type: Array as () => string[],
-      required: true,
-    },
-  },
+const onConnect = (edge: any) => {
+  // Remove an existing connection that the output nodes have.
+  // This is a hack to prevent the user from connecting multiple
+  // nodes to the same output.
+  const outputNode = edge.target;
+  const outputHandle = edge.targetHandle;
 
-  watch: {
-    pendingTemplates: {
-      handler: function (newVal, oldVal) {
-        console.log("pendingTemplates changed", newVal, oldVal);
-        if (newVal.length > oldVal.length) {
-          const templateName = newVal[newVal.length - 1];
-          this.addNode(templateName);
-        }
-      },
-      deep: true,
-    },
-  },
+  const newEdges = elements.value.filter((e) => {
+    if (e.data.isEdge) {
+      return e.target !== outputNode || e.targetHandle !== outputHandle;
+    }
+    return true;
+  });
 
-  data: () => ({
-    elements,
-    pipeline,
-  }),
+  const newId = id++;
+  const newEdge = {
+    ...edge,
+    id: newId.toString(),
+    data: {
+      realId: newId,
+      isEdge: true,
+    }
+  }
+  newEdges.push(newEdge);
+  elements.value = newEdges;
+  processCanvas();
+};
 
-  emits: ["canvas-update", "updateNodeInternals"],
-
-  methods: {
-    // Add a new node to the graph.
-    addNode(templateName: string) {
-      // Get the title of the node template.
-      const template = getTemplates().getTemplate(templateName);
-      const metadata = template.getMetadata();
-
-      if (metadata.metatype !== MetadataType.NodeTemplate) {
-        throw new Error("Template is not a node template");
-      }
-
-      const title = metadata.name;
-
-      const newNode = this.pipeline.createNode(templateName, {
-        metatype: MetadataType.Node,
-        x: 0,
-        y: 0,
-        title,
-      });
-
-      // Add a new node to the graph.
-      this.elements.push(nodeToViewFlow(newNode));
-      this.reprocess();
-    },
-
-    processCanvas() {
-      console.log(this.pipeline);
-      // Get the "output" node for the pipeline.
-      let outputNode;
-
-      for (const node of this.pipeline.getNodes()) {
-        const template = node.getTemplate();
-
-        if (template === "output") {
-          outputNode = node;
-          break;
-        }
-      }
-
-      let canvas;
-      if (!outputNode) {
-        // Draw a canvas with the text "no output node".
-        canvas = document.createElement("canvas");
-        canvas.width = 200;
-        canvas.height = 100;
-        const ctx = canvas.getContext("2d");
-
-        if (!ctx) {
-          throw new Error("Could not get 2d context");
-        }
-
-        // Blue background.
-        ctx.fillStyle = "#00FF00";
-        ctx.fillRect(0, 0, 200, 100);
-
-        // White text.
-        ctx.fillStyle = "#FFFFFF";
-        ctx.font = "30px Arial";
-        ctx.fillText("No output node", 10, 50);
-
-        this.$emit("canvas-update", canvas);
-      } else {
-        // Parse the tree to a JSON format.
-        // @ts-ignore
-        const formatted = serializePipeline(this.pipeline);
-
-        // Replace default values with IDs.
-        for (const link of formatted.links) {
-          if ("defaultValue" in link && link.defaultValue) {
-            // @ts-ignore
-            console.log(`Exposing id: ${link.defaultValue.id}`)
-            // @ts-ignore
-            link.defaultValue = link.defaultValue.id;
-          }
-        }
-        
-        formatted.output = outputNode.getId();
-
-        // Run the API.
-        try {
-          processPipeline(formatted).then((image_file) => {
-            // Conver the image_file `Blob` to a canvas
-            const img = new Image();
-            img.src = URL.createObjectURL(image_file);
-
-            img.onload = () => {
-              const canvas2 = document.createElement("canvas");
-              canvas2.width = img.width;
-              canvas2.height = img.height;
-              const ctx = canvas2.getContext("2d");
-
-              if (!ctx) {
-                throw new Error("Could not get 2d context");
-              }
-
-              ctx.drawImage(img, 0, 0);
-              this.$emit("canvas-update", canvas2);
-            };
-          });
-        } catch (e) {
-          console.log(e);
-        }
-      } 
-    },
-
-    onConnect(connection: Connection | Edge) {
-      //this.elements = addEdge(connection, this.elements);
-
-      // Get the source and target nodes.
-      const sourceId = parseInt(connection.source);
-      const sourceNode = this.pipeline.getNode(sourceId);
-      const sourceHandle = connection.sourceHandle!;
-      const targetId = parseInt(connection.target);
-      const targetNode = this.pipeline.getNode(targetId);
-      const targetHandle = connection.targetHandle!;
-
-      if (!sourceNode || !targetNode) {
-        throw new Error("Could not get source or target node");
-      }
-
-      // Determine the values; source should have "output-" at the front, and
-      // target should have "input-" at the front.
-      const sourceValue = parseInt(sourceHandle.substring(7));
-      const targetValue = parseInt(targetHandle.substring(6));
-
-      console.log(
-        `Linking ${sourceId} ${sourceValue} to ${targetId} ${targetValue}`
-      );
-
-      // If the target node already has an input link, unlink it.
-      if (targetNode.isInputOccupied(targetValue)) {
-        // Get the node that is currently linked to the target node.
-        const oldSourceNode = targetNode.getInputs()[targetValue].getFrom();
-
-        if (oldSourceNode) {
-          console.log(oldSourceNode);
-          const oldSourceId = oldSourceNode.getId();
-          const oldSourceValue = oldSourceNode
-            .getOutputs()
-            .indexOf(targetNode.getInputs()[targetValue]);
-
-          console.log(
-            `Unlinking ${oldSourceId} ${oldSourceValue} -> ${targetId} ${targetValue}`
-          )
-
-          this.pipeline.unlink(
-            oldSourceId,
-            oldSourceValue,
-            targetId,
-            targetValue
-          );
-        }
-      }
-
-      // Link the nodes.
-      this.pipeline.link(sourceId, sourceValue, targetId, targetValue, {
-        metatype: MetadataType.Link,
-      });
-
-      // Update the graph.
-      this.reprocess();
-    },
-
-    reprocess() {
-      // @ts-ignore
-      this.elements = pipelineToVueFlow(this.pipeline);
-      this.processCanvas();
-    },
-  },
-
-  mounted() {
-    this.processCanvas();
-  },
+const props = defineProps({
+  addTemplate: String as () => string | null,
 });
+
+// Watch for changes to the addTemplate prop.
+// If it is not null, add a new node with the given template.
+watch(() => props.addTemplate, (template) => {
+  if (template) {
+    addNode(template);
+  }
+});
+
+const emits = defineEmits<{
+  (event: "canvas-update", canvas: HTMLCanvasElement): void;
+}>();
+
+// Method for adding a new node with the given template.
+// This method is called by the parent Canvas component.
+const addNode = (template: string) => {
+  const node = _templateToNode(template, 0, 0);
+  elements.value.push(node);
+  processCanvas();
+};
+
+function _templateToNode(template: string, x: number, y: number): any {
+  const nodeTemplate = nodeTemplates[template]!;
+  const newId = id++;
+  console.log(`making node with id ${newId}`);
+  const node = {
+    id: newId.toString(), 
+    position: { x, y },
+    type: "repr",
+    data: {
+      realId: newId,
+      node: nodeTemplate,
+      isEdge: false,
+    }
+  };
+  return node;
+};
+
+const processCanvas = () => {
+  console.log("processing canvas");
+  const pipeline = _getPipeline();
+
+  // Process the pipeline.
+  processPipeline(pipeline).then(imageFile => {
+    // Create an image element and set its source to the image file.
+    const image = new Image();
+    image.src = URL.createObjectURL(imageFile);
+
+    // Create a canvas element and draw the image on it.
+    const canvas = document.createElement("canvas");
+    const context = canvas.getContext("2d");
+
+    if (!context) {
+      throw new Error("Could not get canvas context");
+    }
+
+    image.onload = () => {
+      canvas.width = image.width;
+      canvas.height = image.height;
+      context.drawImage(image, 0, 0);
+      emits("canvas-update", canvas);
+    };
+  })
+};
+
+const specificDataMap = new Map<string, SpecificData>();
+
+const nodeNeedsReprocess = (id: string, data: SpecificData) => {
+  specificDataMap.set(id, data);
+  processCanvas();
+};
+
+type SerializedPipeline = {
+  nodes: SerializedNode[];
+  links: SerializedEdge[];
+  output: number | null;
+};
+
+type SerializedNode = {
+  id: number;
+  template: string;
+  metadata: any;
+};
+
+type SerializedEdge = {
+  id: number;
+  from: number;
+  to: number;
+  fromIndex: number;
+  toIndex: number;
+  defaultValue: any;
+  metadata: any;
+}
+
+function _getPipeline(): SerializedPipeline {
+  // Construct the serialized pipeline from the nodes and edges.
+  const vueFlowNodes = elements.value.filter(e => !e.data.isEdge); 
+  const vueFlowEdges = elements.value.filter(e => e.data.isEdge);
+
+  let output = -1;
+  const nodes = vueFlowNodes.map(vueFlowNode => {
+    const node = {
+      id: vueFlowNode.data.realId,
+      template: vueFlowNode.data.node.templateName,
+      metadata: {}
+    };
+
+    if (node.template == "output") {
+      output = node.id;
+    }
+
+    return node;
+  });
+
+  const edges = vueFlowEdges.map(vueFlowEdge => {
+    const sourceHandle = parseInt(vueFlowEdge.sourceHandle?.split("-")[1]!);
+    const targetHandle = parseInt(vueFlowEdge.targetHandle?.split("-")[1]!);
+
+    const baseEdge = {
+      id: vueFlowEdge.data.realId,
+      from: parseInt(vueFlowEdge.source!),
+      to: parseInt(vueFlowEdge.target!),
+      fromIndex: sourceHandle,
+      toIndex: targetHandle,
+      defaultValue: undefined as any,
+      metadata: {/* TODO: set metadata */}
+    };
+    
+    // TODO: set DefaultValue in all possible cases
+    // Get the specific data for this item.
+    const specificData = specificDataMap.get(vueFlowEdge.source!);
+    if (specificData) {
+      if (specificData.type == SpecificDataType.InputImage) {
+        baseEdge.defaultValue = specificData.imageId;
+      }
+    }
+
+    return baseEdge;
+  });
+
+  return {
+    nodes,
+    links: edges,
+    output
+  };
+}
 </script>
 
 <template>
-  <VueFlow id="nodeContainer" v-model="elements" @connect="onConnect">
-    <Controls />
-    <template #node-repr="props">
-      <NodeRepr v-bind="props" @needs-reprocess="processCanvas" />
-    </template>
-  </VueFlow>
+  <div style="height: 50%;">
+    <VueFlow id="nodeContainer" v-model="elements" @connect="onConnect">
+      <Controls />
+      <template #node-repr="props">
+        <NodeRepr v-bind="props" @needs-reprocess="data => {
+          nodeNeedsReprocess(props.id, data)
+        }" />
+      </template>
+    </VueFlow>
+  </div>
 </template>
 
 <style scoped>
