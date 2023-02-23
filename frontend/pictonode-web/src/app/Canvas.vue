@@ -15,6 +15,7 @@ export default defineComponent({
   components: { NodeView, RenderedView, Topbar, Widgets },
   data: () => ({
     img: undefined as HTMLCanvasElement | undefined,
+    addTemplate: null as string | null,
   }),
   methods: {
     onCanvasUpdate(canvas: HTMLCanvasElement) {
@@ -23,13 +24,7 @@ export default defineComponent({
       this.img = canvas;
     },
     addNode(template: string) {
-      // Get the Flow component
-      // You're not supposed to use internal methods, but the alternative is
-      // horrifying.
-      const flow = this.$refs.flow as any;
-
-      // Add a node to the flow
-      flow.addNode(template);
+      this.addTemplate = template;
     } 
   }
 });
@@ -51,5 +46,6 @@ export default defineComponent({
   <NodeView
     @canvas-update="onCanvasUpdate"
     ref="flow"
+    :addTemplate="addTemplate"
   />
 </template>

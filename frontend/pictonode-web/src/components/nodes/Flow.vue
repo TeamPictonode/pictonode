@@ -7,14 +7,14 @@
 <script lang="ts" setup>
 import { Position, VueFlow, Connection, Edge, useVueFlow } from "@vue-flow/core";
 import { Controls } from "@vue-flow/additional-components";
-import { defineComponent, defineProps, defineEmits, ref } from "vue";
+import { defineComponent, defineProps, defineEmits, watch, ref } from "vue";
 import NodeRepr from "./NodeRepr.vue";
 import { processPipeline } from "../../api";
 import { nodeTemplates, SpecificData, SpecificDataType } from "./NodeTypes";
 
 let id = 0;
 
-const elements = [
+const elements = ref([
   _templateToNode("input", 100, 100),
   _templateToNode("output", 300, 100),
   {
@@ -28,7 +28,7 @@ const elements = [
       isEdge: true,
     }
   }
-];
+]);
 
 const onConnect = (edge: any) => {
   const newId = id++;
@@ -40,9 +40,21 @@ const onConnect = (edge: any) => {
       isEdge: true,
     }
   }
-  elements.push(newEdge);
+  elements.value.push(newEdge);
   processCanvas();
 };
+
+const props = defineProps({
+  addTemplate: String as () => string | null,
+});
+
+// Watch for changes to the addTemplate prop.
+// If it is not null, add a new node with the given template.
+watch(() => props.addTemplate, (template) => {
+  if (template) {
+    addNode(template);
+  }
+});
 
 const emits = defineEmits<{
   (event: "canvas-update", canvas: HTMLCanvasElement): void;
@@ -52,7 +64,7 @@ const emits = defineEmits<{
 // This method is called by the parent Canvas component.
 const addNode = (template: string) => {
   const node = _templateToNode(template, 0, 0);
-  elements.push(node);
+  elements.value.push(node);
   processCanvas();
 };
 
@@ -131,8 +143,8 @@ type SerializedEdge = {
 
 function _getPipeline(): SerializedPipeline {
   // Construct the serialized pipeline from the nodes and edges.
-  const vueFlowNodes = elements.filter(e => !e.data.isEdge); 
-  const vueFlowEdges = elements.filter(e => e.data.isEdge);
+  const vueFlowNodes = elements.value.filter(e => !e.data.isEdge); 
+  const vueFlowEdges = elements.value.filter(e => e.data.isEdge);
 
   let output = -1;
   const nodes = vueFlowNodes.map(vueFlowNode => {
