@@ -18,7 +18,7 @@ def webpackAt(p: str):
   
   # Run webpack
   env = os.environ.copy()
-  env["NODE_ENV"] = "production"
+  env["NODE_ENV"] = "development"
   res = sp.run(["npx", "webpack"], cwd=p, check=True, env=env)
 
   if res.returncode != 0:

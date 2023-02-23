@@ -41,6 +41,7 @@ onConnect(edge => {
     }
   }
   addEdges([newEdge]);
+  processCanvas();
 });
 
 const emits = defineEmits<{
@@ -175,7 +176,10 @@ function _getPipeline(): SerializedPipeline {
   <VueFlow id="nodeContainer">
     <Controls />
     <template #node-repr="props">
-      <NodeRepr v-bind="props" @needs-reprocess="data => nodeNeedsReprocess(props.id, data)" />
+      <NodeRepr v-bind="props" @needs-reprocess="
+        // @ts-ignore
+        data => nodeNeedsReprocess(props.id, data)
+      " />
     </template>
   </VueFlow>
 </template>
