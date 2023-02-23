@@ -31,6 +31,19 @@ const elements = ref([
 ]);
 
 const onConnect = (edge: any) => {
+  // Remove an existing connection that the output nodes have.
+  // This is a hack to prevent the user from connecting multiple
+  // nodes to the same output.
+  const outputNode = edge.target;
+  const outputHandle = edge.targetHandle;
+
+  const newEdges = elements.value.filter((e) => {
+    if (e.data.isEdge) {
+      return e.target !== outputNode || e.targetHandle !== outputHandle;
+    }
+    return true;
+  });
+
   const newId = id++;
   const newEdge = {
     ...edge,
@@ -40,7 +53,8 @@ const onConnect = (edge: any) => {
       isEdge: true,
     }
   }
-  elements.value.push(newEdge);
+  newEdges.push(newEdge);
+  elements.value = newEdges;
   processCanvas();
 };
 
