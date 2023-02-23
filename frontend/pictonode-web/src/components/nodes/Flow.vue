@@ -16,7 +16,7 @@ let id = 0;
 
 const elements = [
   _templateToNode("input", 100, 100),
-  _templateToNode("output", 100, 300),
+  _templateToNode("output", 300, 100),
   {
     id: "1000000",
     source: "0",
@@ -74,6 +74,7 @@ function _templateToNode(template: string, x: number, y: number): any {
 };
 
 const processCanvas = () => {
+  console.log("processing canvas");
   const pipeline = _getPipeline();
 
   // Process the pipeline.
@@ -108,7 +109,7 @@ const nodeNeedsReprocess = (id: string, data: SpecificData) => {
 
 type SerializedPipeline = {
   nodes: SerializedNode[];
-  edges: SerializedEdge[];
+  links: SerializedEdge[];
   output: number | null;
 };
 
@@ -133,13 +134,21 @@ function _getPipeline(): SerializedPipeline {
   const vueFlowNodes = elements.filter(e => !e.data.isEdge); 
   const vueFlowEdges = elements.filter(e => e.data.isEdge);
 
-  const nodes = vueFlowNodes.map(vueFlowNode => ({
-    id: vueFlowNode.data.realId,
-    template: vueFlowNode.data.node.template,
-    metadata: {}
-  }));
-
   let output = -1;
+  const nodes = vueFlowNodes.map(vueFlowNode => {
+    const node = {
+      id: vueFlowNode.data.realId,
+      template: vueFlowNode.data.node.templateName,
+      metadata: {}
+    };
+
+    if (node.template == "output") {
+      output = node.id;
+    }
+
+    return node;
+  });
+
   const edges = vueFlowEdges.map(vueFlowEdge => {
     const sourceHandle = parseInt(vueFlowEdge.sourceHandle?.split("-")[1]!);
     const targetHandle = parseInt(vueFlowEdge.targetHandle?.split("-")[1]!);
@@ -168,7 +177,7 @@ function _getPipeline(): SerializedPipeline {
 
   return {
     nodes,
-    edges,
+    links: edges,
     output
   };
 }
@@ -176,13 +185,12 @@ function _getPipeline(): SerializedPipeline {
 
 <template>
   <div style="height: 50%;">
-    <VueFlow id="nodeContainer" v-model="elements">
+    <VueFlow id="nodeContainer" v-model="elements" @connect="onConnect">
       <Controls />
       <template #node-repr="props">
-        <NodeRepr v-bind="props" @needs-reprocess="
-          // @ts-ignore
-          data => nodeNeedsReprocess(props.id, data)
-        " />
+        <NodeRepr v-bind="props" @needs-reprocess="data => {
+          nodeNeedsReprocess(props.id, data)
+        }" />
       </template>
     </VueFlow>
   </div>

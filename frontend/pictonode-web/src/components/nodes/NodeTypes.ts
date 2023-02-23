@@ -3,6 +3,7 @@
 import { DefineComponent, PropType, defineComponent } from "vue";
 
 import InputNode from "./NodeData/InputNode.vue";
+import OutputNode from "./NodeData/OutputNode";
 
 export interface NodeTemplate {
   templateName: string;
@@ -11,7 +12,7 @@ export interface NodeTemplate {
   tooltip: string;
   inputs: LinkTemplate[];
   outputs: LinkTemplate[];
-  innerComponent: DefineComponent<{}, {}, any>;
+  innerComponent: DefineComponent<any, any, any, any, any, any, any, any, any, any>;
 }
 
 export type NodeTemplatePropsType = {
@@ -43,11 +44,14 @@ export type SpecificData = {
 } | {
   type: SpecificDataType.InputImage,
   imageId: number,
+} | {
+  type: SpecificDataType.Output,
 };
 
 export enum SpecificDataType {
   None = "none",
   InputImage = "input-image",
+  Output = "output",
 }
 
 // List of templates.
@@ -115,6 +119,6 @@ export const nodeTemplates: Record<string, NodeTemplate> = {
       }
     ],
     outputs: [],
-    innerComponent: emptyComponent,
+    innerComponent: OutputNode,
   }
 };

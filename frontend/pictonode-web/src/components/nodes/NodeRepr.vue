@@ -4,52 +4,39 @@
   This file in its entirety was written by John Nunley and Grace Meredith.
 -->
 
-<script lang="ts">
+<script lang="ts" setup>
 import { Handle, Position } from "@vue-flow/core";
-import { defineComponent } from "vue";
+import { defineProps, defineEmits } from "vue";
 
 import { NodeTemplate, SpecificData } from "./NodeTypes";
 
-export default defineComponent({
-  components: { Handle },
-  data: () => ({
-    Position,
+function inputHandleStyle(index: number) {
+  return {
+    top: `${index * 20 + 10}px`,
+  };
+}
 
-    inputHandleStyle(index: number) {
-      return {
-        top: `${index * 20 + 10}px`,
-      };
-    },
+ function   outputHandleStyle(index: number) {
+  return {
+    top: `${index * 20 + 10}px`,
+  };
+}
 
-    outputHandleStyle(index: number) {
-      return {
-        top: `${index * 20 + 10}px`,
-      };
-    },
-  }),
-  computed: {
-    innerBlock() {
-      // innerComponent is a defineComponent() object
-      const component = this.data.node.innerComponent;
-      return component;
-    }
-  },
-  emits: {
-    "needs-reprocess": (data: SpecificData) => true,
-  },
-  props: {
-    data: {
-      type: Object as () => { node: NodeTemplate },
-      required: true,
-    }
-  },
-  methods: {
-    onNeedsReprocess(data: SpecificData) {
-      console.log("needs reprocess");
-      this.$emit("needs-reprocess", data);
-    },
-  },
-});
+const props = defineProps<{
+  data: { node: NodeTemplate };
+}>();
+
+const emits = defineEmits<{
+  (event: "needs-reprocess", data: SpecificData): void;
+}>();
+
+function onNeedsReprocess(data: SpecificData): true {
+  console.log("needs reprocess");
+  emits("needs-reprocess", data);
+  return true;
+}
+
+const innerBlock = props.data.node.innerComponent;
 </script>
 
 <template>
