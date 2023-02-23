@@ -7,17 +7,17 @@
 <script lang="ts" setup>
 import { Position, VueFlow, Connection, Edge, useVueFlow } from "@vue-flow/core";
 import { Controls } from "@vue-flow/additional-components";
-import { defineComponent, defineProps, defineEmits } from "vue";
+import { defineComponent, defineProps, defineEmits, ref } from "vue";
 import NodeRepr from "./NodeRepr.vue";
 import { processPipeline } from "../../api";
 import { nodeTemplates, SpecificData, SpecificDataType } from "./NodeTypes";
 
-const { onConnect, addEdges, addNodes, project, getNodes, getEdges } = useVueFlow({
-  nodes: [
-    _templateToNode("input", 100, 100),
-    _templateToNode("output", 100, 300),
-  ],
-  edges: [{
+let id = 0;
+
+const elements = [
+  _templateToNode("input", 100, 100),
+  _templateToNode("output", 100, 300),
+  {
     id: "1000000",
     source: "0",
     target: "1",
@@ -25,24 +25,24 @@ const { onConnect, addEdges, addNodes, project, getNodes, getEdges } = useVueFlo
     targetHandle: "input-0",
     data: {
       realId: 1000000,
+      isEdge: true,
     }
-  }]
-});
+  }
+];
 
-let id = 0;
-
-onConnect(edge => {
+const onConnect = (edge: any) => {
   const newId = id++;
   const newEdge = {
     ...edge,
     id: newId.toString(),
     data: {
       realId: newId,
+      isEdge: true,
     }
   }
-  addEdges([newEdge]);
+  elements.push(newEdge);
   processCanvas();
-});
+};
 
 const emits = defineEmits<{
   (event: "canvas-update", canvas: HTMLCanvasElement): void;
@@ -52,20 +52,22 @@ const emits = defineEmits<{
 // This method is called by the parent Canvas component.
 const addNode = (template: string) => {
   const node = _templateToNode(template, 0, 0);
-  addNodes([node]);
+  elements.push(node);
   processCanvas();
 };
 
 function _templateToNode(template: string, x: number, y: number): any {
   const nodeTemplate = nodeTemplates[template]!;
   const newId = id++;
+  console.log(`making node with id ${newId}`);
   const node = {
     id: newId.toString(), 
     position: { x, y },
     type: "repr",
     data: {
       realId: newId,
-      node: nodeTemplate
+      node: nodeTemplate,
+      isEdge: false,
     }
   };
   return node;
@@ -128,8 +130,8 @@ type SerializedEdge = {
 
 function _getPipeline(): SerializedPipeline {
   // Construct the serialized pipeline from the nodes and edges.
-  const vueFlowNodes = getNodes.value; 
-  const vueFlowEdges = getEdges.value;
+  const vueFlowNodes = elements.filter(e => !e.data.isEdge); 
+  const vueFlowEdges = elements.filter(e => e.data.isEdge);
 
   const nodes = vueFlowNodes.map(vueFlowNode => ({
     id: vueFlowNode.data.realId,
@@ -173,15 +175,17 @@ function _getPipeline(): SerializedPipeline {
 </script>
 
 <template>
-  <VueFlow id="nodeContainer">
-    <Controls />
-    <template #node-repr="props">
-      <NodeRepr v-bind="props" @needs-reprocess="
-        // @ts-ignore
-        data => nodeNeedsReprocess(props.id, data)
-      " />
-    </template>
-  </VueFlow>
+  <div style="height: 50%;">
+    <VueFlow id="nodeContainer" v-model="elements">
+      <Controls />
+      <template #node-repr="props">
+        <NodeRepr v-bind="props" @needs-reprocess="
+          // @ts-ignore
+          data => nodeNeedsReprocess(props.id, data)
+        " />
+      </template>
+    </VueFlow>
+  </div>
 </template>
 
 <style scoped>
