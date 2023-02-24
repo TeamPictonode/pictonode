@@ -186,8 +186,15 @@ class Pictonode (Gimp.PlugIn):
                     if (int(os.getpid()) == int(suspect)) or (
                             int(Gimp.getpid()) != int(get_ppid(suspect))):
 
-                        # If so, we know to recycle the parasite because it
-                        # wasn't us
+                        # There's one deeper edge case where the suspect is a
+                        # persistent process launched by GIMP. This is highly
+                        # unlikely due to GIMP procedure nature, however it
+                        # could still happen. In this scenario restarting GIMP
+                        # would be sufficient. A solution could be to also
+                        # register GIMPS pid in the parasite to check for this,
+                        # however the flatpak version of GIMP would prove an
+                        # issue for this as it runs in its own pid namespace
+                        # (its pid will always be 2)
 
                         recycle_instance_parasite()
 
