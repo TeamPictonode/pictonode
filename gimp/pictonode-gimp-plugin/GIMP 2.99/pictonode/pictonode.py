@@ -218,7 +218,7 @@ class Pictonode (Gimp.PlugIn):
                     else:
                         msg = _("Procedure '{}' is already running!").format(
                             procedure.get_name())
-                        msg += "\nInitiated at: " + timestamp
+                        msg += "\nInitiated at: " + get_pid_timestamp(int(suspect))
                         error = GLib.Error.new_literal(
                             Gimp.PlugIn.error_quark(), msg, 0)
                         return procedure.new_return_values(
