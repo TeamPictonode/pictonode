@@ -172,7 +172,7 @@ class Pictonode (Gimp.PlugIn):
                 register_instance_parasite()
 
             else:
-                from utils import pid_exists
+                from utils import pid_exists, get_ppid
 
                 suspect = bytes(parasite.get_data()).decode("utf-8")
 
@@ -180,15 +180,17 @@ class Pictonode (Gimp.PlugIn):
 
                     # There's a chance that the registered process id is this
                     # process id, even though this process isn't who registered
-                    # that instance in the parasite
+                    # that instance in the parasite, or the registered process
+                    # id that exists isn't associated with GIMP
 
-                    if int(os.getpid()) == int(suspect):
+                    if (int(os.getpid()) == int(suspect)) or (
+                            int(Gimp.getpid()) != int(get_ppid(suspect))):
 
                         # If so, we know to recycle the parasite because it
                         # wasn't us
 
                         recycle_instance_parasite()
-                        
+
                     else:
                         msg = _("Procedure '{}' is already running!.").format(
                             procedure.get_name())

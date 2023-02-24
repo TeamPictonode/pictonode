@@ -12,6 +12,16 @@ if os.name == 'posix':
             return True
         return False
 
+    # https://stackoverflow.com/a/70463176 Get ppid without psutil dependency
+
+    def get_ppid(pid: int) -> int:
+      # Read /proc/<pid>/status and look for the line `PPid:\t120517\n`
+        with open(f"/proc/{pid}/status", encoding="ascii") as f:
+            for line in f.readlines():
+                if line.startswith("PPid:\t"):
+                    return int(line[6:])
+        raise Exception(f"No PPid line found in /proc/{pid}/status")
+
 # Using ctypes for win32 pid introspection is tricky and has many edge cases, see:
 # https://stackoverflow.com/a/17645146 & https://stackoverflow.com/a/23409343
 
@@ -29,3 +39,6 @@ elif os.name == 'nt':
             return False
         else:
             return True
+
+    def get_ppid(pid: int) -> int:
+        raise Exception("<nt>get_ppid() not implemented")
