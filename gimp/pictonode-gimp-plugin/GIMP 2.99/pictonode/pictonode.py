@@ -100,10 +100,12 @@ def save_layer_to_png(gegl_buffer):
 
 
 def register_instance_parasite() -> None:
+    from utils import get_pid_timestamp
+    inst = f"{os.getpid()}.{get_pid_timestamp(Gimp.getpid())}"
     parasite = Gimp.Parasite.new(
         "pictonode-instance",
         Gimp.PARASITE_PERSISTENT,
-        f"{os.getpid()}".encode('utf-8'))
+        inst.encode('utf-8'))
     Gimp.attach_parasite(parasite)
 
 
@@ -172,9 +174,12 @@ class Pictonode (Gimp.PlugIn):
                 register_instance_parasite()
 
             else:
-                from utils import pid_exists, get_ppid
+                from utils import pid_exists, get_ppid, get_pid_timestamp
 
-                suspect = bytes(parasite.get_data()).decode("utf-8")
+                pdata = bytes(
+                    parasite.get_data()).decode("utf-8").split(".")
+
+                suspect, timestamp = pdata[0], pdata[1]
 
                 if pid_exists(int(suspect)):
 
@@ -183,8 +188,8 @@ class Pictonode (Gimp.PlugIn):
                     # that instance in the parasite, or the registered process
                     # id that exists isn't associated with GIMP
 
-                    if (int(os.getpid()) == int(suspect)) or (
-                            int(Gimp.getpid()) != int(get_ppid(suspect))):
+                    if ((int(os.getpid()) == int(suspect)) or (
+                            (int(Gimp.getpid()) != int(get_ppid(suspect))))):
 
                         # There's one deeper edge case where the suspect is a
                         # persistent process launched by GIMP. This is highly
@@ -196,11 +201,24 @@ class Pictonode (Gimp.PlugIn):
                         # issue for this as it runs in its own pid namespace
                         # (its pid will always be 2)
 
+                        # *Solved* by comparing the timestamps of the GIMP process,
+                        # Essentially, the registered timestamp will always be
+                        # different as the only way into this scenario is when
+                        # we are talking about two seperate occurrences of GIMP
+                        # initiated at different times. The next elif takes
+                        # care of this.
+
+                        recycle_instance_parasite()
+
+                    elif ((int(Gimp.getpid()) == int(get_ppid(suspect))) and (
+                            get_pid_timestamp(get_ppid(suspect)) != timestamp)):
+
                         recycle_instance_parasite()
 
                     else:
-                        msg = _("Procedure '{}' is already running!.").format(
+                        msg = _("Procedure '{}' is already running!").format(
                             procedure.get_name())
+                        msg += "\nInitiated at: " + timestamp
                         error = GLib.Error.new_literal(
                             Gimp.PlugIn.error_quark(), msg, 0)
                         return procedure.new_return_values(
@@ -214,9 +232,11 @@ class Pictonode (Gimp.PlugIn):
             GimpUi.init("pictonode.py")
             PictonodeManager().run()
 
+            invalidate_instance_parasite()
+
         else:
             raise Exception(">:(")
-
+        print(get_pid_timestamp(Gimp.getpid()))
         return procedure.new_return_values(
             Gimp.PDBStatusType.SUCCESS, GLib.Error())
 

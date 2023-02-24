@@ -21,7 +21,13 @@ if os.name == 'posix':
                 if line.startswith("PPid:\t"):
                     return int(line[6:])
         raise Exception(f"No PPid line found in /proc/{pid}/status")
-
+    
+    def get_pid_timestamp(pid: int) -> str:
+        import subprocess
+        print(pid)
+        proc = subprocess.check_output(["ps", "-p", f"{pid}", "-o", "lstart="])
+        return proc.decode('utf-8')
+    
 # Using ctypes for win32 pid introspection is tricky and has many edge cases, see:
 # https://stackoverflow.com/a/17645146 & https://stackoverflow.com/a/23409343
 
