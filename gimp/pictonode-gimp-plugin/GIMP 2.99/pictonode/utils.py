@@ -24,8 +24,10 @@ if os.name == 'posix':
     
     def get_pid_timestamp(pid: int) -> str:
         import subprocess
-        print(pid)
-        proc = subprocess.check_output(["ps", "-p", f"{pid}", "-o", "lstart="])
+        try:
+            proc = subprocess.check_output(["ps", "-p", f"{pid}", "-o", "lstart="])
+        except Exception as e:
+            raise e
         return proc.decode('utf-8')
     
 # Using ctypes for win32 pid introspection is tricky and has many edge cases, see:
@@ -48,3 +50,6 @@ elif os.name == 'nt':
 
     def get_ppid(pid: int) -> int:
         raise Exception("<nt>get_ppid() not implemented")
+    
+    def get_pid_timestamp(pid: int) ->str:
+        raise Exception("<nt>get_pid_timestamp() not implemented")
