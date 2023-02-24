@@ -3,6 +3,7 @@ import os
 import configparser
 import window
 import threading
+from toolbar import ProjectToolbar
 
 # autopep8 off
 import gi  # noqa
@@ -29,7 +30,6 @@ from gi.repository import Gimp  # noqa
 
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk  # noqa
-from gi.repository import Gtk # noqa
 
 gi.require_version("Gdk", "3.0")
 from gi.repository import Gdk
@@ -166,6 +166,12 @@ class PictonodeManager(metaclass=SingletonConstruction):
         pass
 
     # we should disambiguate between loaded local projects and unloaded
+
+
+    @threadsafe
+    def set_current_project(self, prjname):
+        if prjname in self.local_projects.keys():
+            print(prjname)
 
     @threadsafe
     def __add_local_project(self, image):

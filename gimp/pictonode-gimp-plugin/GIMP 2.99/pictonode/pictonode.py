@@ -52,6 +52,8 @@ from gi.repository import GObject  # noqa
 
 
 def N_(message): return message
+
+
 def _(message): return GLib.dgettext(None, message)
 
 
@@ -95,6 +97,25 @@ def save_layer_to_png(gegl_buffer):
     buffer_output.process()
 
     return STATIC_TARGET
+
+
+def register_instance_parasite() -> None:
+    from utils import get_pid_timestamp
+    inst = f"{os.getpid()}.{get_pid_timestamp(Gimp.getpid())}"
+    parasite = Gimp.Parasite.new(
+        "pictonode-instance",
+        Gimp.PARASITE_PERSISTENT,
+        inst.encode('utf-8'))
+    Gimp.attach_parasite(parasite)
+
+
+def invalidate_instance_parasite() -> None:
+    Gimp.detach_parasite("pictonode-instance")
+
+
+def recycle_instance_parasite() -> None:
+    invalidate_instance_parasite()
+    register_instance_parasite()
 
 
 class Pictonode (Gimp.PlugIn):
@@ -147,15 +168,75 @@ class Pictonode (Gimp.PlugIn):
                 Gimp.PDBStatusType.CALLING_ERROR, error)
 
         elif run_mode == Gimp.RunMode.INTERACTIVE:
+            parasite = Gimp.get_parasite("pictonode-instance")
+
+            if parasite is None:
+                register_instance_parasite()
+
+            else:
+                from utils import pid_exists, get_ppid, get_pid_timestamp
+
+                pdata = bytes(
+                    parasite.get_data()).decode("utf-8").split(".")
+
+                suspect, timestamp = pdata[0], pdata[1]
+
+                if pid_exists(int(suspect)):
+
+                    # There's a chance that the registered process id is this
+                    # process id, even though this process isn't who registered
+                    # that instance in the parasite, or the registered process
+                    # id that exists isn't associated with GIMP
+
+                    if ((int(os.getpid()) == int(suspect)) or (
+                            (int(Gimp.getpid()) != int(get_ppid(suspect))))):
+
+                        # There's one deeper edge case where the suspect is a
+                        # persistent process launched by GIMP. This is highly
+                        # unlikely due to GIMP procedure nature, however it
+                        # could still happen. In this scenario restarting GIMP
+                        # would be sufficient. A solution could be to also
+                        # register GIMPS pid in the parasite to check for this,
+                        # however the flatpak version of GIMP would prove an
+                        # issue for this as it runs in its own pid namespace
+                        # (its pid will always be 2)
+
+                        # *Solved* by comparing the timestamps of the GIMP process,
+                        # Essentially, the registered timestamp will always be
+                        # different as the only way into this scenario is when
+                        # we are talking about two seperate occurrences of GIMP
+                        # initiated at different times. The next elif takes
+                        # care of this.
+
+                        recycle_instance_parasite()
+
+                    elif ((int(Gimp.getpid()) == int(get_ppid(suspect))) and (
+                            get_pid_timestamp(get_ppid(suspect)) != timestamp)):
+
+                        recycle_instance_parasite()
+
+                    else:
+                        msg = _("Procedure '{}' is already running!").format(
+                            procedure.get_name())
+                        msg += "\nInitiated at: " + get_pid_timestamp(int(suspect))
+                        error = GLib.Error.new_literal(
+                            Gimp.PlugIn.error_quark(), msg, 0)
+                        return procedure.new_return_values(
+                            Gimp.PDBStatusType.CALLING_ERROR, error)
+                else:
+                    recycle_instance_parasite()
+
             PictonodeManager().init(procedure, run_mode, image,
-                                             n_drawables, drawables, args, run_data)
+                                    n_drawables, drawables, args, run_data)
 
             GimpUi.init("pictonode.py")
             PictonodeManager().run()
 
+            invalidate_instance_parasite()
+
         else:
             raise Exception(">:(")
-
+        
         return procedure.new_return_values(
             Gimp.PDBStatusType.SUCCESS, GLib.Error())
 
