@@ -52,6 +52,8 @@ from gi.repository import GObject  # noqa
 
 
 def N_(message): return message
+
+
 def _(message): return GLib.dgettext(None, message)
 
 
@@ -95,6 +97,23 @@ def save_layer_to_png(gegl_buffer):
     buffer_output.process()
 
     return STATIC_TARGET
+
+
+def register_instance_parasite() -> None:
+    parasite = Gimp.Parasite.new(
+        "pictonode-instance",
+        Gimp.PARASITE_PERSISTENT,
+        f"{os.getpid()}".encode('utf-8'))
+    Gimp.attach_parasite(parasite)
+
+
+def invalidate_instance_parasite() -> None:
+    Gimp.detach_parasite("pictonode-instance")
+
+
+def recycle_instance_parasite() -> None:
+    invalidate_instance_parasite()
+    register_instance_parasite()
 
 
 class Pictonode (Gimp.PlugIn):
@@ -147,8 +166,41 @@ class Pictonode (Gimp.PlugIn):
                 Gimp.PDBStatusType.CALLING_ERROR, error)
 
         elif run_mode == Gimp.RunMode.INTERACTIVE:
+            parasite = Gimp.get_parasite("pictonode-instance")
+
+            if parasite is None:
+                register_instance_parasite()
+
+            else:
+                from utils import pid_exists
+
+                suspect = bytes(parasite.get_data()).decode("utf-8")
+
+                if pid_exists(int(suspect)):
+
+                    # There's a chance that the registered process id is this
+                    # process id, even though this process isn't who registered
+                    # that instance in the parasite
+
+                    if int(os.getpid()) == int(suspect):
+
+                        # If so, we know to recycle the parasite because it
+                        # wasn't us
+
+                        recycle_instance_parasite()
+                        
+                    else:
+                        msg = _("Procedure '{}' is already running!.").format(
+                            procedure.get_name())
+                        error = GLib.Error.new_literal(
+                            Gimp.PlugIn.error_quark(), msg, 0)
+                        return procedure.new_return_values(
+                            Gimp.PDBStatusType.CALLING_ERROR, error)
+                else:
+                    recycle_instance_parasite()
+
             PictonodeManager().init(procedure, run_mode, image,
-                                             n_drawables, drawables, args, run_data)
+                                    n_drawables, drawables, args, run_data)
 
             GimpUi.init("pictonode.py")
             PictonodeManager().run()
