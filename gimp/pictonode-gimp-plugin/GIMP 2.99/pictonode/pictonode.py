@@ -236,7 +236,7 @@ class Pictonode (Gimp.PlugIn):
 
         else:
             raise Exception(">:(")
-        print(get_pid_timestamp(Gimp.getpid()))
+        
         return procedure.new_return_values(
             Gimp.PDBStatusType.SUCCESS, GLib.Error())
 
