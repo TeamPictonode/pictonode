@@ -15,10 +15,19 @@ from werkzeug.security import check_password_hash, generate_password_hash
 import atexit
 import random
 
+from dotenv import load_dotenv
+
 from apscheduler.schedulers.background import BackgroundScheduler
 
+def env_or_else(key: str, default: str) -> str:
+    if key in os.environ:
+        return os.environ[key]
+    else:
+        return default
 
 def create_app(test_config=None):
+    load_dotenv(os_path.join(os_path.dirname(__file__), ".env"))
+    
     # Public directory
     public_dir = os_path.join(os_path.dirname(__file__), "..", "public")
 
@@ -26,8 +35,11 @@ def create_app(test_config=None):
     app = Flask(__name__, instance_relative_config=True, static_folder=public_dir)
     app.config.from_mapping(
         SECRET_KEY="ontario",
-        # TODO: not sqlite
-        DATABASE=os.path.join(app.instance_path, "ontario.sqlite"),
+        DATABASE=os.environ["POSTGRES_DB"],
+        USER=os.environ["POSTGRES_USER"],
+        PASSWORD=os.environ["POSTGRES_PASSWORD"],
+        HOST=os.environ["POSTGRES_HOST"],
+        PORT=os.environ["POSTGRES_PORT"] if "POSTGRES_PORT" in os.environ else "5432",
     )
 
     if test_config is None:
