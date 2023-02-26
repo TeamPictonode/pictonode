@@ -132,6 +132,9 @@ class ImgSrcNode(GtkNodes.Node):
     def remove(self, node):
         self.destroy()
 
+    def get_values(self):
+        return {}
+
     def process(self):
         # initialize our image context for the gegl nodes
         self.image_context = ontario.ImageContext()
@@ -220,6 +223,9 @@ class OutputNode(GtkNodes.Node):
 
         self.destroy()
 
+    def get_values(self):
+        return {}
+
     def update_display(self):
         if self.incoming_buffer:
             # display changes
@@ -236,7 +242,7 @@ class OutputNode(GtkNodes.Node):
             self.node_window.display_output()
             self.image_context.reset_context()
         else:
-            pixbuf = None
+            os.remove("/tmp/gimp/temp.png")
             self.node_window.display_output()
 
     def process(self):
@@ -321,9 +327,12 @@ class InvertNode(GtkNodes.Node):
     def remove(self, node):
         self.destroy()
 
+    def get_values(self):
+        return {}
+
     def process_input(self):
         if self.incoming_buffer:
-            # set new internal copy of buffer 
+            # set new internal copy of buffer
             self.buffer = self.incoming_buffer.dup()
             # use ontario backend for image processing
             self.image_builder.load_from_buffer(self.buffer)
@@ -472,6 +481,15 @@ class CompositeNode(GtkNodes.Node):
 
     def remove(self, node):
         self.destroy()
+
+    def get_values(self):
+
+        ''' Returns dictionary of current state of custom values for the node'''
+
+        return {"opacity": self.opacity,
+                "x": self.x,
+                "y": self.y,
+                "scale": self.scale}
 
     def process_input(self):
         if self.incoming_buffer1 and self.incoming_buffer2:
@@ -643,6 +661,16 @@ class BlurNode(GtkNodes.Node):
 
     def remove(self, node):
         self.destroy()
+
+    def get_values(self):
+
+        ''' Returns dictionary of current state of custom values for the node'''
+        
+        custom_values = {}
+        custom_values["std_dev_x"] = self.std_dev_x
+        custom_values["std_dev_y"] = self.std_dev_y
+
+        return custom_values
 
     def process_input(self):
         if self.incoming_buffer:
