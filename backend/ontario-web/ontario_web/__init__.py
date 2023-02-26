@@ -4,6 +4,7 @@
 import os
 from os import path as os_path
 import tempfile
+import psycopg2
 
 from . import db
 from . import image_manager
@@ -34,12 +35,12 @@ def create_app(test_config=None):
     # Create and configure the app
     app = Flask(__name__, instance_relative_config=True, static_folder=public_dir)
     app.config.from_mapping(
-        SECRET_KEY="ontario",
-        DATABASE=os.environ["POSTGRES_DB"],
-        USER=os.environ["POSTGRES_USER"],
-        PASSWORD=os.environ["POSTGRES_PASSWORD"],
-        HOST=os.environ["POSTGRES_HOST"],
-        PORT=os.environ["POSTGRES_PORT"] if "POSTGRES_PORT" in os.environ else "5432",
+        SECRET_KEY=os.urandom(16),
+        DATABASE=env_or_else("POSTGRES_DB", "ontario_db"),
+        USER=env_or_else("POSTGRES_USER", "ontario"),
+        PASSWORD=env_or_else("POSTGRES_PASSWORD", "ontario"),
+        HOST=env_or_else("POSTGRES_HOST", "localhost"),
+        PORT=env_or_else("POSTGRES_PORT", "5432")
     )
 
     if test_config is None:
@@ -135,15 +136,18 @@ def create_app(test_config=None):
 
         # Make sure the username is not already taken
         if not error:
-            db = db.get_db()
+            d = db.get_db()
+            cursor = d.cursor()
             try:
-                db.execute(
+                cursor.execute(
                     "INSERT INTO user (username, realname, password) VALUES (?, ?, ?)",
                     (username, realname, generate_password_hash(password)),
                 )
-                db.commit()
-            except db.IntegrityError:
+                d.commit()
+            except psycopg2.IntegrityError:
                 error = f"User {username} is already registered."
+            finally:
+                cursor.close()
 
         if error:
             return {"error": error}, 400
@@ -169,12 +173,13 @@ def create_app(test_config=None):
             error = "Password is required."
 
         if not error:
-            db = db.get_db()
+            d = db.get_db()
+            cursor = d.cursor()
             try:
-                user = db.execute(
+                user = cursor.execute(
                     "SELECT * FROM user WHERE username = ?", (username,)
                 ).fetchone()
-            except db.OperationalError:
+            except psycopg2.OperationalError:
                 error = "Incorrect username."
 
             if user is None:
@@ -190,5 +195,4 @@ def create_app(test_config=None):
             return {"success": True}
             
 
-    app.secret_key = os.urandom(24)
     return app

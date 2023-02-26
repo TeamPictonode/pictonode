@@ -21,7 +21,7 @@ def get_db() -> psycopg2.extensions.connection:
             port=current_app.config['PORT']
         )
 
-        g.db.row_factory = psycopg2.extras.DictCursor
+        #g.db.row_factory = psycopg2.extras.DictCursor
 
     return g.db
 
@@ -39,15 +39,21 @@ def env_or_else(key: str, default: str) -> str:
         return default
 
 
-def init_db():
+def init_db(test_config=None):
     load_dotenv(path.join(path.dirname(__file__), ".env"))
+
+    def env_config_or_else(key: str, tkey: str,default: str) -> str:
+        if test_config and tkey in test_config:
+            return test_config[tkey]
+        else:
+            return env_or_else(key, default)
 
     # Connect to the database
     conn = psycopg2.connect(
-        host=env_or_else("POSTGRES_HOST", "localhost"),
-        database=env_or_else("POSTGRES_DB", "ontario"),
-        user=env_or_else("POSTGRES_USER", "ontario"),
-        password=env_or_else("POSTGRES_PASSWORD", "ontario"),
+        host=env_config_or_else("POSTGRES_HOST", "HOST", "localhost"),
+        database=env_config_or_else("POSTGRES_DB", "DATABASE", "ontario"),
+        user=env_config_or_else("POSTGRES_USER", "USER", "ontario"),
+        password=env_config_or_else("POSTGRES_PASSWORD", "PASSWORD", "ontario"),
     )
 
     # Open a cursor to perform database operations
@@ -62,7 +68,8 @@ def init_db():
     CREATE TABLE users (
       id SERIAL PRIMARY KEY,
       username VARCHAR(255) UNIQUE NOT NULL,
-      pwd VARCHAR(255) NOT NULL
+      pwd VARCHAR(255) NOT NULL,
+      realname VARCHAR(255) NOT NULL
     );
   """)
 
