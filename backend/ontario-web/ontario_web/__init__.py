@@ -140,7 +140,7 @@ def create_app(test_config=None):
             cursor = d.cursor()
             try:
                 cursor.execute(
-                    "INSERT INTO user (username, realname, password) VALUES (?, ?, ?)",
+                    "INSERT INTO users (username, realname, pwd) VALUES (%s, %s, %s)",
                     (username, realname, generate_password_hash(password)),
                 )
                 d.commit()
@@ -175,23 +175,25 @@ def create_app(test_config=None):
         if not error:
             d = db.get_db()
             cursor = d.cursor()
+            user = None
             try:
-                user = cursor.execute(
-                    "SELECT * FROM user WHERE username = ?", (username,)
-                ).fetchone()
+                cursor.execute(
+                    "SELECT * FROM users WHERE username = %s", (username,)
+                )
+                user = cursor.fetchone()
             except psycopg2.OperationalError:
                 error = "Incorrect username."
 
             if user is None:
                 error = "Incorrect username."
-            elif not check_password_hash(user["password"], password):
+            elif not check_password_hash(user[2], password):
                 error = "Incorrect password."
 
         if error:
             return {"error": error}, 400
         else:
             session.clear()
-            session["user_id"] = user["id"]
+            session["user_id"] = user[0]
             return {"success": True}
             
 
