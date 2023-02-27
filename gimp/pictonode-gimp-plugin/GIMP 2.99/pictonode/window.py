@@ -185,7 +185,7 @@ class PluginWindow(object):
 
         # Adjustable panes between image viewport and node_view
         paned = Gtk.Paned(orientation=Gtk.Orientation.VERTICAL)
-        paned.set_position(screen_height // 3)
+        paned.set_position(screen_height // 2)
         paned.add1(image_frame)
         paned.add2(frame)
         paned.set_wide_handle(True)
@@ -217,17 +217,21 @@ class PluginWindow(object):
             submenu_item = Gtk.MenuItem(label="Add Nodes")
             submenu = Gtk.Menu()
 
+            separator = Gtk.SeparatorMenuItem()
+            separator.set_margin_top(5)
+            separator.set_margin_bottom(5)
+
             sub_item1 = Gtk.MenuItem(label="Source Node")
             sub_item2 = Gtk.MenuItem(label="Output Node")
             sub_item3 = Gtk.MenuItem(label="Invert Node")
-            sub_item4 = Gtk.MenuItem(label="Composite Node")
+            # sub_item4 = Gtk.MenuItem(label="Composite Node")
             sub_item5 = Gtk.MenuItem(label="Blur Node")
 
             # connect menu items here
             sub_item1.connect("activate", self.add_image_src_node)
             sub_item2.connect("activate", self.add_image_out_node)
             sub_item3.connect("activate", self.add_image_invert_node)
-            sub_item4.connect("activate", self.add_image_comp_node)
+            # sub_item4.connect("activate", self.add_image_comp_node)
             sub_item5.connect("activate", self.add_image_blur_node)
 
             # disable output node option if one already exists
@@ -237,8 +241,9 @@ class PluginWindow(object):
             # add items to submenu
             submenu.append(sub_item1)
             submenu.append(sub_item2)
+            submenu.append(separator)
             submenu.append(sub_item3)
-            submenu.append(sub_item4)
+            # submenu.append(sub_item4)
             submenu.append(sub_item5)
 
             # add submenu to menu item
