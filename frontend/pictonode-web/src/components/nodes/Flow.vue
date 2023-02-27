@@ -143,6 +143,7 @@ type SerializedNode = {
   id: number;
   template: string;
   metadata: any;
+  values: Record<string, any>;
 };
 
 type SerializedEdge = {
@@ -151,7 +152,6 @@ type SerializedEdge = {
   to: number;
   fromIndex: number;
   toIndex: number;
-  defaultValue: any;
   metadata: any;
 }
 
@@ -165,8 +165,17 @@ function _getPipeline(): SerializedPipeline {
     const node = {
       id: vueFlowNode.data.realId,
       template: vueFlowNode.data.node.templateName,
-      metadata: {}
+      metadata: {},
+      values: {} as Record<string, any>,
     };
+
+    // Get the specific data for this item.
+    const specificData = specificDataMap.get(vueFlowNode.id);
+    if (specificData) {
+      if (specificData.type == SpecificDataType.InputImage) {
+        node.values["image"] = specificData.imageId;
+      }
+    }
 
     if (node.template == "output") {
       output = node.id;
@@ -185,18 +194,8 @@ function _getPipeline(): SerializedPipeline {
       to: parseInt(vueFlowEdge.target!),
       fromIndex: sourceHandle,
       toIndex: targetHandle,
-      defaultValue: undefined as any,
       metadata: {/* TODO: set metadata */}
-    };
-    
-    // TODO: set DefaultValue in all possible cases
-    // Get the specific data for this item.
-    const specificData = specificDataMap.get(vueFlowEdge.source!);
-    if (specificData) {
-      if (specificData.type == SpecificDataType.InputImage) {
-        baseEdge.defaultValue = specificData.imageId;
-      }
-    }
+    }; 
 
     return baseEdge;
   });

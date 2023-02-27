@@ -73,9 +73,13 @@ class LinkTemplate(Generic[T, M]):
     # Default value for the link.
     __defaultValue: T
 
-    def __init__(self, metadata: M, defaultValue: T):
+    # Name of the link
+    __name: str
+
+    def __init__(self, metadata: M, defaultValue: T, name: str):
         self.__metadata = metadata
         self.__defaultValue = defaultValue
+        self.__name = name
 
     def getMetadata(self) -> M:
         """
@@ -90,6 +94,13 @@ class LinkTemplate(Generic[T, M]):
         """
 
         return self.__defaultValue
+
+    def getName(self) -> str:
+        """
+        Returns the name of the link.
+        """
+
+        return self.__name
 
 
 class Link(Generic[T, M]):
@@ -124,9 +135,6 @@ class Link(Generic[T, M]):
     # Whether or not the link needs to be hydrated.
     _dirty: bool
 
-    # Is the link using a custom value?
-    _customDefault: bool
-
     def __init__(self, template: LinkTemplate[T, M], metadata: M, id: int):
         self.__template = template
         self.__id = id
@@ -137,7 +145,13 @@ class Link(Generic[T, M]):
         self.__metadata = metadata
         self._value = template.getDefaultValue()
         self._dirty = True
-        self._customDefault = False
+
+    def getName(self) -> str:
+        """
+        Returns the name of the link.
+        """
+
+        return self.__template.getName()
 
     def getId(self) -> int:
         """
@@ -195,8 +209,6 @@ class Link(Generic[T, M]):
         Returns the value of the link.
         """
 
-        if not (self._customDefault and self.__from.templateName() == "input"):
-            self.hydrate()
         return self._value
 
     def setValue(self, value: T):
@@ -205,7 +217,6 @@ class Link(Generic[T, M]):
         """
 
         self._value = value
-        self._customDefault = True
         self._dirty = True
 
     def getFromIndex(self) -> int:
@@ -228,15 +239,6 @@ class Link(Generic[T, M]):
         """
 
         return self.__metadata
-
-    def _getDefaultValue(self) -> Optional[T]:
-        """
-        Returns the default value for the link.
-        """
-
-        if self._customDefault:
-            return None
-        return self._value
 
     def __repr__(self):
         return f"Link({self.__from} -> {self.__to})"
@@ -358,10 +360,14 @@ class Node(Generic[T, M], _HydrateTarget):
     # The output links.
     __outputs: List[Link[T, M]]
 
+    # Custom output values.
+    __values: Dict[str, T]
+
     def __init__(
         self,
         templateTable: TemplateTable[T, M],
         template: str,
+        values: Dict[str, T],
         metadata: M,
         id: int
     ):
@@ -369,6 +375,7 @@ class Node(Generic[T, M], _HydrateTarget):
         self.__template = template
         self.__id = id
         self.__metadata = metadata
+        self.__values = values
 
         template = templateTable.getTemplate(template)
         lastLinkId = id + MAX_NODES
@@ -471,7 +478,11 @@ class Node(Generic[T, M], _HydrateTarget):
 
         # Set the outputs.
         for i in range(len(outputs)):
-            self.__outputs[i]._value = outputs[i]
+            name = self.__outputs[i].getName()
+            if name is not None and name in self.__values:
+                self.__outputs[i]._value = self.__values[name]
+            else:
+                self.__outputs[i]._value = outputs[i]
             self.__outputs[i]._dirty = False
 
         print("Done hydrating node", self.__id)
@@ -612,12 +623,12 @@ class Pipeline(Generic[T, M]):
         self.__nextId = 0
         self.__outputId = None
 
-    def createNode(self, template: str, metadata: M, id=None) -> Node[T, M]:
+    def createNode(self, template: str, metadata: M, values={}, id=None) -> Node[T, M]:
         """
         Creates a node.
         """
 
-        node = Node(self.__templateTable, template, metadata, self.__nextId)
+        node = Node(self.__templateTable, template, metadata, values, self.__nextId)
         if not id:
             id = self.__nextId
             self.__nextId += 1
@@ -727,7 +738,6 @@ def serializePipeline(pipeline: Pipeline[T, M]) -> SerializedPipeline:
             "to": link.getToId(),
             "toIndex": link.getToIndex(),
             "metadata": link.getMetadata(),
-            "defaultValue": link._getDefaultValue(),
         }
         links.append(linkSer)
 
@@ -736,6 +746,7 @@ def serializePipeline(pipeline: Pipeline[T, M]) -> SerializedPipeline:
             "id": node.getId(),
             "template": node.getTemplate(),
             "metadata": node.getMetadata(),
+            "values": node.getValues(),
         })
 
     return {
@@ -757,7 +768,7 @@ def deserializePipeline(
 
     for serializedNode in serialized["nodes"]:
         node = pipeline.createNode(
-            serializedNode["template"], serializedNode.get("metadata", None))
+            serializedNode["template"], serializedNode.get("metadata", None), serializedNode.get("values", {}))
         node.setId(serializedNode["id"])
 
     for serializedLink in serialized["links"]:
@@ -772,10 +783,6 @@ def deserializePipeline(
             serializedLink.get("metadata", None),
             serializedLink.get("id", None),
         )
-
-        if serializedLink.get("defaultValue") is not None:
-            newLink.setValue(serializedLink["defaultValue"])
-            newLink._dirty = True
 
     pipeline.setOutputNode(serialized["output"])
 
