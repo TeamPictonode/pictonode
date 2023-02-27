@@ -209,6 +209,7 @@ class Link(Generic[T, M]):
         Returns the value of the link.
         """
 
+        self.hydrate()
         return self._value
 
     def setValue(self, value: T):
@@ -261,6 +262,8 @@ class NodeTemplate(Generic[T, M]):
     # Metadata for the node.
     __metadata: M
 
+    __mapNamesToOutputs: Dict[int, str]
+
     def __init__(
         self,
         onProcess: Callable[[List[Link[T, M]], M], List[T]],
@@ -272,6 +275,7 @@ class NodeTemplate(Generic[T, M]):
         self.__inputs = inputs
         self.__outputs = outputs
         self.__metadata = metadata
+        self.__mapNamesToOutputs = {}
 
     def getMetadata(self) -> M:
         """
@@ -302,6 +306,12 @@ class NodeTemplate(Generic[T, M]):
         """
 
         return self.__onProcess(inputs, metadata)
+
+    def insertNamedOutput(self, name: str, index: int):
+        self.__mapNamesToOutputs[index] = name
+
+    def getNamedOutput(self, index: int) -> Optional[str]:
+        return self.__mapNamesToOutputs.get(index, None)
 
 
 class TemplateTable(Generic[T, M]):
@@ -376,8 +386,12 @@ class Node(Generic[T, M], _HydrateTarget):
         self.__id = id
         self.__metadata = metadata
         self.__values = values
+        if self.__values is None:
+            raise ValueError("Values cannot be None")
 
         template = templateTable.getTemplate(template)
+        if template is None:
+            raise ValueError(f"Unknown template {template}")
         lastLinkId = id + MAX_NODES
 
         self.__inputs = []
@@ -478,10 +492,13 @@ class Node(Generic[T, M], _HydrateTarget):
 
         # Set the outputs.
         for i in range(len(outputs)):
-            name = self.__outputs[i].getName()
+            name = self.__templateTable.getTemplate(self.__template).getNamedOutput(i)
+            print(f"- {name}")
             if name is not None and name in self.__values:
+                print(f"- Node {self.__id} has custom value {self.__values[name]} for index {i}")
                 self.__outputs[i]._value = self.__values[name]
             else:
+                print(f"- Node {self.__id} has a normal value {outputs[i]} for index {i}")
                 self.__outputs[i]._value = outputs[i]
             self.__outputs[i]._dirty = False
 
@@ -628,7 +645,7 @@ class Pipeline(Generic[T, M]):
         Creates a node.
         """
 
-        node = Node(self.__templateTable, template, metadata, values, self.__nextId)
+        node = Node(self.__templateTable, template, values, metadata, self.__nextId)
         if not id:
             id = self.__nextId
             self.__nextId += 1
@@ -664,7 +681,6 @@ class Pipeline(Generic[T, M]):
             id = self.__nextId
             self.__nextId += 1
         link.setId(id)
-        print(link.getId())
         self.__links[link.getId()] = link
         return link
 
@@ -767,8 +783,12 @@ def deserializePipeline(
     pipeline = Pipeline(templateTable)
 
     for serializedNode in serialized["nodes"]:
+        print(serializedNode)
         node = pipeline.createNode(
-            serializedNode["template"], serializedNode.get("metadata", None), serializedNode.get("values", {}))
+            serializedNode["template"],
+            serializedNode.get("metadata", None),
+            serializedNode.get("values", {})
+        )
         node.setId(serializedNode["id"])
 
     for serializedLink in serialized["links"]:
