@@ -47,11 +47,17 @@ def test_process(client):
       "nodes": [
         {{
           "id": 0,
-          "template": "input"
+          "template": "input",
+          "values": {{
+            "image": {image1_id}
+          }}
         }},
         {{
           "id": 1,
-          "template": "input"
+          "template": "input",
+          "values": {{
+            "image": {image2_id}
+          }}
         }},
         {{
           "id": 2,
@@ -68,16 +74,14 @@ def test_process(client):
           "from": 0,
           "to": 2,
           "fromIndex": 0,
-          "toIndex": 0,
-          "defaultValue": {image1_id}
+          "toIndex": 0
         }},
         {{
           "id": 5,
           "from": 1,
           "to": 2,
           "fromIndex": 0,
-          "toIndex": 1,
-          "defaultValue": {image2_id}
+          "toIndex": 1
         }},
         {{
           "id": 6,
