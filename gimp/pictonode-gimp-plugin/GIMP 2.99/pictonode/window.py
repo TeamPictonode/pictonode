@@ -4,7 +4,7 @@ import custom_nodes as cn
 from manager import *
 from httpclient import *
 from client import *
-import window
+from json_generator import *
 
 import sys
 import threading
@@ -54,12 +54,33 @@ from gi.repository import Gtk  # noqa
 
 gi.require_version('Gdk', '3.0')
 from gi.repository import Gdk  # noqa
+
+gi.require_version('GdkPixbuf', '2.0')
+from gi.repository import GdkPixbuf  # noqa
 # autopep8 on
 
-
+# found at https://stackoverflow.com/a/32861765
 css = b"""
 frame {
-  background-color: #D3D3D3
+  background-color: white;
+  background-image:
+    linear-gradient(to right, rgba(184,184,184,0.5) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(184,184,184,0.5) 1px, transparent 1px);
+  background-size: 10px 10px;
+  background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
+}
+"""
+
+# found at https://stackoverflow.com/a/35362074
+css_image_background = b"""
+image {
+  background-color: white;
+  background-image: linear-gradient(45deg, #c0c0c0 25%, transparent 25%),
+    linear-gradient(-45deg, #c0c0c0 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, #d0d0d0 75%),
+    linear-gradient(-45deg, transparent 75%, #d0d0d0 75%);
+  background-size: 20px 20px;
+  background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
 }
 """
 
@@ -77,6 +98,10 @@ class PluginWindow(object):
         self.window: Gtk.Window = Gtk.Window.new(Gtk.WindowType.TOPLEVEL)
         self.window.set_border_width(20)
         self.window.set_title("Pictonode")
+
+        # reset preview image
+        if os.path.isfile("/tmp/gimp/temp.png"):
+            os.remove("/tmp/gimp/temp.png")
 
         # output node lock
         self.has_output_node = False
@@ -102,6 +127,7 @@ class PluginWindow(object):
         menu_bar.append(file_menu_item)
 
         open_graph_item = Gtk.MenuItem("Open Graph")
+        open_graph_item.connect("activate", self.open_graph)
         file_menu.append(open_graph_item)
 
         save_graph_item = Gtk.MenuItem("save")
@@ -116,7 +142,7 @@ class PluginWindow(object):
         frame = Gtk.Frame.new()
         image_frame = Gtk.Frame.new()
 
-        # get style context for the frame and adds the css provider to it
+        # get style context for the frame and add the css provider to it
         style_context = frame.get_style_context()
         style_context.add_provider(
             css_provider, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION)
@@ -125,12 +151,21 @@ class PluginWindow(object):
         scrolled_window = Gtk.ScrolledWindow(hexpand=True, vexpand=True)
         self.image_scrolled = Gtk.ScrolledWindow(hexpand=True, vexpand=True)
 
+        # create a css provider to change the image background
+        image_css_provider = Gtk.CssProvider()
+        image_css_provider.load_from_data(css_image_background)
+
         # add image to image scrolled window
-        # TODO: add zooming and panning - need to do some cairo drawing 
+        # TODO: add zooming and panning - need to do some cairo drawing
         self.image = Gtk.Image.new_from_file("/tmp/gimp/temp.png")
-        self.image.set_hexpand(True)
-        self.image.set_vexpand(True)
+
+        # get style context for the image and add the css provider to it
+        image_style_context = self.image.get_style_context()
+        image_style_context.add_provider(
+            image_css_provider, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION)
+
         self.image_scrolled.add_with_viewport(self.image)
+        self.image_scrolled.connect('scroll-event', self.on_scroll)
 
         scrolled_window.set_policy(
             Gtk.PolicyType.AUTOMATIC,
@@ -150,9 +185,10 @@ class PluginWindow(object):
 
         # Adjustable panes between image viewport and node_view
         paned = Gtk.Paned(orientation=Gtk.Orientation.VERTICAL)
-        paned.set_position(screen_height // 3)
+        paned.set_position(screen_height // 2)
         paned.add1(image_frame)
         paned.add2(frame)
+        paned.set_wide_handle(True)
 
         full_view: Gtk.Box = Gtk.Box.new(Gtk.Orientation.VERTICAL, 0)
         full_view.pack_start(menu_bar, False, False, 0)
@@ -164,7 +200,7 @@ class PluginWindow(object):
         self.window.connect("destroy", self.do_quit)
 
         # set window size and show plugin window
-        self.window.set_default_size(900, 900)
+        self.window.set_default_size((screen_width // .75), (screen_height // .75))
         self.window.show_all()
         Gtk.main()
 
@@ -181,17 +217,21 @@ class PluginWindow(object):
             submenu_item = Gtk.MenuItem(label="Add Nodes")
             submenu = Gtk.Menu()
 
+            separator = Gtk.SeparatorMenuItem()
+            separator.set_margin_top(5)
+            separator.set_margin_bottom(5)
+
             sub_item1 = Gtk.MenuItem(label="Source Node")
             sub_item2 = Gtk.MenuItem(label="Output Node")
             sub_item3 = Gtk.MenuItem(label="Invert Node")
-            sub_item4 = Gtk.MenuItem(label="Composite Node")
+            # sub_item4 = Gtk.MenuItem(label="Composite Node")
             sub_item5 = Gtk.MenuItem(label="Blur Node")
 
             # connect menu items here
             sub_item1.connect("activate", self.add_image_src_node)
             sub_item2.connect("activate", self.add_image_out_node)
             sub_item3.connect("activate", self.add_image_invert_node)
-            sub_item4.connect("activate", self.add_image_comp_node)
+            # sub_item4.connect("activate", self.add_image_comp_node)
             sub_item5.connect("activate", self.add_image_blur_node)
 
             # disable output node option if one already exists
@@ -201,8 +241,9 @@ class PluginWindow(object):
             # add items to submenu
             submenu.append(sub_item1)
             submenu.append(sub_item2)
+            submenu.append(separator)
             submenu.append(sub_item3)
-            submenu.append(sub_item4)
+            # submenu.append(sub_item4)
             submenu.append(sub_item5)
 
             # add submenu to menu item
@@ -214,6 +255,17 @@ class PluginWindow(object):
             # make menu popup
             menu.show_all()
             menu.popup(None, None, None, None, event.button, event.time)
+
+    def on_scroll(self, widget, event):
+        ''' Scroll event for zooming on image '''
+
+        accel_mask = Gtk.accelerator_get_default_mod_mask()
+        if event.state & accel_mask == Gdk.ModifierType.CONTROL_MASK:
+            direction = event.get_scroll_deltas()[2]
+            if direction > 0: # scroll down
+                self.set_zoom_level(self.get_zoom_level() - 0.1)
+            else:
+                self.set_zoom_level(self.get_zoom_level() + 0.1)
 
     def output_node_lock(self, has_out_node: bool):
         ''' User should only ever be allowed one output node at any time '''
@@ -262,8 +314,8 @@ class PluginWindow(object):
 
         # require .xml file types
         file_type_filter = Gtk.FileFilter()
-        file_type_filter.set_name(".xml files")
-        file_type_filter.add_pattern("*.xml")
+        file_type_filter.set_name(".JSON files")
+        file_type_filter.add_pattern("*.JSON")
 
         save_dialog.add_filter(file_type_filter)
 
@@ -275,11 +327,20 @@ class PluginWindow(object):
         if response == Gtk.ResponseType.OK:
             fn = save_dialog.get_filename()
             save_dialog.destroy()
-            self.node_view.save(fn)
+            dictionary = serialize_nodes(self.node_view)
+
+            # credit geeksforgeeks
+            with open(fn, "w") as outfile:
+                json.dump(dictionary, outfile, indent = 2)
+
             return None
 
         # close the dialog
         save_dialog.destroy()
+
+    def open_graph(self, widget=None):
+        json_object = json.dumps(serialize_nodes(self.node_view), indent = 2)
+        print(json_object)
 
     def display_output(self):
         '''

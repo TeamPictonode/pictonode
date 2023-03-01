@@ -132,6 +132,9 @@ class ImgSrcNode(GtkNodes.Node):
     def remove(self, node):
         self.destroy()
 
+    def get_values(self):
+        return {}
+
     def process(self):
         # initialize our image context for the gegl nodes
         self.image_context = ontario.ImageContext()
@@ -218,7 +221,15 @@ class OutputNode(GtkNodes.Node):
         # unlock output node
         self.node_window.output_node_lock(False)
 
+        # delete display image
+        if os.path.exists("/tmp/gimp/temp.png"):
+            os.remove("/tmp/gimp/temp.png")
+            self.node_window.display_output()
+
         self.destroy()
+
+    def get_values(self):
+        return {}
 
     def update_display(self):
         if self.incoming_buffer:
@@ -236,7 +247,7 @@ class OutputNode(GtkNodes.Node):
             self.node_window.display_output()
             self.image_context.reset_context()
         else:
-            pixbuf = None
+            os.remove("/tmp/gimp/temp.png")
             self.node_window.display_output()
 
     def process(self):
@@ -321,9 +332,12 @@ class InvertNode(GtkNodes.Node):
     def remove(self, node):
         self.destroy()
 
+    def get_values(self):
+        return {}
+
     def process_input(self):
         if self.incoming_buffer:
-            # set new internal copy of buffer 
+            # set new internal copy of buffer
             self.buffer = self.incoming_buffer.dup()
             # use ontario backend for image processing
             self.image_builder.load_from_buffer(self.buffer)
@@ -428,8 +442,8 @@ class CompositeNode(GtkNodes.Node):
 
         # default operation arguments
         self.opacity: float = 1
-        self.x: float = 0
-        self.y: float = 0
+        self.x: float = 1000
+        self.y: float = 100
         self.scale: float = 1
 
         # initialize our image context for the gegl nodes
@@ -473,13 +487,25 @@ class CompositeNode(GtkNodes.Node):
     def remove(self, node):
         self.destroy()
 
+    def get_values(self):
+
+        ''' Returns dictionary of current state of custom values for the node'''
+
+        return {"opacity": self.opacity,
+                "x": self.x,
+                "y": self.y,
+                "scale": self.scale}
+
     def process_input(self):
         if self.incoming_buffer1 and self.incoming_buffer2:
+
+            print("Icoming 1: ", self.incoming_buffer1)
+            print("Icoming 2: ", self.incoming_buffer2)
+
             self.buffer = self.incoming_buffer1.dup()
             # use ontario backend for image processing
-            self.image_builder2.load_from_buffer(self.incoming_buffer2)
             self.image_builder1.load_from_buffer(self.incoming_buffer1)
-            self.image_builder1.composite(self.image_builder2,
+            self.image_builder1.composite(self.incoming_buffer2,
                                           self.opacity,
                                           self.x,
                                           self.y,
@@ -487,6 +513,7 @@ class CompositeNode(GtkNodes.Node):
 
             self.image_builder1.save_to_buffer(self.buffer)
             self.image_builder1.process()
+            print("Comp output: ", self.buffer)
 
         # update buffer saved in map and resend reference
         self.value_update()
@@ -561,16 +588,13 @@ class CompositeNode(GtkNodes.Node):
             if datasource == 1:
                 self.incoming_buffer1_id = payload.decode('utf-8')
                 print("Buffer ID 1 incoming: ", self.incoming_buffer1_id)
+                self.incoming_buffer1 = self.node_window.buffer_map.get(
+                    self.incoming_buffer1_id)[0]
             elif datasource == 2:
                 self.incoming_buffer2_id = payload.decode('utf-8')
                 print("Buffer ID 2 incoming: ", self.incoming_buffer2_id)
-
-            # Grab or regrab each buffer from buffer map
-            self.incoming_buffer1 = self.node_window.buffer_map.get(
-                self.incoming_buffer1_id)[0]
-
-            self.incoming_buffer2 = self.node_window.buffer_map.get(
-                self.incoming_buffer2_id)[0]
+                self.incoming_buffer2 = self.node_window.buffer_map.get(
+                    self.incoming_buffer2_id)[0]
 
             self.layer = self.node_window.buffer_map.get(
                 self.incoming_buffer1_id)[1]
@@ -643,6 +667,16 @@ class BlurNode(GtkNodes.Node):
 
     def remove(self, node):
         self.destroy()
+
+    def get_values(self):
+
+        ''' Returns dictionary of current state of custom values for the node'''
+        
+        custom_values = {}
+        custom_values["std_dev_x"] = self.std_dev_x
+        custom_values["std_dev_y"] = self.std_dev_y
+
+        return custom_values
 
     def process_input(self):
         if self.incoming_buffer:
