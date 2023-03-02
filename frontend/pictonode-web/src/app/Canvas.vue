@@ -25,8 +25,8 @@ export default defineComponent({
     },
     addNode(template: string) {
       this.addTemplate = template;
-    } 
-  }
+    },
+  },
 });
 </script>
 
@@ -37,9 +37,7 @@ export default defineComponent({
         <RenderedView :img="img" />
       </v-col>
       <v-col cols="6">
-        <Widgets
-          @input="addNode"
-        />
+        <Widgets @input="addNode" />
       </v-col>
     </v-row>
   </v-container>

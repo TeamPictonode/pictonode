@@ -245,7 +245,8 @@ class ImageBuilder:
         Color balances an image.
         """
 
-        # TODO: need to implement a few different operation, namely "gegl:component-extract"
+        # TODO: need to implement a few different operation
+        # namely "gegl:component-extract"
         # to separate channels and then compositing to combine. May need to be
         # done in the gtk node side
 

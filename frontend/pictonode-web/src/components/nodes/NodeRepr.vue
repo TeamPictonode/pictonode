@@ -16,7 +16,7 @@ function inputHandleStyle(index: number) {
   };
 }
 
- function   outputHandleStyle(index: number) {
+function outputHandleStyle(index: number) {
   return {
     top: `${index * 20 + 10}px`,
   };
@@ -62,7 +62,7 @@ const innerBlock = props.data.node.innerComponent;
     :position="Position.Right"
     :style="outputHandleStyle(index)"
   >
-    {{ outputLink.title|| `Output ${index}` }}
+    {{ outputLink.title || `Output ${index}` }}
   </Handle>
 </template>
 
