@@ -6,8 +6,7 @@
 
 <script lang="ts">
 import { defineComponent } from "vue";
-import getTemplates from "../components/nodes/Templates";
-import { MetadataType } from "../components/nodes/NodeTree";
+import { nodeTemplates } from "../components/nodes/NodeTypes";
 
 interface Item {
   templateName: string;
@@ -22,19 +21,12 @@ interface Category {
 
 function categorize(): Category[] {
   const catmap = new Map<string, Category>();
-  const templates = getTemplates();
+  const templates = nodeTemplates; 
 
-  for (const templateName of templates.getTemplates()) {
-    const template = templates.getTemplate(templateName);
-    const metadata = template.getMetadata();
-
-    if (metadata.metatype !== MetadataType.NodeTemplate) {
-      continue;
-    }
-
-    const category = metadata.category;
-    const name = metadata.name;
-    const tooltip = metadata.tooltip;
+  for (const template of Object.values(templates)) {
+    const category = template.category;
+    const name = template.displayName;
+    const tooltip = template.tooltip;
 
     if (!catmap.has(category)) {
       catmap.set(category, {
@@ -46,7 +38,7 @@ function categorize(): Category[] {
     const cat = catmap.get(category);
     if (cat) {
       cat.values.push({
-        templateName,
+        templateName: template.templateName,
         name,
         tooltip,
       });
@@ -58,12 +50,6 @@ function categorize(): Category[] {
 
 export default defineComponent({
   name: "Widgets",
-  props: {
-    pendingTemplates: {
-      type: Array as () => string[],
-      required: true,
-    },
-  },
   emits: ["input"],
   data() {
     return {
@@ -73,7 +59,7 @@ export default defineComponent({
 
   methods: {
     addNode(item: Item) {
-      this.$emit("input", [...this.pendingTemplates, item.templateName]);
+      this.$emit("input", item.templateName);
     },
   },
 });

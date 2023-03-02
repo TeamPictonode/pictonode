@@ -4,29 +4,43 @@
 import os
 from os import path as os_path
 import tempfile
+import psycopg2
 
 from . import db
 from . import image_manager
 from . import processor
 
-from flask import Flask, request, send_file
+from flask import Flask, request, send_file, session
+from werkzeug.security import check_password_hash, generate_password_hash
 
 import atexit
 import random
 
+from dotenv import load_dotenv
+
 from apscheduler.schedulers.background import BackgroundScheduler
 
+def env_or_else(key: str, default: str) -> str:
+    if key in os.environ:
+        return os.environ[key]
+    else:
+        return default
 
 def create_app(test_config=None):
+    load_dotenv(os_path.join(os_path.dirname(__file__), ".env"))
+    
     # Public directory
     public_dir = os_path.join(os_path.dirname(__file__), "..", "public")
 
     # Create and configure the app
     app = Flask(__name__, instance_relative_config=True, static_folder=public_dir)
     app.config.from_mapping(
-        SECRET_KEY="ontario",
-        # TODO: not sqlite
-        DATABASE=os.path.join(app.instance_path, "ontario.sqlite"),
+        SECRET_KEY=os.urandom(16),
+        DATABASE=env_or_else("POSTGRES_DB", "ontario_db"),
+        USER=env_or_else("POSTGRES_USER", "ontario"),
+        PASSWORD=env_or_else("POSTGRES_PASSWORD", "ontario"),
+        HOST=env_or_else("POSTGRES_HOST", "localhost"),
+        PORT=env_or_else("POSTGRES_PORT", "5432")
     )
 
     if test_config is None:
@@ -98,5 +112,89 @@ def create_app(test_config=None):
 
         # The body of the response should be the output image
         return send_file(filename)
+
+    # For /api/register, take the username, realname and password
+    # from the body of the request and save them to the database
+    # Make sure to hash the password
+    @app.route("/api/register", methods=["POST"])
+    def register():
+        # The body of the request should be a JSON object with the
+        # username, realname and password
+        user = request.get_json()
+        username = user["username"]
+        realname = user["realname"]
+        password = user["password"]
+
+        error = None
+
+        if not username:
+            error = "Username is required."
+        elif not realname:
+            error = "Real name is required."
+        elif not password:
+            error = "Password is required."
+
+        # Make sure the username is not already taken
+        if not error:
+            d = db.get_db()
+            cursor = d.cursor()
+            try:
+                cursor.execute(
+                    "INSERT INTO users (username, realname, pwd) VALUES (%s, %s, %s)",
+                    (username, realname, generate_password_hash(password)),
+                )
+                d.commit()
+            except psycopg2.IntegrityError:
+                error = f"User {username} is already registered."
+            finally:
+                cursor.close()
+
+        if error:
+            return {"error": error}, 400
+        else:
+            return {"success": True}
+
+    # For /api/login, take the username and password from the body
+    # of the request and check them against the database
+    # Make sure to hash the password
+    @app.route("/api/login", methods=["POST"])
+    def login():
+        # The body of the request should be a JSON object with the
+        # username and password
+        user = request.get_json()
+        username = user["username"]
+        password = user["password"]
+
+        error = None
+
+        if not username:
+            error = "Username is required."
+        elif not password:
+            error = "Password is required."
+
+        if not error:
+            d = db.get_db()
+            cursor = d.cursor()
+            user = None
+            try:
+                cursor.execute(
+                    "SELECT * FROM users WHERE username = %s", (username,)
+                )
+                user = cursor.fetchone()
+            except psycopg2.OperationalError:
+                error = "Incorrect username."
+
+            if user is None:
+                error = "Incorrect username."
+            elif not check_password_hash(user[2], password):
+                error = "Incorrect password."
+
+        if error:
+            return {"error": error}, 400
+        else:
+            session.clear()
+            session["user_id"] = user[0]
+            return {"success": True}
+            
 
     return app

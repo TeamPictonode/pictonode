@@ -71,23 +71,24 @@ def make_template_table() -> nodes.TemplateTable[PipelineUnit, PipelineMetadata]
     inputNode = nodes.NodeTemplate(
         lambda args, metadata: [args[0].getValue()],
         [
-            nodes.LinkTemplate(None, -1)
+            nodes.LinkTemplate(None, -1, "image")
         ],
         [
-            nodes.LinkTemplate(None, None)
+            nodes.LinkTemplate(None, None, "image")
         ],
         None
     )
+    inputNode.insertNamedOutput("image", 0)
     table.addTemplate("input", inputNode)
 
     # Output node that saves an image to disk
     outputNode = nodes.NodeTemplate(
         lambda args, _: [args[0].getValue()],
         [
-            nodes.LinkTemplate(None, "foobar")
+            nodes.LinkTemplate(None, "foobar", None)
         ],
         [
-            nodes.LinkTemplate(None, -1)
+            nodes.LinkTemplate(None, -1, None)
         ],
         None
     )
@@ -121,11 +122,11 @@ def make_template_table() -> nodes.TemplateTable[PipelineUnit, PipelineMetadata]
     compositeNode = nodes.NodeTemplate(
         lambda args, meta: [composite(args, meta)],
         [
-            nodes.LinkTemplate(None, None),
-            nodes.LinkTemplate(None, None)
+            nodes.LinkTemplate(None, None, None),
+            nodes.LinkTemplate(None, None, None)
         ],
         [
-            nodes.LinkTemplate(None, "foobar")
+            nodes.LinkTemplate(None, "foobar", None)
         ],
         None
     )
@@ -135,10 +136,10 @@ def make_template_table() -> nodes.TemplateTable[PipelineUnit, PipelineMetadata]
     invertNode = nodes.NodeTemplate(
         lambda args, meta: [load(args[0], meta).invert()],
         [
-            nodes.LinkTemplate(None, None)
+            nodes.LinkTemplate(None, None, None)
         ],
         [
-            nodes.LinkTemplate(None, "foobar")
+            nodes.LinkTemplate(None, "foobar", None)
 
         ],
         None

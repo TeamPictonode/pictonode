@@ -3,6 +3,7 @@ import os
 import configparser
 import window
 import threading
+from toolbar import ProjectToolbar
 
 # autopep8 off
 import gi  # noqa
@@ -29,7 +30,6 @@ from gi.repository import Gimp  # noqa
 
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk  # noqa
-from gi.repository import Gtk # noqa
 
 gi.require_version("Gdk", "3.0")
 from gi.repository import Gdk
@@ -40,6 +40,9 @@ from gi.repository import Gio  # noqa
 gi.require_version("GObject", "2.0")
 from gi.repository import GObject # noqa
 from gi.repository.GdkPixbuf import Pixbuf # noqa
+
+gi.require_version("cairo", "1.0")
+from gi.repository import cairo # noqa
 
 # autopep8 on
 
@@ -164,6 +167,12 @@ class PictonodeManager(metaclass=SingletonConstruction):
 
     # we should disambiguate between loaded local projects and unloaded
 
+
+    @threadsafe
+    def set_current_project(self, prjname):
+        if prjname in self.local_projects.keys():
+            print(prjname)
+
     @threadsafe
     def __add_local_project(self, image):
         if image in self.images_with_xcf:
@@ -183,6 +192,7 @@ class PictonodeManager(metaclass=SingletonConstruction):
             #Gimp.get_pdb().run_procedure("gimp-display-present", [GObject.Value(Gimp.Display, display)])
             image.clean_all()
             self.images_with_xcf.append(image)
+
     @threadsafe
     def __update_settings_ini(self):
         self.settings_ini["SETTINGS"] = self.settings

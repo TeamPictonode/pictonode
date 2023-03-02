@@ -5,7 +5,7 @@
 -->
 
 <script lang="ts">
-import { defineComponent } from "vue";
+import { computed, defineComponent } from "vue";
 import NodeView from "../components/nodes/Flow.vue";
 import RenderedView from "./RenderedView.vue";
 import Topbar from "./Topbar.vue";
@@ -15,20 +15,18 @@ export default defineComponent({
   components: { NodeView, RenderedView, Topbar, Widgets },
   data: () => ({
     img: undefined as HTMLCanvasElement | undefined,
-    ticks: 0,
-    pendingTemplates: [] as string[],
+    addTemplate: null as string | null,
   }),
   methods: {
     onCanvasUpdate(canvas: HTMLCanvasElement) {
       console.log("updated img canvas");
       console.log(canvas);
       this.img = canvas;
-      this.ticks += 1;
     },
-    updatePendingTemplates(pt: string[]) {
-      this.pendingTemplates = pt;
-    },
-  },
+    addNode(template: string) {
+      this.addTemplate = template;
+    } 
+  }
 });
 </script>
 
@@ -36,18 +34,18 @@ export default defineComponent({
   <v-container fluid>
     <v-row no-gutters>
       <v-col cols="6">
-        <RenderedView :img="img" :ticks="ticks" />
+        <RenderedView :img="img" />
       </v-col>
       <v-col cols="6">
         <Widgets
-          :pendingTemplates="pendingTemplates"
-          @input="updatePendingTemplates"
+          @input="addNode"
         />
       </v-col>
     </v-row>
   </v-container>
   <NodeView
     @canvas-update="onCanvasUpdate"
-    :pendingTemplates="pendingTemplates"
+    ref="flow"
+    :addTemplate="addTemplate"
   />
 </template>
