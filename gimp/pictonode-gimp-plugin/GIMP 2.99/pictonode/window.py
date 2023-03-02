@@ -5,6 +5,7 @@ from manager import *
 from httpclient import *
 from client import *
 from json_generator import *
+from json_interpreter import *
 
 import sys
 import threading
@@ -339,8 +340,42 @@ class PluginWindow(object):
         save_dialog.destroy()
 
     def open_graph(self, widget=None):
-        json_object = json.dumps(serialize_nodes(self.node_view), indent = 2)
-        print(json_object)
+        open_dialog = Gtk.FileChooserDialog(
+            "Open Node Graph",
+            self.window,
+            Gtk.FileChooserAction.OPEN,
+            (Gtk.STOCK_CANCEL,
+             Gtk.ResponseType.CANCEL,
+             Gtk.STOCK_OPEN,
+             Gtk.ResponseType.OK))
+
+        # require .json file types
+        file_type_filter = Gtk.FileFilter()
+        file_type_filter.set_name(".JSON files")
+        file_type_filter.add_pattern("*.JSON")
+        file_type_filter.add_pattern("*.json")
+
+        open_dialog.add_filter(file_type_filter)
+
+        # run the window
+        response = open_dialog.run()
+
+        # if ok response, that means a file was chosen, save the node graph as
+        # that file
+        if response == Gtk.ResponseType.OK:
+            fn = open_dialog.get_filename()
+            open_dialog.destroy()
+
+            f = open(fn)
+            json_string = json.load(f)
+
+            json_interpreter(self.node_view, json_string, self)
+            self.node_view.show_all()
+
+            return None
+
+        # close the dialog
+        open_dialog.destroy()
 
     def display_output(self):
         '''
