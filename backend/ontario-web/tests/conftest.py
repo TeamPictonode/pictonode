@@ -1,25 +1,24 @@
 # GNU AGPL v3 License
 # Written by John Nunley
 
-import os
 import pytest
 import psycopg2
-import tempfile
 
 from os import path
 
 from ontario_web import create_app
 from ontario_web.db import get_db, init_db
 
+
 @pytest.fixture
 def app():
     test_config = {
-      'TESTING': True,
-      'DATABASE': 'ontario_test',
-      'USER': 'ontario_test',
-      'PASSWORD': 'ontario_test',
-      'HOST': 'localhost',
-      'PORT': '5432'
+        'TESTING': True,
+        'DATABASE': 'ontario_test',
+        'USER': 'ontario_test',
+        'PASSWORD': 'ontario_test',
+        'HOST': 'localhost',
+        'PORT': '5432'
     }
     app = create_app(test_config)
 
@@ -29,17 +28,17 @@ def app():
             conn = get_db()
             cursor = conn.cursor()
             try:
-              cursor.execute(f.read())
-              conn.commit()
+                cursor.execute(f.read())
+                conn.commit()
             except psycopg2.ProgrammingError:
-              pass
+                pass
             finally:
-              cursor.close()
-              conn.close()
+                cursor.close()
+                conn.close()
 
     yield app
+
 
 @pytest.fixture
 def client(app):
     return app.test_client()
-

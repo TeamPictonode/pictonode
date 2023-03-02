@@ -2,7 +2,11 @@
 // Written by John Nunley
 
 import { defineComponent } from "vue";
-import { SpecificData, SpecificDataType, NodeTemplateComponentProps } from "../NodeTypes";
+import {
+  SpecificData,
+  SpecificDataType,
+  NodeTemplateComponentProps,
+} from "../NodeTypes";
 
 export default defineComponent({
   template: `<div></div>`,
@@ -14,5 +18,5 @@ export default defineComponent({
     this.$emit("updated", {
       type: SpecificDataType.Output,
     });
-  }
+  },
 });

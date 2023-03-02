@@ -2,11 +2,9 @@
 # Written by John Nunley
 
 import os.path as path
-import pytest
 import tempfile
 
 import ontario
-#from ..ontario import ImageBuilder, ImageContext
 
 TEST_IMAGE_PATH = path.join(path.dirname(__file__), "assets", "test-image.png")
 TEST_IMAGE1_PATH = path.join(path.dirname(__file__), "assets", "test1.png")
@@ -119,4 +117,3 @@ def test_unsharp_mask():
     builder.load_from_file(TEST_IMAGE_PATH)
     builder.unsharp_mask(0.5, 0.5)
     builder.process()
-

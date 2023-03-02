@@ -12,26 +12,37 @@ export interface NodeTemplate {
   tooltip: string;
   inputs: LinkTemplate[];
   outputs: LinkTemplate[];
-  innerComponent: DefineComponent<any, any, any, any, any, any, any, any, any, any>;
+  innerComponent: DefineComponent<
+    any,
+    any,
+    any,
+    any,
+    any,
+    any,
+    any,
+    any,
+    any,
+    any
+  >;
 }
 
 export type NodeTemplatePropsType = {
   node: {
-    type: PropType<NodeTemplate>,
-    required: boolean,
-  }
+    type: PropType<NodeTemplate>;
+    required: boolean;
+  };
 };
 export const NodeTemplateComponentProps: NodeTemplatePropsType = {
   node: {
     type: Object as () => NodeTemplate,
     required: true,
   },
-}
+};
 
 export interface LinkTemplate {
   color: string;
   title: string;
-  data_type: DataType,
+  data_type: DataType;
 }
 
 export enum DataType {
@@ -39,14 +50,17 @@ export enum DataType {
   Color = "color",
 }
 
-export type SpecificData = {
-  type: SpecificDataType.None
-} | {
-  type: SpecificDataType.InputImage,
-  imageId: number,
-} | {
-  type: SpecificDataType.Output,
-};
+export type SpecificData =
+  | {
+      type: SpecificDataType.None;
+    }
+  | {
+      type: SpecificDataType.InputImage;
+      imageId: number;
+    }
+  | {
+      type: SpecificDataType.Output;
+    };
 
 export enum SpecificDataType {
   None = "none",
@@ -63,12 +77,12 @@ const emptyComponent = defineComponent<NodeTemplatePropsType, {}, {}>({
     </div>
   `,
   emits: {
-    updated: (data: SpecificData) => true
-  }
+    updated: (data: SpecificData) => true,
+  },
 });
 
 export const nodeTemplates: Record<string, NodeTemplate> = {
-  "input": {
+  input: {
     templateName: "input",
     displayName: "Input",
     category: "Input",
@@ -79,12 +93,12 @@ export const nodeTemplates: Record<string, NodeTemplate> = {
         color: "red",
         title: "Image",
         data_type: DataType.Image,
-      }
+      },
     ],
     innerComponent: InputNode,
   },
 
-  "invert": {
+  invert: {
     templateName: "invert",
     displayName: "Invert",
     category: "Transforms",
@@ -94,7 +108,7 @@ export const nodeTemplates: Record<string, NodeTemplate> = {
         color: "red",
         title: "Image",
         data_type: DataType.Image,
-      }
+      },
     ],
     outputs: [
       {
@@ -106,7 +120,7 @@ export const nodeTemplates: Record<string, NodeTemplate> = {
     innerComponent: emptyComponent,
   },
 
-  "output": {
+  output: {
     templateName: "output",
     displayName: "Output",
     category: "Output",
@@ -116,9 +130,9 @@ export const nodeTemplates: Record<string, NodeTemplate> = {
         color: "red",
         title: "Image",
         data_type: DataType.Image,
-      }
+      },
     ],
     outputs: [],
     innerComponent: OutputNode,
-  }
+  },
 };

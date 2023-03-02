@@ -100,7 +100,7 @@ export class LinkTemplate<T, M> {
 
   public getDefaultValue(): T {
     return this.defaultValue;
-  } 
+  }
 }
 
 // A node in the graph.
@@ -264,7 +264,7 @@ export class Node<T, M> implements HydrateTarget {
     /* eslint-disable @typescript-eslint/no-non-null-assertion */
     const link = this.inputs[toIndex]!;
 
-    const fromValue = from.outputs[fromIndex]!.get(); 
+    const fromValue = from.outputs[fromIndex]!.get();
 
     from.outputs[fromIndex] = link;
     link.__setFrom(from, fromIndex);

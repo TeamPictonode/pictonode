@@ -47,50 +47,70 @@
     </div>
     <div class="about">
       <h1 class="text-h4 text-center">Related Projects and Resources</h1>
-        <v-list class="text-center list">
-          <v-list-item>
-            <a class="text-body-1 buttonLinks" href="https://github.com/notgull/pictonode" tag="v-btn">
-              <v-btn rounded="pill" color="#e1e9d0" size="x-large">
-                Github Repo
-              </v-btn>
-            </a>
-          </v-list-item>
-          <v-list-item>
-            <a class="text-body-1 buttonLinks" href="https://www.blender.org" tag="v-btn">
-              <v-btn rounded="pill" color="#e1e9d0" size="x-large">
-                Blender
-              </v-btn>
-            </a>
-          </v-list-item>
-          <v-list-item>
-            <a class="text-body-1 buttonLinks" href="https://www.gimp.org" tag="v-btn">
-              <v-btn rounded="pill" color="#e1e9d0" size="x-large">
-                GIMP
-              </v-btn>
-            </a>
-          </v-list-item>
-          <v-list-item>
-            <a class="text-body-1 buttonLinks" href="https://www.gegl.org" tag="v-btn">
-              <v-btn rounded="pill" color="#e1e9d0" size="x-large">
-                GEGL
-              </v-btn>
-            </a>
-          </v-list-item>
-          <v-list-item>
-            <a class="text-body-1 buttonLinks" href="https://github.com/aluntzer/gtknodes" tag="v-btn">
-              <v-btn rounded="pill" color="#e1e9d0" size="x-large">
-                GTKNodes
-              </v-btn>
-            </a>
-          </v-list-item>
-          <v-list-item>
-            <a class="text-body-1 buttonLinks" href=" https://github.com/AliensGroup/Gtk.NodeGraph" tag="v-btn">
-              <v-btn rounded="pill" color="#e1e9d0" size="x-large">
-                GTK.NodeGraph
-              </v-btn>
-            </a>
-          </v-list-item>
-        </v-list>
+      <v-list class="text-center list">
+        <v-list-item>
+          <a
+            class="text-body-1 buttonLinks"
+            href="https://github.com/notgull/pictonode"
+            tag="v-btn"
+          >
+            <v-btn rounded="pill" color="#e1e9d0" size="x-large">
+              Github Repo
+            </v-btn>
+          </a>
+        </v-list-item>
+        <v-list-item>
+          <a
+            class="text-body-1 buttonLinks"
+            href="https://www.blender.org"
+            tag="v-btn"
+          >
+            <v-btn rounded="pill" color="#e1e9d0" size="x-large">
+              Blender
+            </v-btn>
+          </a>
+        </v-list-item>
+        <v-list-item>
+          <a
+            class="text-body-1 buttonLinks"
+            href="https://www.gimp.org"
+            tag="v-btn"
+          >
+            <v-btn rounded="pill" color="#e1e9d0" size="x-large"> GIMP </v-btn>
+          </a>
+        </v-list-item>
+        <v-list-item>
+          <a
+            class="text-body-1 buttonLinks"
+            href="https://www.gegl.org"
+            tag="v-btn"
+          >
+            <v-btn rounded="pill" color="#e1e9d0" size="x-large"> GEGL </v-btn>
+          </a>
+        </v-list-item>
+        <v-list-item>
+          <a
+            class="text-body-1 buttonLinks"
+            href="https://github.com/aluntzer/gtknodes"
+            tag="v-btn"
+          >
+            <v-btn rounded="pill" color="#e1e9d0" size="x-large">
+              GTKNodes
+            </v-btn>
+          </a>
+        </v-list-item>
+        <v-list-item>
+          <a
+            class="text-body-1 buttonLinks"
+            href=" https://github.com/AliensGroup/Gtk.NodeGraph"
+            tag="v-btn"
+          >
+            <v-btn rounded="pill" color="#e1e9d0" size="x-large">
+              GTK.NodeGraph
+            </v-btn>
+          </a>
+        </v-list-item>
+      </v-list>
     </div>
   </div>
 </template>

@@ -6,28 +6,37 @@
 
 <template>
   <div class="home-items">
-  <div id="homepage">
-    <p class="welcome text-center">Pictonode</p>
-    <p class="text-center" style="color: white;">your new favorite image editor</p>
+    <div id="homepage">
+      <p class="welcome text-center">Pictonode</p>
+      <p class="text-center" style="color: white">
+        your new favorite image editor
+      </p>
+    </div>
+    <div class="home-options">
+      <v-divider />
+      <v-list class="text-center home-list">
+        <v-list-item>
+          <router-link
+            class="text-body-1"
+            to="/canvas"
+            tag="v-btn"
+            style="color: white"
+          >
+            <v-btn rounded="pill" size="large" color="#bddde9">
+              Create a new Project
+            </v-btn>
+          </router-link>
+        </v-list-item>
+        <v-list-item>
+          <p>Open an existing project (TODO)</p>
+        </v-list-item>
+      </v-list>
+    </div>
   </div>
-  <div class="home-options">
-    <v-divider />
-    <v-list class="text-center home-list">
-      <v-list-item>
-        <router-link class="text-body-1" to="/canvas" tag="v-btn" style="color:white">
-          <v-btn rounded="pill" size="large" color="#bddde9"> Create a new Project </v-btn>
-        </router-link>
-      </v-list-item>
-      <v-list-item>
-        <p>Open an existing project (TODO)</p>
-      </v-list-item>
-    </v-list>
-  </div>
-</div>
 </template>
 
 <style scoped lang="scss">
-  @import url('https://fonts.googleapis.com/css2?family=Alfa+Slab+One&family=Poppins:wght@300&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=Alfa+Slab+One&family=Poppins:wght@300&display=swap");
 #homepage {
   padding: 1rem;
   margin-left: 20rem;
@@ -40,7 +49,7 @@
 .welcome {
   padding-top: 150px;
   font-size: 100px;
-  font-family: 'Alfa Slab One', sans-serif;
+  font-family: "Alfa Slab One", sans-serif;
   color: white;
 }
 .home-list {

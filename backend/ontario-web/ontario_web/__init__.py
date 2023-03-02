@@ -20,20 +20,25 @@ from dotenv import load_dotenv
 
 from apscheduler.schedulers.background import BackgroundScheduler
 
+
 def env_or_else(key: str, default: str) -> str:
     if key in os.environ:
         return os.environ[key]
     else:
         return default
 
+
 def create_app(test_config=None):
     load_dotenv(os_path.join(os_path.dirname(__file__), ".env"))
-    
+
     # Public directory
     public_dir = os_path.join(os_path.dirname(__file__), "..", "public")
 
     # Create and configure the app
-    app = Flask(__name__, instance_relative_config=True, static_folder=public_dir)
+    app = Flask(
+        __name__,
+        instance_relative_config=True,
+        static_folder=public_dir)
     app.config.from_mapping(
         SECRET_KEY=os.urandom(16),
         DATABASE=env_or_else("POSTGRES_DB", "ontario_db"),
@@ -140,7 +145,10 @@ def create_app(test_config=None):
             cursor = d.cursor()
             try:
                 cursor.execute(
-                    "INSERT INTO users (username, realname, pwd) VALUES (%s, %s, %s)",
+                    """
+                    INSERT INTO users (username, realname, pwd)
+                    VALUES (%s, %s, %s)
+                    """,
                     (username, realname, generate_password_hash(password)),
                 )
                 d.commit()
@@ -195,6 +203,5 @@ def create_app(test_config=None):
             session.clear()
             session["user_id"] = user[0]
             return {"success": True}
-            
 
     return app

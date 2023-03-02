@@ -31,6 +31,6 @@ All is tested on the latest version of Node (`v19.0.1` at the time of writing). 
 $ node --version
 ```
 
-to see the version you're running. 
+to see the version you're running.
 
 Whatever you do, do not install Node/NVM in the latest WSL. There are a handful of bugs there.

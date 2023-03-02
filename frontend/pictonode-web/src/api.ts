@@ -22,9 +22,7 @@ export function uploadImage(file: File): Promise<number> {
 
 export function processPipeline(pipeline: any): Promise<File> {
   // The body of the returning request will be an image file.
-  return API.post(
-    "/process",
-    pipeline,
-    { responseType: "blob" }
-  ).then((response) => response.data);
+  return API.post("/process", pipeline, { responseType: "blob" }).then(
+    (response) => response.data
+  );
 }
