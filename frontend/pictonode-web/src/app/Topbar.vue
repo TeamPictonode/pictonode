@@ -70,7 +70,6 @@ export default defineComponent({
           prepend-icon="mdi-account"
           title="My Account"
         ></v-list-item>
-        <v-list-item title="Go back to GIMP //TODO"></v-list-item>
         <v-list-item title="Save Project //TODO"></v-list-item>
       </v-list>
     </v-navigation-drawer>
