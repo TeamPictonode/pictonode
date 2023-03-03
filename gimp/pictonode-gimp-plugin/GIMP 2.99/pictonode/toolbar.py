@@ -1,30 +1,5 @@
-import os
-import configparser
-import window
-import threading
-
 # autopep8 off
 import gi # noqa
-gi.require_version("GIRepository", "2.0")
-from gi.repository import GIRepository  # noqa
-
-GIRepository.Repository.prepend_search_path(
-    os.path.realpath(
-        os.path.dirname(
-            os.path.abspath(__file__)) +
-        "/introspection"))
-
-GIRepository.Repository.prepend_library_path(
-    os.path.realpath(
-        os.path.dirname(
-            os.path.abspath(__file__)) +
-        "/libs"))
-
-gi.require_version("GtkNodes", "0.1")
-from gi.repository import GtkNodes  # noqa
-
-gi.require_version('Gimp', '3.0')
-from gi.repository import Gimp  # noqa
 
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk # noqa
@@ -35,9 +10,8 @@ from gi.repository import Gdk
 gi.require_version("Gio", "2.0")
 from gi.repository import Gio  # noqa
 
-gi.require_version("GObject", "2.0")
-from gi.repository import GObject # noqa
-from gi.repository.GdkPixbuf import Pixbuf # noqa
+gi.require_version("GdkPixbuf", "2.0")
+from gi.repository import GdkPixbuf # noqa
 
 class ProjectToolbar(Gtk.Window):
 
@@ -52,7 +26,7 @@ class ProjectToolbar(Gtk.Window):
         self.hints.max_height = 512
         self.__set_size_hints()
 
-        self.liststore = Gtk.ListStore(Pixbuf, str)
+        self.liststore = Gtk.ListStore(GdkPixbuf.Pixbuf, str)
         self.iconview = Gtk.IconView.new()
         self.iconview.set_activate_on_single_click(True)
         self.iconview.set_selection_mode(Gtk.SelectionMode.BROWSE)
@@ -76,7 +50,7 @@ class ProjectToolbar(Gtk.Window):
         if len(widget.get_selected_items()) != 0:
             PictonodeManager().set_current_project(self.liststore[widget.get_selected_items()[0]][1])
 
-    def add_project(self, prjname: str, pixbuf: Pixbuf) -> None:
+    def add_project(self, prjname: str, pixbuf: GdkPixbuf.Pixbuf) -> None:
         """Store the prjname aligned with itself in the list store so we have easy removal."""
         self._projects.append(prjname)
         self.liststore.append([pixbuf, prjname])
@@ -90,7 +64,7 @@ class ProjectToolbar(Gtk.Window):
         self._projects.pop(remove_index)
         self.liststore.pop(remove_index)
     
-    def update_project_thumbnail(self, prjname: str, pixbuf: Pixbuf) -> None:
+    def update_project_thumbnail(self, prjname: str, pixbuf: GdkPixbuf.Pixbuf) -> None:
         update_index = self._projects.index(prjname)
         self.liststore[update_index] = [pixbuf, prjname]
 
