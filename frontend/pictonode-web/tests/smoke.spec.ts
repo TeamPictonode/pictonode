@@ -5,6 +5,6 @@ describe("Smoke Test", () => {
   it("should return a node pipeline", () => {
     const pipeline = getPipeline;
 
-    expect(pipeline).to.not.eq(undefined)
+    expect(pipeline).to.not.eq(undefined);
   });
-})
+});

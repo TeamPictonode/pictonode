@@ -1,1 +1,5 @@
-Flask python-dotenv psycopg2-binary apscheduler
+Flask
+python-dotenv
+psycopg2-binary
+apscheduler
+pyobject
