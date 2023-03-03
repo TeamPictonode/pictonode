@@ -1,12 +1,10 @@
-import { DataType } from "../src/components/nodes/NodeTypes"
+import { getPipeline } from "../src/components/nodes/getPipeline";
 import { expect } from "chai";
 
 describe("Smoke Test", () => {
-  it("should return a DataType", () => {
-   const color = DataType.Color
-   const image = DataType.Image
+  it("should create a pipeline", () => {
+    const pipeline = getPipeline;
 
-   expect(color).to.eq("color")
-   expect(image).to.eq("image")
+    expect(pipeline).to.not.eq(undefined)
   });
 })
