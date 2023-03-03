@@ -76,3 +76,42 @@ jobs:
       - run: sudo apt update -y && sudo apt install -y gobject-introspection gtk-doc-tools libtool libgirepository1.0-dev autoconf automake libgladeui-dev libgirepository1.0-dev build-essential libgtk-3-dev gir1.2-gtk-3.0
       - run: python3 gimp/pictonode-gimp-plugin/GIMP\ 2.99/scripts/GtkNodes/test_setup.py
 
+  tests:
+    needs: [format_check, unit_test, integration_test, test_web, rebuild_libnode]
+  
+  deploy:
+    needs: [tests]
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/master'
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v1
+        with:
+          node-version: '19.x'
+      - name: Install Dependencies
+        run: npm ci
+      - name: Build the "public" directory
+        run: python3 ./make_public_dir.py
+        working-directory: ./backend/ontario-web
+      - name: Copy "public" directory to AWS Lightsail
+        uses: appleboy/scp-action@master
+        with:
+          host: ${{ secrets.AWS_HOST }}
+          username: ${{ secrets.AWS_USERNAME }}
+          key: ${{ secrets.AWS_KEY }}
+          port: ${{ secrets.AWS_PORT }}
+          source: "./backend/ontario-web/public"
+          target: "/home/bitnami/public-temp"
+      - name: Deploy to AWS Lightsail
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.AWS_HOST }}
+          username: ${{ secrets.AWS_USERNAME }}
+          key: ${{ secrets.AWS_KEY }}
+          port: ${{ secrets.AWS_PORT }}
+          script: |
+            pushd /home/bitnami/pictonode/backend/ontario-web
+            git checkout -- .
+            git pull origin master
+            mv /home/bitnami/public-temp ./public
+            sudo supervisorctl restart ontario_web 
