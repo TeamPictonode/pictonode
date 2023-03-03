@@ -369,8 +369,14 @@ class PluginWindow(object):
             f = open(fn)
             json_string = json.load(f)
 
-            json_interpreter(self.node_view, json_string, self)
+            try:
+                json_interpreter(self.node_view, self, json_string=json_string)
+            except Exception as E:
+                print(E)
+
             self.node_view.show_all()
+
+            f.close()
 
             return None
 

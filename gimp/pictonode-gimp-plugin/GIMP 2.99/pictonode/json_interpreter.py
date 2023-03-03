@@ -1,10 +1,25 @@
 # Created by Parker Nelms
 
 import custom_nodes as cn
+import json
 
 
-def json_interpreter(node_view, json_string: dict, window):
+def json_interpreter(node_view, window, **kwargs):
     ''' Generate a node graph from a json object format. '''
+
+    filename = kwargs.get("filename")
+
+    json_string = kwargs.get("json_string")
+    print(type(json_string))
+    print(type(filename))
+
+    if filename:
+        if json_string:
+            raise Exception("JSONConflict")
+        else:
+            f = open(filename)
+            json_string = json.load(f)
+            f.close()
 
     node_str = 'SrcNode'
 
