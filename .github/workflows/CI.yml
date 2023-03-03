@@ -113,6 +113,7 @@ jobs:
             pushd /home/bitnami/pictonode/backend/ontario-web
             git checkout -- .
             git pull origin master
-            cp -r /home/bitnami/public-temp/backend/ontario-web/public ./public
+            rm -rf ./public
+            cp -r /home/bitnami/public-temp/backend/ontario-web/public ./
             rm -rf /home/bitnami/public-temp
             sudo supervisorctl restart ontario_web 
