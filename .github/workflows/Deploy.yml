@@ -1,0 +1,45 @@
+# CD Pipeline
+
+name: 'cd'
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v1
+        with:
+          node-version: '19.x'
+      - name: Install Dependencies
+        run: npm ci
+      - name: Build the "public" directory
+        run: python3 ./make_public_dir.py
+        working-directory: ./backend/ontario-web
+      - name: Copy "public" directory to AWS Lightsail
+        uses: appleboy/scp-action@master
+        with:
+          host: ${{ secrets.AWS_HOST }}
+          username: ${{ secrets.AWS_USERNAME }}
+          key: ${{ secrets.AWS_KEY }}
+          port: ${{ secrets.AWS_PORT }}
+          source: "./backend/ontario-web/public"
+          target: "/home/bitnami/public-temp"
+      - name: Deploy to AWS Lightsail
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.AWS_HOST }}
+          username: ${{ secrets.AWS_USERNAME }}
+          key: ${{ secrets.AWS_KEY }}
+          port: ${{ secrets.AWS_PORT }}
+          script: |
+            pushd /home/bitnami/pictonode/backend/ontario-web
+            git checkout -- .
+            git pull origin master
+            rm -rf ./public
+            cp -r /home/bitnami/public-temp/backend/ontario-web/public ./
+            rm -rf /home/bitnami/public-temp
+            sudo supervisorctl restart ontario_web 
