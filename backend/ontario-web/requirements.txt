@@ -2,4 +2,3 @@ Flask
 python-dotenv
 psycopg2-binary
 apscheduler
-pyobject

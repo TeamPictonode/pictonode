@@ -9,7 +9,7 @@
     <div id="homepage">
       <p class="welcome text-center">Pictonode</p>
       <p class="text-center" style="color: white">
-        your new favorite image editor
+        Your new favorite image editor
       </p>
     </div>
     <div class="home-options">
