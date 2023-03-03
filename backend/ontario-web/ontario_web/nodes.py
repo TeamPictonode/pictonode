@@ -397,22 +397,22 @@ class Node(Generic[T, M], _HydrateTarget):
         self.__inputs = []
         for i, linkTemplate in enumerate(template.getInputs()):
             link = Link(
-                    linkTemplate,
-                    lastLinkId,
-                    metadata,
+                linkTemplate,
+                lastLinkId,
+                metadata,
             )
             link.setTo(self, i)
             self.__inputs.append(
-                link 
+                link
             )
             lastLinkId += MAX_NODES
 
         self.__outputs = []
         for i, linkTemplate in enumerate(template.getOutputs()):
             link = Link(
-                    linkTemplate,
-                    lastLinkId,
-                    metadata,
+                linkTemplate,
+                lastLinkId,
+                metadata,
             )
             link.setFrom(self, i)
             self.__outputs.append(
@@ -492,13 +492,12 @@ class Node(Generic[T, M], _HydrateTarget):
 
         # Set the outputs.
         for i in range(len(outputs)):
-            name = self.__templateTable.getTemplate(self.__template).getNamedOutput(i)
+            name = self.__templateTable.getTemplate(
+                self.__template).getNamedOutput(i)
             print(f"- {name}")
             if name is not None and name in self.__values:
-                print(f"- Node {self.__id} has custom value {self.__values[name]} for index {i}")
                 self.__outputs[i]._value = self.__values[name]
             else:
-                print(f"- Node {self.__id} has a normal value {outputs[i]} for index {i}")
                 self.__outputs[i]._value = outputs[i]
             self.__outputs[i]._dirty = False
 
@@ -640,12 +639,18 @@ class Pipeline(Generic[T, M]):
         self.__nextId = 0
         self.__outputId = None
 
-    def createNode(self, template: str, metadata: M, values={}, id=None) -> Node[T, M]:
+    def createNode(self, template: str, metadata: M,
+                   values={}, id=None) -> Node[T, M]:
         """
         Creates a node.
         """
 
-        node = Node(self.__templateTable, template, values, metadata, self.__nextId)
+        node = Node(
+            self.__templateTable,
+            template,
+            values,
+            metadata,
+            self.__nextId)
         if not id:
             id = self.__nextId
             self.__nextId += 1
@@ -661,7 +666,7 @@ class Pipeline(Generic[T, M]):
         toId: int,
         toIndex: int,
         meta: M,
-        id = None,
+        id=None,
     ) -> Link[T, M]:
         """
         Link two nodes together and return the link object.
@@ -669,12 +674,6 @@ class Pipeline(Generic[T, M]):
 
         from_node = self.__nodes[fromId]
         to_node = self.__nodes[toId]
-
-        #if from_node.isOutputOccupied(fromIndex):
-        #    raise ValueError(f"Output is occupied: {fromId} {fromIndex} {toId} {toIndex}")
-
-        #if to_node.isInputOccupied(toIndex):
-        #    raise ValueError("Input is occupied")
 
         link = to_node._linkFrom(from_node, fromIndex, toIndex, meta)
         if not id:
@@ -792,10 +791,10 @@ def deserializePipeline(
         node.setId(serializedNode["id"])
 
     for serializedLink in serialized["links"]:
-        if not "from" in serializedLink or not "to" in serializedLink:
+        if "from" not in serializedLink or "to" not in serializedLink:
             continue
 
-        newLink = pipeline.link(
+        pipeline.link(
             serializedLink["from"],
             serializedLink["fromIndex"],
             serializedLink["to"],

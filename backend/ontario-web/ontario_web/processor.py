@@ -3,8 +3,6 @@
 # libnodepy-based pipeline processor, using ontario as a backend.
 
 import json
-import os.path as path
-import tempfile
 
 from .image_manager import ImageManager
 from . import nodes
@@ -40,9 +38,11 @@ def process(pipeline, images: ImageManager, target: str) -> None:
     output = outputNode.getOutputs()[0]
     img = output.getValue()
     if isinstance(img, int):
-        img = ImageBuilder(context).load_from_file(images.image_path_for_id(img))
+        img = ImageBuilder(context).load_from_file(
+            images.image_path_for_id(img))
     if not isinstance(img, ImageBuilder):
-        raise Exception(f"Output is not an image; got {type(img)}, {repr(img)}")
+        raise Exception(
+            f"Output is not an image; got {type(img)}, {repr(img)}")
 
     # Save to file
     img.save_to_file(target).process()
@@ -64,7 +64,8 @@ class PipelineMetadata:
         self.context = context
 
 
-def make_template_table() -> nodes.TemplateTable[PipelineUnit, PipelineMetadata]:
+def make_template_table(
+) -> nodes.TemplateTable[PipelineUnit, PipelineMetadata]:
     table = nodes.TemplateTable()
 
     # Input node that loads an image from disk
@@ -99,7 +100,6 @@ def make_template_table() -> nodes.TemplateTable[PipelineUnit, PipelineMetadata]
 
     def load(arg, meta) -> ImageBuilder:
         val = arg.getValue()
-        #print(f"Load: {val}")
         if isinstance(val, ImageBuilder):
             return val
         img_path = meta.images.image_path_for_id(val)
@@ -113,10 +113,7 @@ def make_template_table() -> nodes.TemplateTable[PipelineUnit, PipelineMetadata]
             0.0,
             1.0
         )
-        #nprint(f"Composite: {val}")
         return val
-        # TODO
-        #return load(args[0], meta)
 
     # Composite node that composes two images
     compositeNode = nodes.NodeTemplate(

@@ -6,9 +6,6 @@ from . import ontario
 import os
 import datetime
 from typing import Dict
-from gi.repository import Gegl
-import gi
-gi.require_version('Gegl', '0.4')
 # autopep8 on
 
 
@@ -91,7 +88,8 @@ class ImageManager:
         # Remove images that are more than a day old.
         for image_id, image_info in sorted_images:
             remove_image = False
-            if datetime.datetime.now() - image_info.creation_time > self.__image_lifetime:
+            lifetime = datetime.datetime.now() - image_info.creation_time
+            if lifetime > self.__image_lifetime:
                 remove_image = True
 
             # If we're over quote, remove the image.
@@ -128,7 +126,7 @@ class ImageManager:
 
         if not os.path.exists(image_path):
             raise Exception(f"Image {image_path} does not exist.")
-        
+
         # get the image size
         image_size = os.path.getsize(image_path)
 

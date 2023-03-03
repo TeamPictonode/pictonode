@@ -26,11 +26,16 @@ export default defineComponent({
     <v-app-bar color="#e1e9d0" pictonode>
       <v-app-bar-nav-icon @click.stop="drawer = !drawer"></v-app-bar-nav-icon>
       <v-toolbar-title>
-        <router-link to="/" tag="v-btn" style="color:black;">
+        <router-link to="/" tag="v-btn" style="color: black">
           <v-btn> Pictonode </v-btn>
         </router-link>
 
-        <router-link class="text-body-1" to="/about" tag="v-btn" style="color:black;">
+        <router-link
+          class="text-body-1"
+          to="/about"
+          tag="v-btn"
+          style="color: black"
+        >
           <v-btn> About Page </v-btn>
         </router-link>
       </v-toolbar-title>
@@ -50,7 +55,10 @@ export default defineComponent({
           </v-list-item>
           <v-list-item>
             <router-link to="/register" tag="v-btn" style="color: black">
-              <v-btn rounded="pill" color="#e1e9d0"> Register </v-btn></router-link>
+              <v-btn rounded="pill" color="#e1e9d0">
+                Register
+              </v-btn></router-link
+            >
           </v-list-item>
           <v-list-item> Settings (TODO) </v-list-item>
         </v-list>
@@ -68,5 +76,4 @@ export default defineComponent({
   </v-layout>
 </template>
 
-<style>
-</style>
+<style></style>
