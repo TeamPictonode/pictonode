@@ -75,12 +75,9 @@ jobs:
       - uses: actions/checkout@v2
       - run: sudo apt update -y && sudo apt install -y gobject-introspection gtk-doc-tools libtool libgirepository1.0-dev autoconf automake libgladeui-dev libgirepository1.0-dev build-essential libgtk-3-dev gir1.2-gtk-3.0
       - run: python3 gimp/pictonode-gimp-plugin/GIMP\ 2.99/scripts/GtkNodes/test_setup.py
-
-  tests:
-    needs: [format_check, unit_test, integration_test, test_web, rebuild_libnode]
   
   deploy:
-    needs: [tests]
+    needs: [format_check, unit_test, integration_test, test_web, rebuild_libnode]
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/master'
     steps:
