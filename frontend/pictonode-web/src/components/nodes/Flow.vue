@@ -16,7 +16,8 @@ import { Controls } from "@vue-flow/additional-components";
 import { defineComponent, defineProps, defineEmits, watch, ref } from "vue";
 import NodeRepr from "./NodeRepr.vue";
 import { processPipeline } from "../../api";
-import { nodeTemplates, SpecificData, SpecificDataType } from "./NodeTypes";
+import { nodeTemplates } from "./NodeTypes";
+import { getPipeline, SpecificData, SpecificDataType } from "./getPipeline";
 
 let id = 0;
 
@@ -108,9 +109,11 @@ function _templateToNode(template: string, x: number, y: number): any {
   return node;
 }
 
+const specificDataMap = new Map<string, SpecificData>();
+
 const processCanvas = () => {
   console.log("processing canvas");
-  const pipeline = _getPipeline();
+  const pipeline = getPipeline(elements.value, specificDataMap);
 
   // Process the pipeline.
   processPipeline(pipeline).then((imageFile) => {
@@ -135,88 +138,10 @@ const processCanvas = () => {
   });
 };
 
-const specificDataMap = new Map<string, SpecificData>();
-
 const nodeNeedsReprocess = (id: string, data: SpecificData) => {
   specificDataMap.set(id, data);
   processCanvas();
 };
-
-type SerializedPipeline = {
-  nodes: SerializedNode[];
-  links: SerializedEdge[];
-  output: number | null;
-};
-
-type SerializedNode = {
-  id: number;
-  template: string;
-  metadata: any;
-  values: Record<string, any>;
-};
-
-type SerializedEdge = {
-  id: number;
-  from: number;
-  to: number;
-  fromIndex: number;
-  toIndex: number;
-  metadata: any;
-};
-
-function _getPipeline(): SerializedPipeline {
-  // Construct the serialized pipeline from the nodes and edges.
-  const vueFlowNodes = elements.value.filter((e) => !e.data.isEdge);
-  const vueFlowEdges = elements.value.filter((e) => e.data.isEdge);
-
-  let output = -1;
-  const nodes = vueFlowNodes.map((vueFlowNode) => {
-    const node = {
-      id: vueFlowNode.data.realId,
-      template: vueFlowNode.data.node.templateName,
-      metadata: {},
-      values: {} as Record<string, any>,
-    };
-
-    // Get the specific data for this item.
-    const specificData = specificDataMap.get(vueFlowNode.id);
-    if (specificData) {
-      if (specificData.type == SpecificDataType.InputImage) {
-        node.values["image"] = specificData.imageId;
-      }
-    }
-
-    if (node.template == "output") {
-      output = node.id;
-    }
-
-    return node;
-  });
-
-  const edges = vueFlowEdges.map((vueFlowEdge) => {
-    const sourceHandle = parseInt(vueFlowEdge.sourceHandle?.split("-")[1]!);
-    const targetHandle = parseInt(vueFlowEdge.targetHandle?.split("-")[1]!);
-
-    const baseEdge = {
-      id: vueFlowEdge.data.realId,
-      from: parseInt(vueFlowEdge.source!),
-      to: parseInt(vueFlowEdge.target!),
-      fromIndex: sourceHandle,
-      toIndex: targetHandle,
-      metadata: {
-        /* TODO: set metadata */
-      },
-    };
-
-    return baseEdge;
-  });
-
-  return {
-    nodes,
-    links: edges,
-    output,
-  };
-}
 </script>
 
 <template>

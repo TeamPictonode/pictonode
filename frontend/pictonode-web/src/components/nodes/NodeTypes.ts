@@ -1,6 +1,7 @@
 // Various node templates and their types.
 
 import { DefineComponent, PropType, defineComponent } from "vue";
+import { SpecificData, SpecificDataType } from "./getPipeline";
 
 import InputNode from "./NodeData/InputNode.vue";
 import OutputNode from "./NodeData/OutputNode";
@@ -48,24 +49,6 @@ export interface LinkTemplate {
 export enum DataType {
   Image = "image",
   Color = "color",
-}
-
-export type SpecificData =
-  | {
-      type: SpecificDataType.None;
-    }
-  | {
-      type: SpecificDataType.InputImage;
-      imageId: number;
-    }
-  | {
-      type: SpecificDataType.Output;
-    };
-
-export enum SpecificDataType {
-  None = "none",
-  InputImage = "input-image",
-  Output = "output",
 }
 
 // List of templates.
