@@ -5,6 +5,7 @@ from manager import *
 from httpclient import *
 from client import *
 from json_generator import *
+from json_interpreter import *
 
 import sys
 import threading
@@ -126,11 +127,11 @@ class PluginWindow(object):
         file_menu_item.set_submenu(file_menu)
         menu_bar.append(file_menu_item)
 
-        open_graph_item = Gtk.MenuItem("Open Graph")
+        open_graph_item = Gtk.MenuItem("Open Node Graph")
         open_graph_item.connect("activate", self.open_graph)
         file_menu.append(open_graph_item)
 
-        save_graph_item = Gtk.MenuItem("save")
+        save_graph_item = Gtk.MenuItem("Export Node Graph")
         file_menu.append(save_graph_item)
         save_graph_item.connect("activate", self.save_graph)
 
@@ -331,7 +332,7 @@ class PluginWindow(object):
 
             # credit geeksforgeeks
             with open(fn, "w") as outfile:
-                json.dump(dictionary, outfile, indent = 2)
+                json.dump(dictionary, outfile, indent=2)
 
             return None
 
@@ -339,8 +340,48 @@ class PluginWindow(object):
         save_dialog.destroy()
 
     def open_graph(self, widget=None):
-        json_object = json.dumps(serialize_nodes(self.node_view), indent = 2)
-        print(json_object)
+        open_dialog = Gtk.FileChooserDialog(
+            "Open Node Graph",
+            self.window,
+            Gtk.FileChooserAction.OPEN,
+            (Gtk.STOCK_CANCEL,
+             Gtk.ResponseType.CANCEL,
+             Gtk.STOCK_OPEN,
+             Gtk.ResponseType.OK))
+
+        # require .json file types
+        file_type_filter = Gtk.FileFilter()
+        file_type_filter.set_name(".JSON files")
+        file_type_filter.add_pattern("*.JSON")
+        file_type_filter.add_pattern("*.json")
+
+        open_dialog.add_filter(file_type_filter)
+
+        # run the window
+        response = open_dialog.run()
+
+        # if ok response, that means a file was chosen, load that file
+        # then call the json interpreter to build the graph
+        if response == Gtk.ResponseType.OK:
+            fn = open_dialog.get_filename()
+            open_dialog.destroy()
+
+            f = open(fn)
+            json_string = json.load(f)
+
+            try:
+                json_interpreter(self.node_view, self, json_string=json_string)
+            except Exception as E:
+                print(E)
+
+            self.node_view.show_all()
+
+            f.close()
+
+            return None
+
+        # close the dialog
+        open_dialog.destroy()
 
     def display_output(self):
         '''
@@ -349,7 +390,6 @@ class PluginWindow(object):
         '''
 
         # TODO: draw checker pattern with same dimensions as image
-        # Draw image over the checkered background
 
         # Create Gtk.Image from file (to change to pixbuf later)
         self.image.set_from_file("/tmp/gimp/temp.png")
