@@ -3,11 +3,8 @@
 
 <script lang="ts">
 import { defineComponent } from "vue";
-import {
-  SpecificData,
-  SpecificDataType,
-  NodeTemplateComponentProps,
-} from "../NodeTypes";
+import { NodeTemplateComponentProps } from "../NodeTypes";
+import { SpecificData, SpecificDataType } from "../getPipeline";
 import { uploadImage } from "../../../api";
 
 export default defineComponent({

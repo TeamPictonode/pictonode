@@ -8,7 +8,8 @@
 import { Handle, Position } from "@vue-flow/core";
 import { defineProps, defineEmits } from "vue";
 
-import { NodeTemplate, SpecificData } from "./NodeTypes";
+import { NodeTemplate } from "./NodeTypes";
+import { SpecificData } from "./getPipeline";
 
 function inputHandleStyle(index: number) {
   return {

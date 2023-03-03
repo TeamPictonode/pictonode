@@ -3,10 +3,9 @@
 
 import { defineComponent } from "vue";
 import {
-  SpecificData,
-  SpecificDataType,
   NodeTemplateComponentProps,
 } from "../NodeTypes";
+import { SpecificData, SpecificDataType } from "../getPipeline";
 
 export default defineComponent({
   template: `<div></div>`,
