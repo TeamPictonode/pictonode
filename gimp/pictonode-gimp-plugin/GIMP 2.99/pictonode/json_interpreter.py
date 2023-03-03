@@ -4,6 +4,7 @@ import custom_nodes as cn
 
 
 def json_interpreter(node_view, json_string: dict, window):
+    ''' Generate a node graph from a json object format. '''
 
     node_str = 'SrcNode'
 
@@ -11,6 +12,7 @@ def json_interpreter(node_view, json_string: dict, window):
 
     nodes_loaded = {}
 
+    # Goes through each node and adds a corresponding gtknode object to the given node view
     for node in json_string["nodes"]:
 
         node_str = node["template"]
@@ -28,12 +30,11 @@ def json_interpreter(node_view, json_string: dict, window):
             node_obj.set_property("y", y)
 
             nodes_loaded[node["id"]] = node_obj
-            # node_view.child_set_property(node_obj, "x", x)
-            # node_view.child_set_property(node_obj, "y", y)
 
         else:
             return False
-        
+
+    # Goes through each link and connects the two nodes it corresponds to
     for link in json_string["links"]:
         pass
 

@@ -127,11 +127,11 @@ class PluginWindow(object):
         file_menu_item.set_submenu(file_menu)
         menu_bar.append(file_menu_item)
 
-        open_graph_item = Gtk.MenuItem("Open Graph")
+        open_graph_item = Gtk.MenuItem("Open Node Graph")
         open_graph_item.connect("activate", self.open_graph)
         file_menu.append(open_graph_item)
 
-        save_graph_item = Gtk.MenuItem("save")
+        save_graph_item = Gtk.MenuItem("Export Node Graph")
         file_menu.append(save_graph_item)
         save_graph_item.connect("activate", self.save_graph)
 
@@ -332,7 +332,7 @@ class PluginWindow(object):
 
             # credit geeksforgeeks
             with open(fn, "w") as outfile:
-                json.dump(dictionary, outfile, indent = 2)
+                json.dump(dictionary, outfile, indent=2)
 
             return None
 
@@ -360,8 +360,8 @@ class PluginWindow(object):
         # run the window
         response = open_dialog.run()
 
-        # if ok response, that means a file was chosen, save the node graph as
-        # that file
+        # if ok response, that means a file was chosen, load that file
+        # then call the json interpreter to build the graph
         if response == Gtk.ResponseType.OK:
             fn = open_dialog.get_filename()
             open_dialog.destroy()
@@ -384,7 +384,6 @@ class PluginWindow(object):
         '''
 
         # TODO: draw checker pattern with same dimensions as image
-        # Draw image over the checkered background
 
         # Create Gtk.Image from file (to change to pixbuf later)
         self.image.set_from_file("/tmp/gimp/temp.png")
