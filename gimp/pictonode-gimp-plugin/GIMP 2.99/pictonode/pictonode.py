@@ -31,15 +31,12 @@ def register_instance_parasite() -> None:
         inst.encode('utf-8'))
     Gimp.attach_parasite(parasite)
 
-
 def invalidate_instance_parasite() -> None:
     Gimp.detach_parasite("pictonode-instance")
-
 
 def recycle_instance_parasite() -> None:
     invalidate_instance_parasite()
     register_instance_parasite()
-
 
 class Pictonode (Gimp.PlugIn):
 
@@ -84,7 +81,7 @@ class Pictonode (Gimp.PlugIn):
             run_data):
 
         if run_mode == Gimp.RunMode.NONINTERACTIVE or run_mode == Gimp.RunMode.WITH_LAST_VALS:
-            msg = _("Procedure '{}' only works in INTERACTIVE mode.").format(
+            msg = _("Procedure '{}' only works in INTERACTIVE mode!").format(
                 procedure.get_name())
             error = GLib.Error.new_literal(Gimp.PlugIn.error_quark(), msg, 0)
             return procedure.new_return_values(
@@ -158,7 +155,12 @@ class Pictonode (Gimp.PlugIn):
             invalidate_instance_parasite()
 
         else:
-            raise Exception(">:(")
+            msg = _("Procedure '{}' only works in INTERACTIVE mode!").format(procedure.get_name())
+            msg += "\nCall mode: " + str(run_mode)
+            error = GLib.Error.new_literal(
+                    Gimp.PlugIn.error_quark(), msg, 0)
+            return procedure.new_return_values(
+                    Gimp.PDBStatusType.CALLING_ERROR, error)
         
         return procedure.new_return_values(
             Gimp.PDBStatusType.SUCCESS, GLib.Error())
