@@ -21,14 +21,8 @@ GIRepository.Repository.prepend_library_path(
             os.path.abspath(__file__)) +
         "/output/libs"))
 
-gi.require_version("GIRepository", "2.0")
-from gi.repository import GIRepository  # noqa
-
 gi.require_version("GtkNodes", "0.1")
 from gi.repository import GtkNodes  # noqa
-
-gi.require_version('Gegl', '0.4')
-from gi.repository import Gegl  # noqa
 # autopep8 on
 
 
