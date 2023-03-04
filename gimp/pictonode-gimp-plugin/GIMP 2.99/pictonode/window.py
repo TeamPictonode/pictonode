@@ -32,24 +32,6 @@ GIRepository.Repository.prepend_library_path(
 gi.require_version("GtkNodes", "0.1")
 from gi.repository import GtkNodes  # noqa
 
-gi.require_version('Gimp', '3.0')
-from gi.repository import Gimp  # noqa
-
-gi.require_version('GimpUi', '3.0')
-from gi.repository import GimpUi  # noqa
-
-gi.require_version('Gegl', '0.4')
-from gi.repository import Gegl  # noqa
-
-gi.require_version("Gio", "2.0")
-from gi.repository import Gio  # noqa
-
-gi.require_version("GLib", "2.0")
-from gi.repository import GLib  # noqa
-
-gi.require_version("GObject", "2.0")
-from gi.repository import GObject  # noqa
-
 gi.require_version('Gtk', '3.0')
 from gi.repository import Gtk  # noqa
 
@@ -277,24 +259,75 @@ class PluginWindow(object):
             self.has_output_node = False
 
     def add_image_src_node(self, widget=None):
-        self.node_view.add(cn.ImgSrcNode(self))
+        ''' Adds an image source node at the current cursor position '''
+
+        # create new node and add it to the NodeView widget
+        new_node = cn.ImgSrcNode(self)
+        self.node_view.add(new_node)
+
+        # grab cursor position and move node to it
+        position = self.get_cursor_pos()
+        new_node.set_property("x", position[0])
+        new_node.set_property("y", position[1])
         self.node_view.show_all()
 
     def add_image_out_node(self, widget=None):
-        self.node_view.add(cn.OutputNode(self))
+        ''' Adds an image output node at the current cursor position '''
+
+        # create new node and add it to the NodeView widget
+        new_node = cn.OutputNode(self)
+        self.node_view.add(new_node)
+
+        # grab cursor position and move node to it
+        position = self.get_cursor_pos()
+        new_node.set_property("x", position[0])
+        new_node.set_property("y", position[1])
         self.node_view.show_all()
 
     def add_image_invert_node(self, widget=None):
-        self.node_view.add(cn.InvertNode(self))
+        ''' Adds an invert node at the current cursor position '''
+
+        # create new node and add it to the NodeView widget
+        new_node = cn.InvertNode(self)
+        self.node_view.add(new_node)
+
+        # grab cursor position and move node to it
+        position = self.get_cursor_pos()
+        new_node.set_property("x", position[0])
+        new_node.set_property("y", position[1])
         self.node_view.show_all()
 
     def add_image_comp_node(self, widget=None):
-        self.node_view.add(cn.CompositeNode(self))
+        ''' Adds a composite node at the current cursor position '''
+
+        # create new node and add it to the NodeView widget
+        new_node = cn.CompositeNode(self)
+        self.node_view.add(new_node)
+
+        # grab cursor position and move node to it
+        position = self.get_cursor_pos()
+        new_node.set_property("x", position[0])
+        new_node.set_property("y", position[1])
         self.node_view.show_all()
 
     def add_image_blur_node(self, widget=None):
-        self.node_view.add(cn.BlurNode(self))
+        ''' Adds a blur node at the current cursor position '''
+
+        # create new node and add it to the NodeView widget
+        new_node = cn.BlurNode(self)
+        self.node_view.add(new_node)
+
+        # grab cursor position and move node to it
+        position = self.get_cursor_pos()
+        new_node.set_property("x", position[0])
+        new_node.set_property("y", position[1])
         self.node_view.show_all()
+
+    def get_cursor_pos(self) -> list:
+        pointer = self.node_view.get_display().get_default_seat().get_pointer()
+        pos = self.node_view.get_window().get_device_position(pointer)
+
+        return [pos[1], pos[2]]
 
     def set_node_view(self, new_nv: GtkNodes.NodeView):
         self.node_view = new_nv
@@ -340,6 +373,7 @@ class PluginWindow(object):
         save_dialog.destroy()
 
     def open_graph(self, widget=None):
+
         open_dialog = Gtk.FileChooserDialog(
             "Open Node Graph",
             self.window,
@@ -363,8 +397,13 @@ class PluginWindow(object):
         # if ok response, that means a file was chosen, load that file
         # then call the json interpreter to build the graph
         if response == Gtk.ResponseType.OK:
+
             fn = open_dialog.get_filename()
             open_dialog.destroy()
+
+            # delete current node_view nodes
+            for node in self.node_view.get_children():
+                node.destroy()
 
             f = open(fn)
             json_string = json.load(f)

@@ -20,12 +20,6 @@ GIRepository.Repository.prepend_library_path(
             os.path.abspath(__file__)) +
         "/libs"))
 
-gi.require_version("GtkNodes", "0.1")
-from gi.repository import GtkNodes  # noqa
-
-gi.require_version('Gimp', '3.0')
-from gi.repository import Gimp  # noqa
-
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk # noqa
 

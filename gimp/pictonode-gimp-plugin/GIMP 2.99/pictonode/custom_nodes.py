@@ -1,11 +1,5 @@
 # This file was written by Parker Nelms and Stephen Foster.
 
-from httpclient import *
-from client import *
-import window
-import pickle
-import sys
-import threading
 import os
 import uuid
 import ontario
@@ -31,24 +25,6 @@ GIRepository.Repository.prepend_library_path(
 gi.require_version("GtkNodes", "0.1")
 from gi.repository import GtkNodes  # noqa
 
-gi.require_version('Gimp', '3.0')
-from gi.repository import Gimp  # noqa
-
-gi.require_version('GimpUi', '3.0')
-from gi.repository import GimpUi  # noqa
-
-gi.require_version('Gegl', '0.4')
-from gi.repository import Gegl  # noqa
-
-gi.require_version("Gio", "2.0")
-from gi.repository import Gio  # noqa
-
-gi.require_version("GLib", "2.0")
-from gi.repository import GLib  # noqa
-
-gi.require_version("GObject", "2.0")
-from gi.repository import GObject  # noqa
-
 gi.require_version('Gtk', '3.0')
 from gi.repository import Gtk  # noqa
 
@@ -65,7 +41,17 @@ from gi.repository import GdkPixbuf  # noqa
 # implement gegl node operations using ontario backend
 
 
-class ImgSrcNode(GtkNodes.Node):
+class CustomNode(GtkNodes.Node):
+
+    def __init__(self, *args, **kwds) -> None:
+        super().__init__(*args, **kwds)
+
+    def set_values(self, values: dict):
+        '''Virtual Method to be overriden by custom nodes'''
+        pass
+
+
+class ImgSrcNode(CustomNode):
     __gtype_name__ = 'SrcNode'
 
     def __init__(self, node_window, *args, **kwds) -> None:
@@ -154,7 +140,7 @@ class ImgSrcNode(GtkNodes.Node):
             self.node_socket_output.write(bytes(self.buffer_id, 'utf8'))
 
 
-class OutputNode(GtkNodes.Node):
+class OutputNode(CustomNode):
     __gtype_name__ = 'OutNode'
 
     def __init__(self, node_window, *args, **kwds) -> None:
@@ -163,7 +149,8 @@ class OutputNode(GtkNodes.Node):
         self.node_window = node_window
 
         # lock output node
-        self.node_window.output_node_lock(True)
+        if self.node_window:
+            self.node_window.output_node_lock(True)
 
         # build an image contexts
         # add nodes to it
@@ -293,7 +280,7 @@ class OutputNode(GtkNodes.Node):
             self.save_file_button.set_sensitive(False)
 
 
-class InvertNode(GtkNodes.Node):
+class InvertNode(CustomNode):
     __gtype_name__ = 'InvertNode'
 
     def __init__(self, node_window, *args, **kwds) -> None:
@@ -421,7 +408,7 @@ class InvertNode(GtkNodes.Node):
             print("Error!!!")
 
 
-class CompositeNode(GtkNodes.Node):
+class CompositeNode(CustomNode):
     __gtype_name__ = 'CompNode'
 
     def __init__(self, node_window, *args, **kwds) -> None:
@@ -607,7 +594,7 @@ class CompositeNode(GtkNodes.Node):
             print("Error!!!")
 
 
-class BlurNode(GtkNodes.Node):
+class BlurNode(CustomNode):
     __gtype_name__ = 'BlurNode'
 
     def __init__(self, node_window, *args, **kwds) -> None:
@@ -630,8 +617,8 @@ class BlurNode(GtkNodes.Node):
         self.connect("node_func_clicked", self.remove)
 
         # add argument fields
-        self.xlabel = Gtk.Label("std-dev-x")
-        self.ylabel = Gtk.Label("std-dev-y")
+        self.xlabel = Gtk.Label(label="std-dev-x")
+        self.ylabel = Gtk.Label(label="std-dev-y")
 
         self.xentry = Gtk.Entry()
         self.yentry = Gtk.Entry()
@@ -670,13 +657,26 @@ class BlurNode(GtkNodes.Node):
 
     def get_values(self):
 
-        ''' Returns dictionary of current state of custom values for the node'''
-        
+        ''' Returns dictionary of current state of custom values for the node '''
+
         custom_values = {}
         custom_values["std_dev_x"] = self.std_dev_x
         custom_values["std_dev_y"] = self.std_dev_y
 
         return custom_values
+
+    def set_values(self, values: dict):
+
+        ''' Sets custom node defaults from dictionary '''
+
+        print("Bruh1: ", values.get('std_dev_x'))
+        print("Bruh2: ", values.get('std_dev_y'))
+        self.std_dev_x = values.get('std_dev_x')
+        self.std_dev_y = values.get('std_dev_y')
+
+        # set entry text for each entry box
+        self.xentry.set_text(str(self.std_dev_x))
+        self.yentry.set_text(str(self.std_dev_y))
 
     def process_input(self):
         if self.incoming_buffer:
