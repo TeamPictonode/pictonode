@@ -43,6 +43,7 @@ def json_interpreter(node_view, window, **kwargs):
             node_view.add(node_obj)
             node_obj.set_property("x", x)
             node_obj.set_property("y", y)
+            node_obj.set_values(node.get("values"))
 
             nodes_loaded[node["id"]] = node_obj
 
@@ -51,6 +52,19 @@ def json_interpreter(node_view, window, **kwargs):
 
     # Goes through each link and connects the two nodes it corresponds to
     for link in json_string["links"]:
-        pass
+        from_obj = nodes_loaded.get(link.get("from"))
+        to_obj = nodes_loaded.get(link.get("to"))
+        from_index = link.get("fromIndex")
+        to_index = link.get("toIndex")
+
+        if from_obj and to_obj:
+            try:
+                from_source = from_obj.get_sources()[from_index]
+                to_sink = to_obj.get_sinks()[to_index]
+                to_sink.connect_sockets(from_source)
+            except Exception:
+                raise Exception("JSONCorrupt")
+        else:
+            raise Exception("JSONCorrupt")
 
     return True

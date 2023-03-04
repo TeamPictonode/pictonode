@@ -41,7 +41,17 @@ from gi.repository import GdkPixbuf  # noqa
 # implement gegl node operations using ontario backend
 
 
-class ImgSrcNode(GtkNodes.Node):
+class CustomNode(GtkNodes.Node):
+
+    def __init__(self, *args, **kwds) -> None:
+        super().__init__(*args, **kwds)
+
+    def set_values(self, values: dict):
+        '''Virtual Method to be overriden by custom nodes'''
+        pass
+
+
+class ImgSrcNode(CustomNode):
     __gtype_name__ = 'SrcNode'
 
     def __init__(self, node_window, *args, **kwds) -> None:
@@ -130,7 +140,7 @@ class ImgSrcNode(GtkNodes.Node):
             self.node_socket_output.write(bytes(self.buffer_id, 'utf8'))
 
 
-class OutputNode(GtkNodes.Node):
+class OutputNode(CustomNode):
     __gtype_name__ = 'OutNode'
 
     def __init__(self, node_window, *args, **kwds) -> None:
@@ -270,7 +280,7 @@ class OutputNode(GtkNodes.Node):
             self.save_file_button.set_sensitive(False)
 
 
-class InvertNode(GtkNodes.Node):
+class InvertNode(CustomNode):
     __gtype_name__ = 'InvertNode'
 
     def __init__(self, node_window, *args, **kwds) -> None:
@@ -398,7 +408,7 @@ class InvertNode(GtkNodes.Node):
             print("Error!!!")
 
 
-class CompositeNode(GtkNodes.Node):
+class CompositeNode(CustomNode):
     __gtype_name__ = 'CompNode'
 
     def __init__(self, node_window, *args, **kwds) -> None:
@@ -584,7 +594,7 @@ class CompositeNode(GtkNodes.Node):
             print("Error!!!")
 
 
-class BlurNode(GtkNodes.Node):
+class BlurNode(CustomNode):
     __gtype_name__ = 'BlurNode'
 
     def __init__(self, node_window, *args, **kwds) -> None:
@@ -647,13 +657,26 @@ class BlurNode(GtkNodes.Node):
 
     def get_values(self):
 
-        ''' Returns dictionary of current state of custom values for the node'''
-        
+        ''' Returns dictionary of current state of custom values for the node '''
+
         custom_values = {}
         custom_values["std_dev_x"] = self.std_dev_x
         custom_values["std_dev_y"] = self.std_dev_y
 
         return custom_values
+
+    def set_values(self, values: dict):
+
+        ''' Sets custom node defaults from dictionary '''
+
+        print("Bruh1: ", values.get('std_dev_x'))
+        print("Bruh2: ", values.get('std_dev_y'))
+        self.std_dev_x = values.get('std_dev_x')
+        self.std_dev_y = values.get('std_dev_y')
+
+        # set entry text for each entry box
+        self.xentry.set_text(str(self.std_dev_x))
+        self.yentry.set_text(str(self.std_dev_y))
 
     def process_input(self):
         if self.incoming_buffer:

@@ -373,6 +373,7 @@ class PluginWindow(object):
         save_dialog.destroy()
 
     def open_graph(self, widget=None):
+
         open_dialog = Gtk.FileChooserDialog(
             "Open Node Graph",
             self.window,
@@ -396,8 +397,13 @@ class PluginWindow(object):
         # if ok response, that means a file was chosen, load that file
         # then call the json interpreter to build the graph
         if response == Gtk.ResponseType.OK:
+
             fn = open_dialog.get_filename()
             open_dialog.destroy()
+
+            # delete current node_view nodes
+            for node in self.node_view.get_children():
+                node.destroy()
 
             f = open(fn)
             json_string = json.load(f)
