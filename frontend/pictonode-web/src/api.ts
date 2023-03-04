@@ -26,3 +26,15 @@ export function processPipeline(pipeline: any): Promise<File> {
     (response) => response.data
   );
 }
+
+export function setRegister(credentials: any): Promise<boolean> {
+  return API.post("/register", credentials,{ responseType: "json"}).then(
+    (response) => response.data
+  );
+}
+
+export function checkLogin(credentials: any): Promise<boolean> {
+  return API.post("/login", credentials, { responseType: "json"}).then(
+    (response) => response.data
+  )
+}
