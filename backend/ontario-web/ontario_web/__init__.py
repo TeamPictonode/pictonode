@@ -46,7 +46,8 @@ def create_app(test_config=None):
         USER=env_or_else("POSTGRES_USER", "ontario"),
         PASSWORD=env_or_else("POSTGRES_PASSWORD", "ontario"),
         HOST=env_or_else("POSTGRES_HOST", "localhost"),
-        PORT=env_or_else("POSTGRES_PORT", "5432")
+        PORT=env_or_else("POSTGRES_PORT", "5432"),
+        INSTANCE_PATH=os_path.join(app.root_path, "instance"),
     )
 
     if test_config is None:
@@ -87,7 +88,16 @@ def create_app(test_config=None):
         id="image_manager_clean_up",
     )
 
+    # Create a directory to store projects in
+    instance_path = app.config["INSTANCE_PATH"]
+    if not os_path.exists(instance_path):
+        os.makedirs(instance_path)
+    projects_path = os_path.join(instance_path, "projects")
+    if not os_path.exists(projects_path):
+        os.makedirs(projects_path)
+
     app.teardown_appcontext(db.close_db)
+    app.cli.add_command(db.init_db_command)
 
     # For /api/upload_image, save an image to a file and then save it
     # to the database
@@ -238,5 +248,133 @@ def create_app(test_config=None):
 
             # The body of the response should be the JSON pipeline
             return save_and_load.load_from_zip(im, save_path)
+
+    # For /api/projects, return a list of all projects associated with 
+    # the username
+    @app.route("/api/projects/<username>", methods=["GET"])
+    def projects(username):
+        d = db.get_db()
+        cursor = d.cursor()
+        projects = []
+        try:
+            cursor.execute(
+                """
+                SELECT projects.id, projects.name, projects.description,
+                FROM projects
+                INNER JOIN users ON projects.owner = users.id
+                WHERE users.username = %s
+                """
+            )
+            projects = cursor.fetchall()
+        except psycopg2.OperationalError:
+            pass
+        finally:
+            cursor.close()
+
+        ret_projects = []
+        for project in projects:
+            ret_projects.append(
+                {
+                    "id": project[0],
+                    "name": project[1],
+                    "description": project[2],
+                }
+            )
+
+        return ret_projects
+    
+    def _check_project_exists(id):
+        d = db.get_db()
+        cursor = d.cursor()
+        project = None
+        try:
+            # Make sure the project exists
+            cursor.execute(
+                """
+                SELECT * FROM projects
+                WHERE id = %s
+                """,
+                (id,),
+            )
+            project = cursor.fetchone()
+        except psycopg2.OperationalError:
+            pass
+        finally:
+            cursor.close()
+
+        return project is not None
+
+    # For /api/project/id, return the project ZIP with the given id
+    @app.route("/api/project/<id>", methods=["GET"])
+    def project_json(id):
+        if not _check_project_exists(id):
+            return {"error": "Project does not exist."}, 404
+
+        # The project JSON is at the projects dir, at file
+        p = os_path.join(projects_path, f"project{id}.zip")
+
+        # Send the file over
+        return send_file(p) 
+
+    # Upload a JSON and an XCF file to the projects dir
+    @app.route("/api/project/upload", methods=["PUT"])
+    def project_upload():
+        # Request contains:
+        # - Body with name and description
+        # - ZIP file 
+        project = request.get_json()
+        name = project["name"]
+        description = project["description"]
+        zip = request.files["zip"]
+
+        # Make sure the user is logged in
+        if "user_id" not in session:
+            return {"error": "Not logged in."}, 401
+        
+        # Insert into the projects table
+        d = db.get_db()
+        cursor = d.cursor()
+        try:
+            cursor.execute(
+                """
+                INSERT INTO projects (name, description, owner)
+                VALUES (%s, %s, %s)
+                RETURNING id
+                """,
+                (name, description, session["user_id"]),
+            )
+            id = cursor.fetchone()[0]
+            d.commit()
+        except psycopg2.OperationalError:
+            return {"error": "Error uploading project."}, 500
+        finally:
+            cursor.close()
+
+        # Save the file
+        zip.save(os_path.join(projects_path, f"project{id}.zip"))
+
+        # Return the id of the project
+        return {"id": id}
+
+    # Upload a JSON and XCF file to an existing project.
+    # The project id is in the URL
+    @app.route("/api/project/upload/<id>", methods=["PUT"])
+    def project_upload_existing(id):
+        # Request contains:
+        # - ZIP file
+        zip = request.files["zip"]
+
+        # Make sure the user is logged in
+        if "user_id" not in session:
+            return {"error": "Not logged in."}, 401
+
+        # Make sure the project exists
+        if not _check_project_exists(id):
+            return {"error": "Project does not exist."}, 404
+
+        # Save the zip file
+        zip.save(os_path.join(projects_path, f"project{id}.zip"))
+
+        return {"success": True}
 
     return app

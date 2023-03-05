@@ -76,6 +76,20 @@ def init_db(test_config=None):
     );
   """)
 
+    # Create the projects table
+    cur.execute("""
+    DROP TABLE IF EXISTS projects;
+    """)
+    cur.execute("""
+    CREATE TABLE projects (
+        id SERIAL PRIMARY KEY,
+        name VARCHAR(255) NOT NULL,
+        description VARCHAR(255) NOT NULL
+        owner INTEGER NOT NULL,
+        FOREIGN KEY (owner) REFERENCES users (id)
+    );
+    """)
+
     conn.commit()
     cur.close()
     conn.close()
