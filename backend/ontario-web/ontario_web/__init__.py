@@ -9,6 +9,7 @@ import psycopg2
 from . import db
 from . import image_manager
 from . import processor
+from . import save_and_load
 
 from flask import Flask, request, send_file, session
 from werkzeug.security import check_password_hash, generate_password_hash
@@ -203,5 +204,39 @@ def create_app(test_config=None):
             session.clear()
             session["user_id"] = user[0]
             return {"success": True}
+
+    # For /api/save, take a JSON pipeline and return a saved .zip file
+    # containing the pipeline and the necessary images
+    @app.route("/api/save", methods=["POST"])
+    def save():
+        # The body of the request should be a JSON object with the
+        # pipeline
+        pipeline = request.get_json()
+
+        # Create a temporary directory
+        with tempfile.TemporaryDirectory() as dir:
+            save_path = os_path.join(dir, "pipeline.zip")
+            save_and_load.save_to_zip(
+                im,
+                pipeline,
+                save_path
+            )
+
+            # The body of the response should be the .zip file
+            return send_file(save_path)
+
+    # For /api/load, take a .zip file and return a JSON pipeline
+    @app.route("/api/load", methods=["POST"])
+    def load():
+        # The body of the request should be a .zip file
+        file = request.files["file"]
+
+        # Create a temporary directory
+        with tempfile.TemporaryDirectory() as dir:
+            save_path = os_path.join(dir, "pipeline.zip")
+            file.save(save_path)
+
+            # The body of the response should be the JSON pipeline
+            return save_and_load.load_from_zip(im, save_path)
 
     return app
