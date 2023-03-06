@@ -97,3 +97,14 @@ export function getPipeline(
     output,
   };
 }
+
+export function loadPipeline(
+  pipeline: SerializedPipeline,
+  specificDataMap: Map<string, SpecificData>
+): any[] {
+  const elements: any[] = [];
+
+  // TODO
+
+  return elements;
+}

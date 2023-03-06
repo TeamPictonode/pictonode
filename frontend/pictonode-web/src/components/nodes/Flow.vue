@@ -15,9 +15,10 @@ import {
 import { Controls } from "@vue-flow/additional-components";
 import { defineComponent, defineProps, defineEmits, watch, ref } from "vue";
 import NodeRepr from "./NodeRepr.vue";
-import { processPipeline } from "../../api";
+import { processPipeline, savePipeline as apiSavePipeline, loadPipeline as apiLoadPipeline } from "../../api";
 import { nodeTemplates } from "./NodeTypes";
-import { getPipeline, SpecificData, SpecificDataType } from "./getPipeline";
+import { getPipeline, SpecificData, SpecificDataType, loadPipeline as gLoadPipeline } from "./getPipeline";
+//import download from "downloadjs";
 
 let id = 0;
 
@@ -66,16 +67,24 @@ const onConnect = (edge: any) => {
 };
 
 const props = defineProps({
-  addTemplate: String as () => string | null,
+  addDirective: String as () => string | null,
 });
 
 // Watch for changes to the addTemplate prop.
 // If it is not null, add a new node with the given template.
 watch(
-  () => props.addTemplate,
-  (template) => {
-    if (template) {
-      addNode(template);
+  () => props.addDirective,
+  (directive) => {
+    if (directive) {
+      // If it starts with "add", add a new node.
+      if (directive.startsWith("add:")) {
+        const template = directive.substring(4);
+        addNode(template);
+      } else if (directive == "save") {
+        savePipeline();
+      } else if (directive == "load") {
+        loadPipeline();
+      }
     }
   }
 );
@@ -142,6 +151,34 @@ const nodeNeedsReprocess = (id: string, data: SpecificData) => {
   specificDataMap.set(id, data);
   processCanvas();
 };
+
+const savePipeline = () => {
+  const pipeline = getPipeline(elements.value, specificDataMap);
+  apiSavePipeline(pipeline).then(file => {
+    // Download the file.
+
+  })
+}; 
+
+const loadPipeline = () => {
+  const fileElement = document.createElement("input");
+  fileElement.type = "file";
+
+  fileElement.onchange = (event) => {
+    const file = (event.target as HTMLInputElement).files![0];
+    apiLoadPipeline(file).then(pipeline => {
+      specificDataMap.clear();
+      elements.value = gLoadPipeline(
+        pipeline as any,
+        specificDataMap
+      );
+
+      processCanvas();
+    })
+  };
+
+  fileElement.click();
+}
 </script>
 
 <template>

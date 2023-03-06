@@ -26,3 +26,20 @@ export function processPipeline(pipeline: any): Promise<File> {
     (response) => response.data
   );
 }
+
+export function savePipeline(pipeline: any): Promise<File> {
+  // The body of the returning request will be a ZIP file.
+  return API.post("/save", pipeline, { responseType: "blob" }).then(
+    (response) => response.data
+  );
+}
+
+export function loadPipeline(zip: File): Promise<any[]> {
+  // Response will be JSON with pipeline field "pipeline"
+  const formData = new FormData();
+  formData.append("file", zip);
+
+  return API.post("/load", formData, { responseType: "json" }).then(
+    (response) => response.data
+  );
+}
