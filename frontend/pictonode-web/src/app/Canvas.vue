@@ -17,7 +17,7 @@ export default defineComponent({
     img: undefined as HTMLCanvasElement | undefined,
     addDirective: null as string | null,
     saveDialog: false,
-    loadDialog: false,
+    loadDialog: false
   }),
   methods: {
     onCanvasUpdate(canvas: HTMLCanvasElement) {
