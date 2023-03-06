@@ -97,3 +97,53 @@ export function getPipeline(
     output,
   };
 }
+
+export function loadPipeline(
+  pipeline: SerializedPipeline,
+  specificDataMap: Map<string, SpecificData>,
+  nodeTemplates: Record<string, any>
+): any[] {
+  const elements: any[] = [];
+
+  let x = 0;
+  let y = 0;
+
+  for (const node of pipeline.nodes) {
+    if (node.template === "input" && "image" in node.values) {
+      specificDataMap.set(node.id.toString(), {
+        type: SpecificDataType.InputImage,
+        imageId: node.values["image"],
+      });
+    }
+
+    elements.push({
+      id: node.id.toString(),
+      type: "repr",
+      data: {
+        realId: node.id,
+        isEdge: false,
+        node: nodeTemplates[node.template]!,
+      },
+      position: { x, y },
+    });
+
+    x += 100;
+    y += 100;
+  }
+
+  for (const edge of pipeline.links) {
+    elements.push({
+      id: edge.id.toString(),
+      data: {
+        realId: edge.id,
+        isEdge: true,
+      },
+      source: edge.from.toString(),
+      target: edge.to.toString(),
+      sourceHandle: `output-${edge.fromIndex}`,
+      targetHandle: `input-${edge.toIndex}`,
+    });
+  }
+
+  return elements;
+}

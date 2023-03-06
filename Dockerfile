@@ -3,7 +3,7 @@
 # Set up ontario-web as a docker container
 
 # Use a node image
-FROM node:14
+FROM node:19
 
 # Add relevant files in the current directory to the container
 ADD ./backend /backend
@@ -16,7 +16,7 @@ ADD ./package-lock.json /package-lock.json
 RUN apt-get update && apt-get install -y libcairo2-dev libgirepository1.0-dev libgegl-dev python3-pip python3 python3-gi python3-gi-cairo gir1.2-gtk-3.0
 
 # Install node packages
-RUN npm ci
+RUN npm install
 
 # Set the working directory to /backend/ontario-web
 WORKDIR /backend/ontario-web

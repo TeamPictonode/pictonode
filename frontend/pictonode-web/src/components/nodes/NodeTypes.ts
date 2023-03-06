@@ -60,7 +60,7 @@ const emptyComponent = defineComponent<NodeTemplatePropsType, {}, {}>({
     </div>
   `,
   emits: {
-    updated: (data: SpecificData) => true,
+    updated: (_data: SpecificData) => true,
   },
 });
 
