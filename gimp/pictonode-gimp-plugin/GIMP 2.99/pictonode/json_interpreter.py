@@ -23,19 +23,20 @@ def json_interpreter(node_view, window, **kwargs):
 
     node_str = 'SrcNode'
 
-    instantiation_dict = {'SrcNode': cn.ImgSrcNode, 'OutNode': cn.OutputNode, 'InvertNode': cn.InvertNode, 'BlurNode': cn.BlurNode}
+    instantiation_dict = {'ImgSrc': cn.ImgSrcNode, 'ImgOut': cn.OutputNode,
+                          'Invert': cn.InvertNode, 'GaussBlur': cn.BlurNode,
+                          'BrightCont': cn.BrightContNode}
 
     nodes_loaded = {}
 
     # Goes through each node and adds a corresponding gtknode object to the given node view
     for node in json_string["nodes"]:
 
+        print("Node start: ", node)
+
         node_str = node["template"]
         x = node["metadata"]["x"]
         y = node["metadata"]["y"]
-
-        print("x: ", x)
-        print("y: ", y)
 
         if node_str in instantiation_dict:
             # add node at given position
@@ -49,6 +50,8 @@ def json_interpreter(node_view, window, **kwargs):
 
         else:
             return False
+
+        print("Node end: ", node)
 
     # Goes through each link and connects the two nodes it corresponds to
     for link in json_string["links"]:
