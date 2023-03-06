@@ -15,10 +15,19 @@ import {
 import { Controls } from "@vue-flow/additional-components";
 import { defineComponent, defineProps, defineEmits, watch, ref } from "vue";
 import NodeRepr from "./NodeRepr.vue";
-import { processPipeline, savePipeline as apiSavePipeline, loadPipeline as apiLoadPipeline } from "../../api";
+import {
+  processPipeline,
+  savePipeline as apiSavePipeline,
+  loadPipeline as apiLoadPipeline,
+} from "../../api";
 import { nodeTemplates } from "./NodeTypes";
-import { getPipeline, SpecificData, SpecificDataType, loadPipeline as gLoadPipeline } from "./getPipeline";
-//import download from "downloadjs";
+import {
+  getPipeline,
+  SpecificData,
+  SpecificDataType,
+  loadPipeline as gLoadPipeline,
+} from "./getPipeline";
+import * as download from "downloadjs";
 
 let id = 0;
 
@@ -154,11 +163,11 @@ const nodeNeedsReprocess = (id: string, data: SpecificData) => {
 
 const savePipeline = () => {
   const pipeline = getPipeline(elements.value, specificDataMap);
-  apiSavePipeline(pipeline).then(file => {
+  apiSavePipeline(pipeline).then((file) => {
     // Download the file.
-
-  })
-}; 
+    download(file, "pipeline.zip", "application/zip");
+  });
+};
 
 const loadPipeline = () => {
   const fileElement = document.createElement("input");
@@ -166,19 +175,20 @@ const loadPipeline = () => {
 
   fileElement.onchange = (event) => {
     const file = (event.target as HTMLInputElement).files![0];
-    apiLoadPipeline(file).then(pipeline => {
+    apiLoadPipeline(file).then((pipeline) => {
       specificDataMap.clear();
       elements.value = gLoadPipeline(
         pipeline as any,
-        specificDataMap
+        specificDataMap,
+        nodeTemplates
       );
 
       processCanvas();
-    })
+    });
   };
 
   fileElement.click();
-}
+};
 </script>
 
 <template>

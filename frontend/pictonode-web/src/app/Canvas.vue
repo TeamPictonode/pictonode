@@ -15,7 +15,7 @@ export default defineComponent({
   components: { NodeView, RenderedView, Topbar, Widgets },
   data: () => ({
     img: undefined as HTMLCanvasElement | undefined,
-    addDirective: null as string | null, 
+    addDirective: null as string | null,
   }),
   methods: {
     onCanvasUpdate(canvas: HTMLCanvasElement) {
@@ -31,7 +31,7 @@ export default defineComponent({
     },
     loadPipeline() {
       this.addDirective = "load";
-    }
+    },
   },
 });
 </script>
