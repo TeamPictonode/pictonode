@@ -46,6 +46,8 @@ class CustomNode(GtkNodes.Node):
     def __init__(self, *args, **kwds) -> None:
         super().__init__(*args, **kwds)
 
+        self.set_can_focus(True)
+
     def set_values(self, values: dict):
         '''Virtual Method to be overriden by custom nodes'''
         pass
@@ -654,9 +656,6 @@ class BlurNode(CustomNode):
     def set_values(self, values: dict):
 
         ''' Sets custom node defaults from dictionary '''
-
-        print("Bruh1: ", values.get('std_dev_x'))
-        print("Bruh2: ", values.get('std_dev_y'))
         self.std_dev_x = values.get('std_dev_x')
         self.std_dev_y = values.get('std_dev_y')
 
@@ -694,6 +693,8 @@ class BlurNode(CustomNode):
         '''
         Checks entry input, update values, and processes buffer
         '''
+
+        self.grab_focus()
 
         value = float(entry.get_text())
 

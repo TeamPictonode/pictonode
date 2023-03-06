@@ -59,7 +59,7 @@ def serialize_nodes(node_view):
 
     # set output node id if it exist and sets it to null if not
     try:
-        json_string["output"] = list(filter(lambda srcnode: srcnode["template"] == "OutNode", json_string["nodes"]))[0]["id"]
+        json_string["output"] = list(filter(lambda srcnode: srcnode["template"] == "ImgOut", json_string["nodes"]))[0]["id"]
     except IndexError:
         json_string["output"] = None
 
