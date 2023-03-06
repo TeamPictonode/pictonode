@@ -50,9 +50,15 @@ class CustomNode(GtkNodes.Node):
         '''Virtual Method to be overriden by custom nodes'''
         pass
 
+    def remove(self, node):
+        self.destroy()
+
+    def get_values(self):
+        return {}
+
 
 class ImgSrcNode(CustomNode):
-    __gtype_name__ = 'SrcNode'
+    __gtype_name__ = 'ImgSrc'
 
     def __init__(self, node_window, *args, **kwds) -> None:
         super().__init__(*args, **kwds)
@@ -115,12 +121,6 @@ class ImgSrcNode(CustomNode):
         self.process()
         self.node_socket_output.write(bytes(self.buffer_id, 'utf8'))
 
-    def remove(self, node):
-        self.destroy()
-
-    def get_values(self):
-        return {}
-
     def process(self):
         # initialize our image context for the gegl nodes
         self.image_context = ontario.ImageContext()
@@ -141,7 +141,7 @@ class ImgSrcNode(CustomNode):
 
 
 class OutputNode(CustomNode):
-    __gtype_name__ = 'OutNode'
+    __gtype_name__ = 'ImgOut'
 
     def __init__(self, node_window, *args, **kwds) -> None:
         super().__init__(*args, **kwds)
@@ -215,9 +215,6 @@ class OutputNode(CustomNode):
 
         self.destroy()
 
-    def get_values(self):
-        return {}
-
     def update_display(self):
         if self.incoming_buffer:
             # display changes
@@ -281,7 +278,7 @@ class OutputNode(CustomNode):
 
 
 class InvertNode(CustomNode):
-    __gtype_name__ = 'InvertNode'
+    __gtype_name__ = 'Invert'
 
     def __init__(self, node_window, *args, **kwds) -> None:
         super().__init__(*args, **kwds)
@@ -315,12 +312,6 @@ class InvertNode(CustomNode):
             label, GtkNodes.NodeSocketIO.SOURCE)
         self.node_socket_output.connect(
             "socket_connect", self.node_socket_connect)
-
-    def remove(self, node):
-        self.destroy()
-
-    def get_values(self):
-        return {}
 
     def process_input(self):
         if self.incoming_buffer:
@@ -409,7 +400,7 @@ class InvertNode(CustomNode):
 
 
 class CompositeNode(CustomNode):
-    __gtype_name__ = 'CompNode'
+    __gtype_name__ = 'CompOver'
 
     def __init__(self, node_window, *args, **kwds) -> None:
         super().__init__(*args, **kwds)
@@ -471,17 +462,16 @@ class CompositeNode(CustomNode):
         self.node_socket_output.connect(
             "socket_connect", self.node_socket_connect)
 
-    def remove(self, node):
-        self.destroy()
-
     def get_values(self):
 
-        ''' Returns dictionary of current state of custom values for the node'''
+        ''' Returns dictionary of current state of custom values for the node '''
 
-        return {"opacity": self.opacity,
-                "x": self.x,
-                "y": self.y,
-                "scale": self.scale}
+        custom_values = {"opacity": self.opacity,
+                         "x": self.x,
+                         "y": self.y,
+                         "scale": self.scale}
+
+        return custom_values
 
     def process_input(self):
         if self.incoming_buffer1 and self.incoming_buffer2:
@@ -595,7 +585,7 @@ class CompositeNode(CustomNode):
 
 
 class BlurNode(CustomNode):
-    __gtype_name__ = 'BlurNode'
+    __gtype_name__ = 'GaussBlur'
 
     def __init__(self, node_window, *args, **kwds) -> None:
         super().__init__(*args, **kwds)
@@ -652,16 +642,12 @@ class BlurNode(CustomNode):
         self.node_socket_output.connect(
             "socket_connect", self.node_socket_connect)
 
-    def remove(self, node):
-        self.destroy()
-
     def get_values(self):
 
         ''' Returns dictionary of current state of custom values for the node '''
 
-        custom_values = {}
-        custom_values["std_dev_x"] = self.std_dev_x
-        custom_values["std_dev_y"] = self.std_dev_y
+        custom_values = {"std_dev_x": self.std_dev_x,
+                         "std_dev_y": self.std_dev_y}
 
         return custom_values
 

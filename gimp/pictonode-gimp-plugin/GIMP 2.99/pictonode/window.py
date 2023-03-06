@@ -6,6 +6,7 @@ from httpclient import *
 from client import *
 from json_generator import *
 from json_interpreter import *
+from login_window import LoginBox
 
 import sys
 import threading
@@ -75,12 +76,17 @@ screen_height = screen.get_height()
 # class based on the demo class from the gtknode img.py example
 
 
-class PluginWindow(object):
+class PluginWindow(Gtk.Window):
 
-    def __init__(self, layers: list):
-        self.window: Gtk.Window = Gtk.Window.new(Gtk.WindowType.TOPLEVEL)
-        self.window.set_border_width(20)
-        self.window.set_title("Pictonode")
+    def __init__(self, layers: list, **kwargs):
+        super().__init__(**kwargs)
+
+        self.set_border_width(20)
+        self.set_title("Pictonode")
+
+        # create overlay so that widgets can popup on UI
+        self.overlay = Gtk.Overlay()
+        self.add(self.overlay)
 
         # reset preview image
         if os.path.isfile("/tmp/gimp/temp.png"):
@@ -89,7 +95,7 @@ class PluginWindow(object):
         # output node lock
         self.has_output_node = False
 
-        # buffer map is used for storing and keeping track 
+        # buffer map is used for storing and keeping track
         # of changes to the buffer
         self.buffer_map = {}
 
@@ -101,13 +107,18 @@ class PluginWindow(object):
 
         # create menus on the bar
         file_menu = Gtk.Menu.new()
+        about_menu = Gtk.Menu.new()
 
         # TODO: about_menu = Gtk.Menu.new()
 
         # add menu items to file menu
         file_menu_item = Gtk.MenuItem("File")
+        about_menu_item = Gtk.MenuItem("About")
+
         file_menu_item.set_submenu(file_menu)
+        about_menu_item.set_submenu(about_menu)
         menu_bar.append(file_menu_item)
+        menu_bar.append(about_menu_item)
 
         open_graph_item = Gtk.MenuItem("Open Node Graph")
         open_graph_item.connect("activate", self.open_graph)
@@ -116,6 +127,10 @@ class PluginWindow(object):
         save_graph_item = Gtk.MenuItem("Export Node Graph")
         file_menu.append(save_graph_item)
         save_graph_item.connect("activate", self.save_graph)
+
+        login_item = Gtk.MenuItem("Login")
+        about_menu.append(login_item)
+        login_item.connect("activate", self.login)
 
         # create a css provider to change the frame background
         css_provider = Gtk.CssProvider()
@@ -178,19 +193,21 @@ class PluginWindow(object):
         full_view.pack_start(image_frame, True, True, 20)
         full_view.pack_start(paned, True, True, 0)
 
-        self.window.add(full_view)
+        self.overlay.add(full_view)
 
-        self.window.connect("destroy", self.do_quit)
+        self.connect("destroy", self.do_quit)
 
         # set window size and show plugin window
-        self.window.set_default_size((screen_width // .75), (screen_height // .75))
-        self.window.show_all()
-        Gtk.main()
+        self.set_default_size((screen_width // .75), (screen_height // .75))
 
     def do_quit(self, widget=None, data=None):
         Gtk.main_quit()
-        # can't call sys.exit(0) during plugin runtime if window is closed, it'll kill the whole plugin process
-        # sys.exit(0)
+
+    def login(self, widget=None):
+        # create login overlay
+        login_box = LoginBox(orientation=Gtk.Orientation.VERTICAL)
+        self.overlay.add_overlay(login_box)
+        self.show_all()
 
     def on_button_press(self, widget, event):
         if event.button == 3:
@@ -329,9 +346,10 @@ class PluginWindow(object):
 
         return [pos[1], pos[2]]
 
-    def set_node_view(self, new_nv: GtkNodes.NodeView):
-        self.node_view = new_nv
+    def reset_node_view(self):
+        self.node_view = GtkNodes.NodeView.new()
         self.node_view.show_all()
+        self.show_all()
 
     def save_graph(self, widget=None):
 
@@ -339,7 +357,7 @@ class PluginWindow(object):
 
         save_dialog = Gtk.FileChooserDialog(
             "Save Node Graph",
-            self.window,
+            self,
             Gtk.FileChooserAction.SAVE,
             (Gtk.STOCK_CANCEL,
              Gtk.ResponseType.CANCEL,
@@ -376,7 +394,7 @@ class PluginWindow(object):
 
         open_dialog = Gtk.FileChooserDialog(
             "Open Node Graph",
-            self.window,
+            self,
             Gtk.FileChooserAction.OPEN,
             (Gtk.STOCK_CANCEL,
              Gtk.ResponseType.CANCEL,
