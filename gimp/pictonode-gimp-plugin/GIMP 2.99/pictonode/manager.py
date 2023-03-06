@@ -106,7 +106,7 @@ class PictonodeManager(metaclass=SingletonConstruction):
     def run(self):
 
         ''' This run() will be gutted just checking out some pocs for parker'''
-        theme_name = "Yaru"
+        theme_name = "Adwaita"
         settings = Gtk.Settings.get_default()
         settings.set_property("gtk-theme-name", theme_name)
 
@@ -161,6 +161,7 @@ class PictonodeManager(metaclass=SingletonConstruction):
         win.show_all()
         # GimpUi.init("pictonode.py")
         self.main_window = window.PluginWindow(self.image.list_layers())
+        self.main_window.show_all()
         Gtk.main()
         # icon toolbar
         pass
