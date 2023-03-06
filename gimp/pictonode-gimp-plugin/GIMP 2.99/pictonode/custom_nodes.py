@@ -47,6 +47,7 @@ class CustomNode(GtkNodes.Node):
         super().__init__(*args, **kwds)
 
         self.set_can_focus(True)
+        self.connect("node_func_clicked", self.remove)
 
     def set_values(self, values: dict):
         '''Virtual Method to be overriden by custom nodes'''
@@ -696,19 +697,19 @@ class BlurNode(CustomNode):
 
         self.grab_focus()
 
-        value = float(entry.get_text())
-
-        # remove keyboard focus from entry box
-        entry.grab_remove()
-
         # let sanitize our inputs
         try:
+            value = float(entry.get_text())
+            entry.set_text(str(value))
             if value < 0:
-                entry.set_text("0")
+                entry.set_text("0.0")
+                value = 0.0
             elif value > 100:
-                entry.set_text("1")
+                entry.set_text("100.0")
+                value = 100.0
         except ValueError:
-            entry.set_text("0")
+            entry.set_text("0.0")
+            value = 0.0
 
         # set new values
         if entry_id == 1:
@@ -716,6 +717,212 @@ class BlurNode(CustomNode):
 
         elif entry_id == 2:
             self.std_dev_y = value
+
+        self.process_input()
+
+    def value_update(self):
+        '''
+        Processes image and sends out updated buffer reference
+        '''
+
+        did_process = self.process_ouput()
+
+        if not did_process:
+            print("Error: could not process invert")
+
+        self.node_socket_output.write(bytes(self.buffer_id, 'utf8'))
+
+    def node_socket_disconnect(self, socket, sink):
+        '''
+        Processes socket disconnect and updates output accordingly
+        '''
+
+        # reset buffer reference information
+        self.incoming_buffer_id = None
+        self.incoming_buffer = None
+        self.buffer = None
+        self.layer = None
+        self.process_input()
+
+    def node_socket_connect(self, sink, source):
+        '''
+        Sends buffer reference upon initial socket connection
+        '''
+
+        self.value_update()
+
+    def node_socket_incoming(self, socket, payload):
+        '''
+        Updates node internal state upon update from socket.
+        '''
+
+        # reset buffer reference information
+        self.incoming_buffer_id = None
+        self.incoming_buffer = None
+        self.buffer = None
+        self.layer = None
+
+        # set new buffer information
+        if payload:
+            self.image_context.reset_context()
+            self.incoming_buffer_id = payload.decode('utf-8')
+            print("Buffer ID incoming: ", self.incoming_buffer_id)
+
+            self.incoming_buffer = self.node_window.buffer_map.get(
+                self.incoming_buffer_id)[0]
+
+            self.layer = self.node_window.buffer_map.get(
+                self.incoming_buffer_id)[1]
+
+            print("Invert Incoming: ", self.incoming_buffer)
+
+            self.process_input()
+        else:
+            print("Error!!!")
+
+
+class BrightContNode(CustomNode):
+    __gtype_name__ = 'BrightCont'
+
+    def __init__(self, node_window, *args, **kwds) -> None:
+        super().__init__(*args, **kwds)
+
+        self.node_window = node_window
+        self.buffer_id = str(uuid.uuid1())
+        self.buffer = None
+        self.layer = None
+
+        # default operation arguments
+        self.brightness: float = 0.0
+        self.contrast: float = 1.0
+
+        # initialize our image context for the gegl nodes
+        self.image_context = ontario.ImageContext()
+        self.image_builder = ontario.ImageBuilder(self.image_context)
+
+        self.set_label("Bright/Contrast")
+
+        # add argument fields
+        self.label1 = Gtk.Label(label="Brightness")
+        self.label2 = Gtk.Label(label="Contrast")
+
+        self.entry1 = Gtk.Entry()
+        self.entry2 = Gtk.Entry()
+
+        self.entry1.set_text(str(self.brightness))
+        self.entry2.set_text(str(self.contrast))
+
+        self.entry1.connect("activate", self.entry_change, 1)
+        self.entry2.connect("activate", self.entry_change, 2)
+
+        self.item_add(self.label1, GtkNodes.NodeSocketIO.DISABLE)
+        self.item_add(self.entry1, GtkNodes.NodeSocketIO.DISABLE)
+        self.item_add(self.label2, GtkNodes.NodeSocketIO.DISABLE)
+        self.item_add(self.entry2, GtkNodes.NodeSocketIO.DISABLE)
+
+        # create node input socket
+        label: Gtk.Label = Gtk.Label.new("Image")
+        label.set_xalign(0.0)
+        self.node_socket_input = self.item_add(
+            label, GtkNodes.NodeSocketIO.SINK)
+        self.node_socket_input.connect(
+            "socket_incoming", self.node_socket_incoming)
+        self.node_socket_input.connect(
+            "socket_disconnect", self.node_socket_disconnect)
+
+        # create node output socket
+        label: Gtk.Label = Gtk.Label.new("Image")
+        label.set_xalign(1.0)
+        self.node_socket_output = self.item_add(
+            label, GtkNodes.NodeSocketIO.SOURCE)
+        self.node_socket_output.connect(
+            "socket_connect", self.node_socket_connect)
+
+    def get_values(self):
+
+        ''' Returns dictionary of current state of custom values for the node '''
+
+        custom_values = {"brightness": self.brightness,
+                         "contrast": self.contrast}
+
+        return custom_values
+
+    def set_values(self, values: dict):
+
+        ''' Sets custom node defaults from dictionary '''
+        self.brightness = values.get('brightness')
+        self.contrast = values.get('contrast')
+
+        # set entry text for each entry box
+        self.entry1.set_text(str(self.brightness))
+        self.entry2.set_text(str(self.contrast))
+
+    def process_input(self):
+        if self.incoming_buffer:
+            # set internal copy of buffer
+            self.buffer = self.incoming_buffer.dup()
+
+            # use ontario backend for image processing
+            self.image_builder.load_from_buffer(self.buffer)
+            self.image_builder.brightness_contrast(self.brightness, self.contrast)
+            self.image_builder.save_to_buffer(self.buffer)
+            self.image_builder.process()
+
+        # update buffer saved in map and resend reference
+        self.value_update()
+
+    def process_ouput(self):
+        '''
+        Updates buffer reference in map
+        '''
+
+        print("Buffer: ", self.buffer)
+        self.node_window.buffer_map[self.buffer_id] = [self.buffer, self.layer]
+
+        if self.buffer:
+            return True
+        return False
+
+    def entry_change(self, entry, entry_id):
+        '''
+        Checks entry input, updates values, and processes buffer
+        '''
+
+        self.grab_focus()
+
+        if entry_id == 1:
+            # let sanitize our inputs
+            try:
+                value = float(entry.get_text())
+                entry.set_text(str(value))
+                if value < -1:
+                    entry.set_text("-1.0")
+                    value = -1.0
+                elif value > 1.0:
+                    entry.set_text("1.0")
+                    value = 1.0
+            except ValueError:
+                entry.set_text("0.0")
+                value = 0.0
+
+            self.brightness = value
+
+        elif entry_id == 2:
+             # let sanitize our inputs
+            try:
+                value = float(entry.get_text())
+                entry.set_text(str(value))
+                if value < 0:
+                    entry.set_text("0.0")
+                    value = 0.0
+                elif value > 2.0:
+                    entry.set_text("2.0")
+                    value = 2.0
+            except ValueError:
+                entry.set_text("1.0")
+                value = 1.0
+
+            self.contrast = value
 
         self.process_input()
 
