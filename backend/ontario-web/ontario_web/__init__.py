@@ -257,7 +257,7 @@ def create_app(test_config=None):
         cursor = d.cursor()
         projects = []
         try:
-            # Select id, name, description from projects, where the 
+            # Select id, name, description from projects, where the
             # owner id is the user with the given username
             cursor.execute(
                 """
