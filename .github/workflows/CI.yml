@@ -58,6 +58,10 @@ jobs:
         run: python -m pip install pytest
       - name: Install GEGL
         run: sudo apt update -y && sudo apt install -y libgegl-dev
+      - name: Install requirements
+        run: |
+          pushd ./backend/ontario-web
+          python -m pip install -r requirements.txt
       - name: Run Pytest
         run: bash ./scripts/pytest_test.sh
 
