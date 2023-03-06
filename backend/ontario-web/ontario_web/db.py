@@ -63,8 +63,9 @@ def init_db(test_config=None):
     cur = conn.cursor()
 
     # Create the users table
+    # Cascade deletes to projects
     cur.execute("""
-    DROP TABLE IF EXISTS users;
+    DROP TABLE IF EXISTS users CASCADE;
   """)
 
     cur.execute("""
@@ -78,13 +79,14 @@ def init_db(test_config=None):
 
     # Create the projects table
     cur.execute("""
-    DROP TABLE IF EXISTS projects;
+    DROP TABLE IF EXISTS projects CASCADE;
     """)
+
     cur.execute("""
     CREATE TABLE projects (
         id SERIAL PRIMARY KEY,
         name VARCHAR(255) NOT NULL,
-        description VARCHAR(255) NOT NULL
+        description VARCHAR(255) NOT NULL,
         owner INTEGER NOT NULL,
         FOREIGN KEY (owner) REFERENCES users (id)
     );

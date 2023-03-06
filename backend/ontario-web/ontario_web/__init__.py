@@ -249,7 +249,7 @@ def create_app(test_config=None):
             # The body of the response should be the JSON pipeline
             return save_and_load.load_from_zip(im, save_path)
 
-    # For /api/projects, return a list of all projects associated with 
+    # For /api/projects, return a list of all projects associated with
     # the username
     @app.route("/api/projects/<username>", methods=["GET"])
     def projects(username):
@@ -257,13 +257,17 @@ def create_app(test_config=None):
         cursor = d.cursor()
         projects = []
         try:
+            # Select id, name, description from projects, where the 
+            # owner id is the user with the given username
             cursor.execute(
                 """
-                SELECT projects.id, projects.name, projects.description,
-                FROM projects
-                INNER JOIN users ON projects.owner = users.id
-                WHERE users.username = %s
-                """
+                SELECT p.id, p.name, p.description
+                FROM projects p
+                INNER JOIN users u
+                ON p.owner = u.id
+                WHERE u.username = %s
+                """,
+                (username,),
             )
             projects = cursor.fetchall()
         except psycopg2.OperationalError:
@@ -282,7 +286,7 @@ def create_app(test_config=None):
             )
 
         return ret_projects
-    
+
     def _check_project_exists(id):
         d = db.get_db()
         cursor = d.cursor()
@@ -314,23 +318,23 @@ def create_app(test_config=None):
         p = os_path.join(projects_path, f"project{id}.zip")
 
         # Send the file over
-        return send_file(p) 
+        return send_file(p)
 
     # Upload a JSON and an XCF file to the projects dir
     @app.route("/api/project/upload", methods=["PUT"])
     def project_upload():
-        # Request contains:
-        # - Body with name and description
-        # - ZIP file 
-        project = request.get_json()
-        name = project["name"]
-        description = project["description"]
+        # Request is form data that contains:
+        # - name
+        # - description
+        # - zip
+        name = request.form["name"]
+        description = request.form["description"]
         zip = request.files["zip"]
 
         # Make sure the user is logged in
         if "user_id" not in session:
             return {"error": "Not logged in."}, 401
-        
+
         # Insert into the projects table
         d = db.get_db()
         cursor = d.cursor()
@@ -358,7 +362,7 @@ def create_app(test_config=None):
 
     # Upload a JSON and XCF file to an existing project.
     # The project id is in the URL
-    @app.route("/api/project/upload/<id>", methods=["PUT"])
+    @app.route("/api/project/upload/<id>", methods=["POST"])
     def project_upload_existing(id):
         # Request contains:
         # - ZIP file
