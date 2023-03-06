@@ -54,6 +54,8 @@ jobs:
               POSTGRES_USER: ontario_test
               POSTGRES_PASSWORD: ontario_test
               POSTGRES_DB: ontario_test
+            ports:
+              - 5432:5432
             # Set health checks to wait until postgres has started
             options: >-
               --health-cmd pg_isready
