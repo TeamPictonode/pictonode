@@ -7,9 +7,9 @@ The pictonode saved file format is a ZIP file containing the following:
 
 ## Node pipeline Node names:
 
-**Image Source Node**: 'ImgSrc'
-**Image Output Node**: 'ImgOut'
-**Image Invert Node**: 'Invert'
-**Gaussian Blur Node**: 'GaussBlur'
-**Composite Node**: 'CompOver'
-**Brightness Contrast Node**: 'BrightCont'
+- **Image Source Node**: 'ImgSrc' 
+- **Image Output Node**: 'ImgOut' 
+- **Image Invert Node**: 'Invert' 
+- **Gaussian Blur Node**: 'GaussBlur' 
+- **Composite Node**: 'CompOver' 
+- **Brightness Contrast Node**: 'BrightCont'
