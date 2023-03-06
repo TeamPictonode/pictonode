@@ -224,14 +224,14 @@ class PluginWindow(Gtk.Window):
             sub_item1 = Gtk.MenuItem(label="Source Node")
             sub_item2 = Gtk.MenuItem(label="Output Node")
             sub_item3 = Gtk.MenuItem(label="Invert Node")
-            # sub_item4 = Gtk.MenuItem(label="Composite Node")
+            sub_item4 = Gtk.MenuItem(label="Bright/Contrast")
             sub_item5 = Gtk.MenuItem(label="Blur Node")
 
             # connect menu items here
             sub_item1.connect("activate", self.add_image_src_node)
             sub_item2.connect("activate", self.add_image_out_node)
             sub_item3.connect("activate", self.add_image_invert_node)
-            # sub_item4.connect("activate", self.add_image_comp_node)
+            sub_item4.connect("activate", self.add_bright_cont_node)
             sub_item5.connect("activate", self.add_image_blur_node)
 
             # disable output node option if one already exists
@@ -243,7 +243,7 @@ class PluginWindow(Gtk.Window):
             submenu.append(sub_item2)
             submenu.append(separator)
             submenu.append(sub_item3)
-            # submenu.append(sub_item4)
+            submenu.append(sub_item4)
             submenu.append(sub_item5)
 
             # add submenu to menu item
@@ -319,6 +319,19 @@ class PluginWindow(Gtk.Window):
 
         # create new node and add it to the NodeView widget
         new_node = cn.CompositeNode(self)
+        self.node_view.add(new_node)
+
+        # grab cursor position and move node to it
+        position = self.get_cursor_pos()
+        new_node.set_property("x", position[0])
+        new_node.set_property("y", position[1])
+        self.node_view.show_all()
+
+    def add_bright_cont_node(self, widget=None):
+        ''' Adds a brightness contrast node at the current cursor position '''
+
+        # create new node and add it to the NodeView widget
+        new_node = cn.BrightContNode(self)
         self.node_view.add(new_node)
 
         # grab cursor position and move node to it
