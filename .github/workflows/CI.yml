@@ -47,6 +47,19 @@ jobs:
 
   integration_test:
     runs-on: ubuntu-latest
+    services:
+          postgres:
+            image: postgres
+            env:
+              POSTGRES_USER: ontario_test
+              POSTGRES_PASSWORD: ontario_test
+              POSTGRES_DB: ontario_test
+            # Set health checks to wait until postgres has started
+            options: >-
+              --health-cmd pg_isready
+              --health-interval 10s
+              --health-timeout 5s
+              --health-retries 5
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-node@v1
