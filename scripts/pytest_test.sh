@@ -7,6 +7,7 @@ set -ex
 PY_PROJECTS=(
   "backend/ontario"
   "backend/ontario-web"
+  "gimp/pictonode-gimp-plugin/GIMP 2.99/tests"
 )
 
 # Make sure pytest is installed
@@ -15,6 +16,9 @@ then
   echo "pytest could not be found. Please install it with 'pip install pytest'"
   exit
 fi
+
+# Setup environment for plugin tests
+source gimp/pictonode-gimp-plugin/GIMP 2.99/tests/setup_json_test.sh
 
 for project in "${PY_PROJECTS[@]}"
 do

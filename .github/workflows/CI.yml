@@ -78,6 +78,7 @@ jobs:
           pushd ./backend/ontario-web
           python -m pip install -r requirements.txt
       - name: Run Pytest
+      - uses: GabrielBB/xvfb-action@v1
         run: bash ./scripts/pytest_test.sh
 
   test_web:
