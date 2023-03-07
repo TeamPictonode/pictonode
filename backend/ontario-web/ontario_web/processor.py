@@ -108,10 +108,6 @@ def make_template_table(
     def composite(args, meta):
         val = load(args[0], meta).composite(
             load(args[1], meta),
-            1.0,
-            0.0,
-            0.0,
-            1.0
         )
         return val
 
