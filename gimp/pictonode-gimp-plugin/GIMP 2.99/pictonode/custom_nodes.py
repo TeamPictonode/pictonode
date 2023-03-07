@@ -422,10 +422,9 @@ class CompositeNode(CustomNode):
         self.layer = None
 
         # default operation arguments
-        self.opacity: float = 1
-        self.x: float = 1000
-        self.y: float = 100
-        self.scale: float = 1
+        self.x: float = -50.0
+        self.y: float = -60.0
+        self.scale: float = 100.0
 
         # initialize our image context for the gegl nodes
         self.image_context = ontario.ImageContext()
@@ -434,6 +433,30 @@ class CompositeNode(CustomNode):
 
         self.set_label("Image Composite")
         self.connect("node_func_clicked", self.remove)
+
+        # add argument fields
+        self.label1 = Gtk.Label(label="X translate")
+        self.label2 = Gtk.Label(label="Y translate")
+        self.label3 = Gtk.Label(label="Scale")
+
+        self.entry1 = Gtk.Entry()
+        self.entry2 = Gtk.Entry()
+        self.entry3 = Gtk.Entry()
+
+        self.entry1.set_text(str(self.x))
+        self.entry2.set_text(str(self.y))
+        self.entry3.set_text(str(self.scale))
+
+        self.entry1.connect("activate", self.entry_change, 1)
+        self.entry2.connect("activate", self.entry_change, 2)
+        self.entry3.connect("activate", self.entry_change, 3)
+
+        self.item_add(self.label1, GtkNodes.NodeSocketIO.DISABLE)
+        self.item_add(self.entry1, GtkNodes.NodeSocketIO.DISABLE)
+        self.item_add(self.label2, GtkNodes.NodeSocketIO.DISABLE)
+        self.item_add(self.entry2, GtkNodes.NodeSocketIO.DISABLE)
+        self.item_add(self.label3, GtkNodes.NodeSocketIO.DISABLE)
+        self.item_add(self.entry3, GtkNodes.NodeSocketIO.DISABLE)
 
         # create node input sockets
 
@@ -469,12 +492,23 @@ class CompositeNode(CustomNode):
 
         ''' Returns dictionary of current state of custom values for the node '''
 
-        custom_values = {"opacity": self.opacity,
-                         "x": self.x,
+        custom_values = {"x": self.x,
                          "y": self.y,
                          "scale": self.scale}
 
         return custom_values
+
+    def set_values(self, values: dict):
+
+        ''' Sets custom node defaults from dictionary '''
+        self.x = values.get('x')
+        self.y = values.get('y')
+        self.scale = values.get('scale')
+
+        # set entry text for each entry box
+        self.entry1.set_text(str(self.x))
+        self.entry2.set_text(str(self.y))
+        self.entry3.set_text(str(self.scale))
 
     def process_input(self):
         if self.incoming_buffer1 and self.incoming_buffer2:
@@ -485,18 +519,76 @@ class CompositeNode(CustomNode):
             self.buffer = self.incoming_buffer1.dup()
             # use ontario backend for image processing
             self.image_builder1.load_from_buffer(self.incoming_buffer1)
-            self.image_builder1.composite(self.incoming_buffer2,
-                                          self.opacity,
-                                          self.x,
-                                          self.y,
-                                          self.scale)
-
+            self.image_builder2.load_from_buffer(self.incoming_buffer2)
+            self.image_builder2.translate(self.x, self.y)
+            self.image_builder2.resize(self.scale, self.scale)
+            self.image_builder1.composite(self.image_builder2)
             self.image_builder1.save_to_buffer(self.buffer)
             self.image_builder1.process()
             print("Comp output: ", self.buffer)
 
         # update buffer saved in map and resend reference
         self.value_update()
+
+    def entry_change(self, entry, entry_id):
+        '''
+        Checks entry input, updates values, and processes buffer
+        '''
+
+        self.grab_focus()
+
+        if entry_id == 1:
+            # let sanitize our inputs
+            try:
+                value = float(entry.get_text())
+                entry.set_text(str(value))
+                if value < -1000000:
+                    entry.set_text("-1000000.0")
+                    value = -1000000.0
+                elif value > 1000000:
+                    entry.set_text("1000000.0")
+                    value = 1000000.0
+            except ValueError:
+                entry.set_text("0.0")
+                value = 0.0
+
+            self.x = value
+
+        elif entry_id == 2:
+            # let sanitize our inputs
+            try:
+                value = float(entry.get_text())
+                entry.set_text(str(value))
+                if value < -1000000:
+                    entry.set_text("-1000000.0")
+                    value = -1000000.0
+                elif value > 1000000:
+                    entry.set_text("1000000.0")
+                    value = 1000000.0
+            except ValueError:
+                entry.set_text("0.0")
+                value = 0.0
+
+            self.y = value
+
+        elif entry_id == 3:
+            # let sanitize our inputs
+            try:
+                value = float(entry.get_text())
+                entry.set_text(str(value))
+                if value < -9000.0:
+                    entry.set_text("-9000.0")
+                    value = -9000.0
+                elif value > 9000.0:
+                    entry.set_text("9000.0")
+                    value = 9000.0
+            except ValueError:
+                entry.set_text("100.0")
+                value = 100.0
+
+            self.scale = value
+
+        self.process_input()
 
     def process_ouput(self):
         '''

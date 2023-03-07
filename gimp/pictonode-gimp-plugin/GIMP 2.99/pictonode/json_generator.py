@@ -33,9 +33,8 @@ def serialize_nodes(node_view):
 
     # serialize the links, requires a second pass through the nodes
     link_id = 0
-    for sink_index, node in enumerate(node_view.get_children()):
-        sink_index = 0
-        for sink in node.get_sinks():
+    for node in node_view.get_children():
+        for sink_index, sink in enumerate(node.get_sinks()):
             if not sink.get_input():
                 continue
 
