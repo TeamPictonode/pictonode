@@ -1,4 +1,4 @@
-pushd $( dirname "$0" )
+pushd "$(dirname "${BASH_SOURCE[0]}")"
 
 if [ ! -d "./output" ]
 then
