@@ -65,7 +65,6 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-node@v1
-      - uses: GabrielBB/xvfb-action@v1
         with:
           node-version: '19.x'
       - name: Install Dependencies
@@ -79,7 +78,7 @@ jobs:
           pushd ./backend/ontario-web
           python -m pip install -r requirements.txt
       - name: Run Pytest
-        run: bash ./scripts/pytest_test.sh
+        run: xvfb-run bash ./scripts/pytest_test.sh
 
   test_web:
     runs-on: ubuntu-latest
