@@ -9,25 +9,25 @@ def test_process(client, image_ids):
       "nodes": [
         {{
           "id": 0,
-          "template": "input",
+          "template": "ImgSrc",
           "values": {{
             "image": {image1_id}
           }}
         }},
         {{
           "id": 1,
-          "template": "input",
+          "template": "ImgSrc",
           "values": {{
             "image": {image2_id}
           }}
         }},
         {{
           "id": 2,
-          "template": "composite"
+          "template": "CompOver"
         }},
         {{
           "id": 3,
-          "template": "output"
+          "template": "ImgOut"
         }}
       ],
       "links": [

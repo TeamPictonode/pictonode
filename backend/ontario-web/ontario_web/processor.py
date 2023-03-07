@@ -80,7 +80,7 @@ def make_template_table(
         None
     )
     inputNode.insertNamedOutput("image", 0)
-    table.addTemplate("input", inputNode)
+    table.addTemplate("ImgSrc", inputNode)
 
     # Output node that saves an image to disk
     outputNode = nodes.NodeTemplate(
@@ -93,7 +93,7 @@ def make_template_table(
         ],
         None
     )
-    table.addTemplate("output", outputNode)
+    table.addTemplate("ImgOut", outputNode)
 
     def raise_(args, meta):
         raise Exception(f"Not implemented. {args[0].getValue()}")
@@ -123,7 +123,7 @@ def make_template_table(
         ],
         None
     )
-    table.addTemplate("composite", compositeNode)
+    table.addTemplate("CompOver", compositeNode)
 
     # Invert node that inverts an image
     invertNode = nodes.NodeTemplate(
@@ -137,6 +137,6 @@ def make_template_table(
         ],
         None
     )
-    table.addTemplate("invert", invertNode)
+    table.addTemplate("Invert", invertNode)
 
     return table

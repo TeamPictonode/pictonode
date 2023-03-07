@@ -141,7 +141,7 @@ class ImageBuilder:
     def composite(
             self,
             other: "ImageBuilder"
-            ) -> "ImageBuilder":
+    ) -> "ImageBuilder":
         """
         Composites two images.
         """

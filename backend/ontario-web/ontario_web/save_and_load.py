@@ -25,7 +25,7 @@ def save_to_zip(
 
     with zipfile.ZipFile(target, "w") as zip_file:
         for node in json_pipeline["nodes"]:
-            if node["template"] == "input":
+            if node["template"] == "ImgSrc":
                 # Get the resulting image path
                 values = node["values"]
                 id = values["image"]
@@ -55,7 +55,7 @@ def load_from_zip(
         json_pipeline = json.loads(json_pipeline)
 
         for node in json_pipeline["nodes"]:
-            if node["template"] == "input":
+            if node["template"] == "ImgSrc":
                 # Get the resulting image path
                 values = node["values"]
                 img_path = values["image"]
