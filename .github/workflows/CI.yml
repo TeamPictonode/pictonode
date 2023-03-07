@@ -78,8 +78,10 @@ jobs:
           pushd ./backend/ontario-web
           python -m pip install -r requirements.txt
       - name: Run Pytest
-        run: xvfb-run bash ./scripts/pytest_test.sh
-
+        run: |
+          bash ./gimp/pictonode-gimp-plugin/GIMP-2.99/tests/setup_json_test.sh
+          xvfb-run bash ./scripts/pytest_test.sh
+           
   test_web:
     runs-on: ubuntu-latest
     steps:
