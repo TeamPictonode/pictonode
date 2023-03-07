@@ -17,9 +17,6 @@ then
   exit
 fi
 
-# Setup environment for plugin tests
-source gimp/pictonode-gimp-plugin/GIMP-2.99/tests/setup_json_test.sh
-
 for project in "${PY_PROJECTS[@]}"
 do
   echo "Running pytest on $project"
