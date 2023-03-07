@@ -140,24 +140,19 @@ class ImageBuilder:
 
     def composite(
             self,
-            other: "ImageBuilder",
-            opacity: float,
-            x: float,
-            y: float,
-            scale: float) -> "ImageBuilder":
+            other: "ImageBuilder"
+            ) -> "ImageBuilder":
         """
         Composites two images.
         """
 
-        node = self.__parent.create_child("gegl:layer")
-        node.set_property("opacity", opacity)
-        node.set_property("x", x)
-        node.set_property("y", y)
-        node.set_property("scale", scale)
+        node = self.__parent.create_child("gegl:over")
 
         # Connect the last node to the save node.
         self.__nodes[-1].connect_to("output", node, "input")
         other.__nodes[-1].connect_to("output", node, "aux")
+
+        self.__nodes.append(node)
         return self
 
     def invert(self) -> "ImageBuilder":
@@ -167,6 +162,23 @@ class ImageBuilder:
 
         # create child node invert
         node = self.__parent.create_child("gegl:invert-linear")
+
+        # Connect the last node to the new node.
+        self.__nodes[-1].link(node)
+
+        # add new node to node list
+        self.__nodes.append(node)
+        return self
+
+    def translate(self, x: float, y: float) -> "ImageBuilder":
+        """
+        Translates an image.
+        """
+
+        # create child node invert
+        node = self.__parent.create_child("gegl:translate")
+        node.set_property("x", x)
+        node.set_property("y", y)
 
         # Connect the last node to the new node.
         self.__nodes[-1].link(node)
@@ -226,7 +238,7 @@ class ImageBuilder:
         Resizes an image.
         """
 
-        node = self.__parent.create_child("gegl:scale-sizes")
+        node = self.__parent.create_child("gegl:scale-size")
         node.set_property("x", width)
         node.set_property("y", height)
 

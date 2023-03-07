@@ -226,6 +226,7 @@ class PluginWindow(Gtk.Window):
             sub_item3 = Gtk.MenuItem(label="Invert Node")
             sub_item4 = Gtk.MenuItem(label="Bright/Contrast")
             sub_item5 = Gtk.MenuItem(label="Blur Node")
+            sub_item6 = Gtk.MenuItem(label="Composite Node")
 
             # connect menu items here
             sub_item1.connect("activate", self.add_image_src_node)
@@ -233,6 +234,7 @@ class PluginWindow(Gtk.Window):
             sub_item3.connect("activate", self.add_image_invert_node)
             sub_item4.connect("activate", self.add_bright_cont_node)
             sub_item5.connect("activate", self.add_image_blur_node)
+            sub_item6.connect("activate", self.add_image_comp_node)
 
             # disable output node option if one already exists
             if self.has_output_node:
@@ -245,6 +247,7 @@ class PluginWindow(Gtk.Window):
             submenu.append(sub_item3)
             submenu.append(sub_item4)
             submenu.append(sub_item5)
+            submenu.append(sub_item6)
 
             # add submenu to menu item
             submenu_item.set_submenu(submenu)
