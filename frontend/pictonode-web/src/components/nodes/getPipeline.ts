@@ -66,7 +66,7 @@ export function getPipeline(
       }
     }
 
-    if (node.template == "output") {
+    if (node.template == "ImgOut") {
       output = node.id;
     }
 

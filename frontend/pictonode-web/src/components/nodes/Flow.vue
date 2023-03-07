@@ -32,8 +32,8 @@ import * as download from "downloadjs";
 let id = 0;
 
 const elements = ref([
-  _templateToNode("input", 100, 100),
-  _templateToNode("output", 300, 100),
+  _templateToNode("ImgSrc", 100, 100),
+  _templateToNode("ImgOut", 300, 100),
   {
     id: "1000000",
     source: "0",
