@@ -42,8 +42,10 @@ def test_composite():
 
     context = ontario.ImageContext()
     builder = ontario.ImageBuilder(context)
+    builder_aux = ontario.ImageBuilder(context)
     builder.load_from_file(TEST_IMAGE1_PATH)
-    builder.composite(builder.load_from_file(TEST_IMAGE2_PATH), 0, 0, 0, 1)
+    builder_aux.load_from_file(TEST_IMAGE2_PATH)
+    builder.composite(builder_aux)
     builder.process()
 
 
