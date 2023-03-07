@@ -32,6 +32,12 @@ export default defineComponent({
     },
     setPassword(template: string) {
       this.password = template
+    },
+    confirmPassword(template: string) {
+      //to do
+    },
+    setRegister() {
+      //to do
     }
   }
 });

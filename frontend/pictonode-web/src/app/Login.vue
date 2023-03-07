@@ -8,7 +8,22 @@
 import { defineComponent } from "vue";
 
 export default defineComponent({
+  data: () => ({
+    username: null as string | null,
+    password: null as string | null,
+  }),
   name: "Login",
+  methods: {
+    setUsername(template: string) {
+      this.username = template
+    },
+    setPassword(template: string) {
+      this.password = template
+    },
+    checkLogin() {
+      ///to do
+    }
+  }
 });
 </script>
 
@@ -17,13 +32,13 @@ export default defineComponent({
     <v-card-title class="text-center">Login</v-card-title>
     <v-card-text>
       <v-form>
-        <v-text-field label="Username" solo />
-        <v-text-field type="password" label="Password" />
+        <v-text-field label="Username" solo @input="setUsername"/>
+        <v-text-field type="password" label="Password" @input="setPassword"/>
       </v-form>
     </v-card-text>
     <v-card-actions>
       <v-spacer />
-      <v-btn color="primary">Login</v-btn>
+      <v-btn color="primary" @input="checkLogin">Login</v-btn>
     </v-card-actions>
   </v-card>
 </template>
