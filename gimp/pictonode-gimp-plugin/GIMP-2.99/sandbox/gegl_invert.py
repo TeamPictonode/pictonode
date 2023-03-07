@@ -23,7 +23,7 @@ import sys
 import os
 
 if sys.platform == "win32":
-    os.environ['GI_TYPELIB_PATH'] = "C:\Program Files\GIMP %GIMP_VERSION%\lib\girepository-1.0"
+    os.environ['GI_TYPELIB_PATH'] = "C:\Program Files\GIMP-%GIMP_VERSION%\lib\girepository-1.0"
 
 import gi
 

@@ -7,7 +7,7 @@ set -ex
 PY_PROJECTS=(
   "backend/ontario"
   "backend/ontario-web"
-  "gimp/pictonode-gimp-plugin/GIMP\ 2.99"
+  "gimp/pictonode-gimp-plugin/GIMP-2.99"
 )
 
 # Make sure pytest is installed
