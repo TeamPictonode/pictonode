@@ -6,44 +6,39 @@
 
 <script lang="ts">
 import { defineComponent } from "vue";
-import { setRegister } from "../api"
+import { threadId } from "worker_threads";
+import { setRegister } from "../api";
 
 export default defineComponent({
   data: () => ({
     user: {
       username: null as string | null,
-      email: null as string | null,
       firstName: null as string | null,
-      lastName: null as string | null,
       password: null as string | null,
-      realname: null as string | null,
-    }
+    },
   }),
   name: "Register",
 
-  methods:{
+  methods: {
     addUsername(template: string) {
-      this.user.username = template
-    },
-    addEmail(template: string) {
-      this.user.email = template
+      this.user.username = template;
     },
     addFirstName(template: string) {
-      this.user.firstName = template
-    },
-    addLastName(template: string) {
-      this.user.lastName = template
+      this.user.firstName = template;
     },
     setPassword(template: string) {
-      this.user.password = template
+      this.user.password = template;
     },
     confirmPassword(template: string) {
       //to do
     },
     register() {
-      console.log("I am getting called")
-      this.user.firstName && this.user.lastName ? this.user.realname = this.user.firstName + this.user.lastName : this.user.realname = null
-      setRegister(this.user)
+      const user: JSON = <JSON>(<unknown>{
+        username: `${this.user.username}`,
+        realname: `${this.user.firstName}`,
+        password: `${this.user.password}`,
+      });
+      setRegister(user)
         .then(() => {
           console.log("Registration completed");
           this.$router.push("/login");
@@ -54,8 +49,8 @@ export default defineComponent({
           console.log(errorCode);
           console.log(errorMessage);
         });
-    }
-  }
+    },
+  },
 });
 </script>
 
@@ -67,28 +62,40 @@ export default defineComponent({
         <v-container>
           <v-row>
             <v-col cols="12">
-              <v-text-field label="Username" solo @input="addUsername" aria-required/>
-            </v-col>
-          </v-row>
-          <v-row>
-            <v-col cols="12">
-              <v-text-field label="Email" solo @input="addEmail" aria-required />
+              <v-text-field
+                label="Username"
+                solo
+                @input="addUsername"
+                aria-required
+              />
             </v-col>
           </v-row>
           <v-row>
             <v-col cols="12" sm="6">
-              <v-text-field label="First Name" solo @input="addFirstName" aria-required/>
-            </v-col>
-            <v-col cols="12" sm="6">
-              <v-text-field label="Last Name" solo @input="addLastName" aria-required/>
+              <v-text-field
+                label="Name"
+                solo
+                @input="addFirstName"
+                aria-required
+              />
             </v-col>
           </v-row>
           <v-row>
             <v-col cols="6">
-              <v-text-field type="password" label="Password" @input="setPassword" aria-required/>
+              <v-text-field
+                type="password"
+                label="Password"
+                @input="setPassword"
+                aria-required
+              />
             </v-col>
             <v-col cols="6">
-              <v-text-field type="password" label="Confirm Password" @input="confirmPassword" aria-required/>
+              <v-text-field
+                type="password"
+                label="Confirm Password"
+                @input="confirmPassword"
+                aria-required
+              />
             </v-col>
           </v-row>
         </v-container>

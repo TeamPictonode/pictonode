@@ -24,9 +24,13 @@ export default defineComponent({
       this.user.password = template
     },
     login() {
-      checkLogin(this.user)
+      const user:JSON = <JSON><unknown>{
+        "username": `${this.user.username}`,
+        "password": `${this.user.password}`
+      }
+      checkLogin(user)
         .then(() => {
-          this.$router.push("/home");
+          this.$router.push("/");
         })
         .catch((error) => {
           const errorCode = error.code;
