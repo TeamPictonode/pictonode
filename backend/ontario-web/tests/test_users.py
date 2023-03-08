@@ -43,7 +43,10 @@ def test_list_users(client):
     assert response.status_code == 200
 
     users = response.json
-    for uname, rname in users:
+    for user in users:
+        uname = user["username"]
         if uname == username:
-            assert rname == realname
+            assert user["realname"] == realname
             return
+
+    assert False
