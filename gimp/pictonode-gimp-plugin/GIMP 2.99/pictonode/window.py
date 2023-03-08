@@ -208,6 +208,7 @@ class PluginWindow(Gtk.Window):
         login_box = LoginBox(orientation=Gtk.Orientation.VERTICAL)
         self.overlay.add_overlay(login_box)
         self.show_all()
+        login_box.hide_register()
 
     def on_button_press(self, widget, event):
         if event.button == 3:
