@@ -1,5 +1,6 @@
 # GNU AGPL v3 License
 
+
 def test_process(client, image_ids):
     image1_id, image2_id = image_ids
 
