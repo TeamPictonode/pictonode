@@ -7,6 +7,7 @@ from client import *
 from json_generator import *
 from json_interpreter import *
 from login_window import LoginBox
+from about import AboutDialog
 
 import sys
 import threading
@@ -129,8 +130,11 @@ class PluginWindow(Gtk.Window):
         save_graph_item.connect("activate", self.save_graph)
 
         login_item = Gtk.MenuItem("Login")
+        about_item = Gtk.MenuItem("About")
         about_menu.append(login_item)
+        about_menu.append(about_item)
         login_item.connect("activate", self.login)
+        about_item.connect("activate", self.about)
 
         # create a css provider to change the frame background
         css_provider = Gtk.CssProvider()
@@ -209,6 +213,10 @@ class PluginWindow(Gtk.Window):
         self.overlay.add_overlay(login_box)
         self.show_all()
         login_box.hide_register()
+
+    def about(self, widget=None):
+        about_dialog = AboutDialog()
+        about_dialog.show_all()
 
     def on_button_press(self, widget, event):
         if event.button == 3:

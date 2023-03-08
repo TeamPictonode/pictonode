@@ -22,7 +22,8 @@ def serialize_nodes(node_view):
         node_dict["template"] = str(node.__gtype_name__)
         node_dict["values"] = node.get_values()
         node_dict["metadata"] = {"x": node.get_property("x"),
-                                 "y": node.get_property("y")}
+                                 "y": node.get_property("y"),
+                                 "expanded": node.get_expanded()}
 
         node_list.append(node_dict)
 
