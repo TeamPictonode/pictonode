@@ -18,10 +18,10 @@ export default defineComponent({
   name: "Login",
   methods: {
     setUsername(template: string) {
-      this.username = template
+      this.user.username = template
     },
     setPassword(template: string) {
-      this.password = template
+      this.user.password = template
     },
     checkLogin() {
       ///to do
