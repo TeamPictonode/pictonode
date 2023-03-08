@@ -381,4 +381,34 @@ def create_app(test_config=None):
 
         return {"success": True}
 
+    # List all users and their realnames
+    @app.route("/api/users", methods=["GET"])
+    def users():
+        d = db.get_db()
+        cursor = d.cursor()
+        users = []
+        try:
+            cursor.execute(
+                """
+                SELECT username, realname
+                FROM users
+                """
+            )
+            users = cursor.fetchall()
+        except psycopg2.OperationalError:
+            pass
+        finally:
+            cursor.close()
+
+        realUsers = []
+        for user in users:
+            realUsers.append(
+                {
+                    "username": user[0],
+                    "realname": user[1],
+                }
+            )
+
+        return realUsers
+
     return app
