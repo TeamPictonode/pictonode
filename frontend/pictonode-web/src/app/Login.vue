@@ -6,6 +6,7 @@
 
 <script lang="ts">
 import { defineComponent } from "vue";
+import { checkLogin } from "../api";
 
 export default defineComponent({
   data: () => ({
