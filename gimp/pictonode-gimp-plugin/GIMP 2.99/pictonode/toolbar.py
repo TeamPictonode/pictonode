@@ -54,12 +54,20 @@ class ProjectToolbar(Gtk.Window):
         self.iconview.set_item_width(64)
         self.add(self.iconview)
 
+        self.headerbar = Gtk.HeaderBar()
+        self.headerbar.set_title("")
+        self.headerbar.set_subtitle("")
+        self.headerbar.set_show_close_button(False)
+        self.headerbar.set_has_subtitle(False)
+        self.set_titlebar(self.headerbar)
+
         self._projects = []
 
         self.iconview.connect("selection-changed", self.icon_clicked)
         self.init = True
 
         self.connect("destroy", Gtk.main_quit)
+        self.show_all()
 
     def icon_clicked(self, widget: Gtk.IconView):
         if self.mode != "Debug":
@@ -95,6 +103,10 @@ class ProjectToolbar(Gtk.Window):
         self._projects[update_index] = newprjname
         pixbuf = self.liststore[update_index][0]
         self.liststore[update_index] = [pixbuf, newprjname]
+
+    def set_username_as_titlebar(self, username):
+        self.username_as_title = username
+        self.headerbar.set_title(username)
 
     def __set_size_hints(self) -> None:
         self.set_geometry_hints(None, self.hints, Gdk.WindowHints.MAX_SIZE | Gdk.WindowHints.MIN_SIZE)
