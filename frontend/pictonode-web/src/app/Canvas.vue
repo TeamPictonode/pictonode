@@ -15,7 +15,9 @@ export default defineComponent({
   components: { NodeView, RenderedView, Topbar, Widgets },
   data: () => ({
     img: undefined as HTMLCanvasElement | undefined,
-    addTemplate: null as string | null,
+    addDirective: null as string | null,
+    saveDialog: false,
+    loadDialog: false,
   }),
   methods: {
     onCanvasUpdate(canvas: HTMLCanvasElement) {
@@ -24,7 +26,13 @@ export default defineComponent({
       this.img = canvas;
     },
     addNode(template: string) {
-      this.addTemplate = template;
+      this.addDirective = `add:${template}`;
+    },
+    savePipeline() {
+      this.addDirective = "save";
+    },
+    loadPipeline() {
+      this.addDirective = "load";
     },
   },
 });
@@ -33,17 +41,31 @@ export default defineComponent({
 <template>
   <v-container fluid>
     <v-row no-gutters>
-      <v-col cols="6">
+      <v-col cols="4">
         <RenderedView :img="img" />
       </v-col>
-      <v-col cols="6">
+      <v-col cols="4">
         <Widgets @input="addNode" />
+      </v-col>
+      <v-col cols="4">
+        <v-list>
+          <v-list-item>
+            <v-list-item-content>
+              <v-button @click="savePipeline">Save Pipeline</v-button>
+            </v-list-item-content>
+          </v-list-item>
+          <v-list-item>
+            <v-list-item-content>
+              <v-button @click="loadPipeline">Load Pipeline</v-button>
+            </v-list-item-content>
+          </v-list-item>
+        </v-list>
       </v-col>
     </v-row>
   </v-container>
   <NodeView
     @canvas-update="onCanvasUpdate"
     ref="flow"
-    :addTemplate="addTemplate"
+    :addDirective="addDirective"
   />
 </template>

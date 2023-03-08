@@ -101,6 +101,13 @@ class ImageManager:
                 image_info.delete()
                 del self.__image_map[image_id]
 
+    def extension(self) -> str:
+        """
+        Returns the image extension.
+        """
+
+        return self.__extension
+
     def add_image(self, path: str) -> int:
         """
         Adds an image to the image manager.

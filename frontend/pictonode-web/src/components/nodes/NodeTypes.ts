@@ -60,13 +60,13 @@ const emptyComponent = defineComponent<NodeTemplatePropsType, {}, {}>({
     </div>
   `,
   emits: {
-    updated: (data: SpecificData) => true,
+    updated: (_data: SpecificData) => true,
   },
 });
 
 export const nodeTemplates: Record<string, NodeTemplate> = {
-  input: {
-    templateName: "input",
+  ImgSrc: {
+    templateName: "ImgSrc",
     displayName: "Input",
     category: "Input",
     tooltip: "Try uploading an image to me!",
@@ -81,8 +81,8 @@ export const nodeTemplates: Record<string, NodeTemplate> = {
     innerComponent: InputNode,
   },
 
-  invert: {
-    templateName: "invert",
+  Invert: {
+    templateName: "Invert",
     displayName: "Invert",
     category: "Transforms",
     tooltip: "I invert values of an input image!",
@@ -103,8 +103,35 @@ export const nodeTemplates: Record<string, NodeTemplate> = {
     innerComponent: emptyComponent,
   },
 
-  output: {
-    templateName: "output",
+  CompOver: {
+    templateName: "CompOver",
+    displayName: "Composite",
+    category: "Transforms",
+    tooltip: "I composite two images!",
+    inputs: [
+      {
+        color: "red",
+        title: "Top Image",
+        data_type: DataType.Image,
+      },
+      {
+        color: "green",
+        title: "Bottom Image",
+        data_type: DataType.Image,
+      },
+    ],
+    outputs: [
+      {
+        color: "red",
+        title: "Composite Image",
+        data_type: DataType.Image,
+      },
+    ],
+    innerComponent: emptyComponent,
+  },
+
+  ImgOut: {
+    templateName: "ImgOut",
     displayName: "Output",
     category: "Output",
     tooltip: "I am an output node!",

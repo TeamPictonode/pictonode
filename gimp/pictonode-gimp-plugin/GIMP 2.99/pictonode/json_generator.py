@@ -22,7 +22,8 @@ def serialize_nodes(node_view):
         node_dict["template"] = str(node.__gtype_name__)
         node_dict["values"] = node.get_values()
         node_dict["metadata"] = {"x": node.get_property("x"),
-                                 "y": node.get_property("y")}
+                                 "y": node.get_property("y"),
+                                 "expanded": node.get_expanded()}
 
         node_list.append(node_dict)
 
@@ -33,9 +34,8 @@ def serialize_nodes(node_view):
 
     # serialize the links, requires a second pass through the nodes
     link_id = 0
-    for sink_index, node in enumerate(node_view.get_children()):
-        sink_index = 0
-        for sink in node.get_sinks():
+    for node in node_view.get_children():
+        for sink_index, sink in enumerate(node.get_sinks()):
             if not sink.get_input():
                 continue
 
@@ -59,7 +59,7 @@ def serialize_nodes(node_view):
 
     # set output node id if it exist and sets it to null if not
     try:
-        json_string["output"] = list(filter(lambda srcnode: srcnode["template"] == "OutNode", json_string["nodes"]))[0]["id"]
+        json_string["output"] = list(filter(lambda srcnode: srcnode["template"] == "ImgOut", json_string["nodes"]))[0]["id"]
     except IndexError:
         json_string["output"] = None
 

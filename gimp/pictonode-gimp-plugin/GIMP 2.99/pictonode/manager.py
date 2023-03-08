@@ -39,7 +39,7 @@ from gi.repository import Gio  # noqa
 
 gi.require_version("GObject", "2.0")
 from gi.repository import GObject # noqa
-from gi.repository.GdkPixbuf import Pixbuf # noqa
+from gi.repository import GdkPixbuf # noqa
 
 gi.require_version("cairo", "1.0")
 from gi.repository import cairo # noqa
@@ -98,75 +98,40 @@ class PictonodeManager(metaclass=SingletonConstruction):
         self.images_without_xcf = []
         self.__update_xcf_image_association()
 
+        self.current_user = "test"
+
         for img in self.images_with_xcf:
             self.__add_local_project(img)
 
         self.main_window: window.PluginWindow
 
+        self.toolbar = ProjectToolbar()
+        for img in self.images_with_xcf:
+            self.toolbar.add_project(os.path.splitext(os.path.basename(img.get_xcf_file().get_path()))[0], img.get_thumbnail(64,64,1))
+
+        self.set_current_user(self.current_user)
+
     def run(self):
 
         ''' This run() will be gutted just checking out some pocs for parker'''
-        theme_name = "Yaru"
+        theme_name = "Adwaita"
         settings = Gtk.Settings.get_default()
         settings.set_property("gtk-theme-name", theme_name)
 
-        win = Gtk.Window()
-        win.set_default_size(128, 256)
-        win.set_title("Projects")
-
-        hints = Gdk.Geometry()
-        hints.min_width = 128
-        hints.max_width = 256
-        hints.min_height = 192
-        hints.max_height = 512
-
-        win.set_geometry_hints(None, hints, Gdk.WindowHints.MAX_SIZE | Gdk.WindowHints.MIN_SIZE)
-        liststore = Gtk.ListStore(Pixbuf, str)
-        iconview = Gtk.IconView.new()
-        iconview.set_model(liststore)
-        iconview.set_pixbuf_column(0)
-        iconview.set_text_column(1)
-        iconview.set_item_width(64)
 
         layers = self.image.list_layers()
         print(layers)
 
-        frame = Gtk.Frame.new()
-        scrolled_window = Gtk.ScrolledWindow(hexpand=False, vexpand=True)
-        scrolled_window.set_policy(
-            Gtk.PolicyType.AUTOMATIC,
-            Gtk.PolicyType.AUTOMATIC)
-        frame.add(scrolled_window)
-        scrolled_window.add(iconview)
-        win.add(frame)
-
-        icons = []
-        for img in self.images_with_xcf:
-            icons.append(os.path.splitext(os.path.basename(img.get_xcf_file().get_path()))[0])
-
-        for i, img in enumerate(self.images_with_xcf):
-            # pixbuf = Gtk.IconTheme.get_default().load_icon(icon, 64, 0)
-            pixbuf = img.get_thumbnail(64, 64, 1)
-            liststore.append([pixbuf, icons[i]])
-
-        headerbar = Gtk.HeaderBar()
-        headerbar.set_title("")
-        headerbar.set_subtitle("")
-        headerbar.set_show_close_button(False)
-        headerbar.set_has_subtitle(False)
-
-        win.set_titlebar(headerbar)
-        # win.add(iconview)
-        win.connect("destroy", Gtk.main_quit)
-        win.show_all()
-        # GimpUi.init("pictonode.py")
         self.main_window = window.PluginWindow(self.image.list_layers())
+        self.main_window.show_all()
         Gtk.main()
-        # icon toolbar
-        pass
 
     # we should disambiguate between loaded local projects and unloaded
 
+    @threadsafe
+    def set_current_user(self, username):
+        self.current_user = username
+        self.toolbar.set_username_as_titlebar(self.current_user)
 
     @threadsafe
     def set_current_project(self, prjname):

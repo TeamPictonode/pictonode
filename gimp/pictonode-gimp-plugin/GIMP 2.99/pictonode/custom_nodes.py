@@ -46,13 +46,22 @@ class CustomNode(GtkNodes.Node):
     def __init__(self, *args, **kwds) -> None:
         super().__init__(*args, **kwds)
 
+        self.set_can_focus(True)
+        self.connect("node_func_clicked", self.remove)
+
     def set_values(self, values: dict):
         '''Virtual Method to be overriden by custom nodes'''
         pass
 
+    def remove(self, node):
+        self.destroy()
+
+    def get_values(self):
+        return {}
+
 
 class ImgSrcNode(CustomNode):
-    __gtype_name__ = 'SrcNode'
+    __gtype_name__ = 'ImgSrc'
 
     def __init__(self, node_window, *args, **kwds) -> None:
         super().__init__(*args, **kwds)
@@ -115,12 +124,6 @@ class ImgSrcNode(CustomNode):
         self.process()
         self.node_socket_output.write(bytes(self.buffer_id, 'utf8'))
 
-    def remove(self, node):
-        self.destroy()
-
-    def get_values(self):
-        return {}
-
     def process(self):
         # initialize our image context for the gegl nodes
         self.image_context = ontario.ImageContext()
@@ -141,7 +144,7 @@ class ImgSrcNode(CustomNode):
 
 
 class OutputNode(CustomNode):
-    __gtype_name__ = 'OutNode'
+    __gtype_name__ = 'ImgOut'
 
     def __init__(self, node_window, *args, **kwds) -> None:
         super().__init__(*args, **kwds)
@@ -215,9 +218,6 @@ class OutputNode(CustomNode):
 
         self.destroy()
 
-    def get_values(self):
-        return {}
-
     def update_display(self):
         if self.incoming_buffer:
             # display changes
@@ -281,7 +281,7 @@ class OutputNode(CustomNode):
 
 
 class InvertNode(CustomNode):
-    __gtype_name__ = 'InvertNode'
+    __gtype_name__ = 'Invert'
 
     def __init__(self, node_window, *args, **kwds) -> None:
         super().__init__(*args, **kwds)
@@ -315,12 +315,6 @@ class InvertNode(CustomNode):
             label, GtkNodes.NodeSocketIO.SOURCE)
         self.node_socket_output.connect(
             "socket_connect", self.node_socket_connect)
-
-    def remove(self, node):
-        self.destroy()
-
-    def get_values(self):
-        return {}
 
     def process_input(self):
         if self.incoming_buffer:
@@ -409,7 +403,7 @@ class InvertNode(CustomNode):
 
 
 class CompositeNode(CustomNode):
-    __gtype_name__ = 'CompNode'
+    __gtype_name__ = 'CompOver'
 
     def __init__(self, node_window, *args, **kwds) -> None:
         super().__init__(*args, **kwds)
@@ -428,10 +422,9 @@ class CompositeNode(CustomNode):
         self.layer = None
 
         # default operation arguments
-        self.opacity: float = 1
-        self.x: float = 1000
-        self.y: float = 100
-        self.scale: float = 1
+        self.x: float = -50.0
+        self.y: float = -60.0
+        self.scale: float = 100.0
 
         # initialize our image context for the gegl nodes
         self.image_context = ontario.ImageContext()
@@ -440,6 +433,30 @@ class CompositeNode(CustomNode):
 
         self.set_label("Image Composite")
         self.connect("node_func_clicked", self.remove)
+
+        # add argument fields
+        self.label1 = Gtk.Label(label="X translate")
+        self.label2 = Gtk.Label(label="Y translate")
+        self.label3 = Gtk.Label(label="Scale")
+
+        self.entry1 = Gtk.Entry()
+        self.entry2 = Gtk.Entry()
+        self.entry3 = Gtk.Entry()
+
+        self.entry1.set_text(str(self.x))
+        self.entry2.set_text(str(self.y))
+        self.entry3.set_text(str(self.scale))
+
+        self.entry1.connect("activate", self.entry_change, 1)
+        self.entry2.connect("activate", self.entry_change, 2)
+        self.entry3.connect("activate", self.entry_change, 3)
+
+        self.item_add(self.label1, GtkNodes.NodeSocketIO.DISABLE)
+        self.item_add(self.entry1, GtkNodes.NodeSocketIO.DISABLE)
+        self.item_add(self.label2, GtkNodes.NodeSocketIO.DISABLE)
+        self.item_add(self.entry2, GtkNodes.NodeSocketIO.DISABLE)
+        self.item_add(self.label3, GtkNodes.NodeSocketIO.DISABLE)
+        self.item_add(self.entry3, GtkNodes.NodeSocketIO.DISABLE)
 
         # create node input sockets
 
@@ -471,17 +488,27 @@ class CompositeNode(CustomNode):
         self.node_socket_output.connect(
             "socket_connect", self.node_socket_connect)
 
-    def remove(self, node):
-        self.destroy()
-
     def get_values(self):
 
-        ''' Returns dictionary of current state of custom values for the node'''
+        ''' Returns dictionary of current state of custom values for the node '''
 
-        return {"opacity": self.opacity,
-                "x": self.x,
-                "y": self.y,
-                "scale": self.scale}
+        custom_values = {"x": self.x,
+                         "y": self.y,
+                         "scale": self.scale}
+
+        return custom_values
+
+    def set_values(self, values: dict):
+
+        ''' Sets custom node defaults from dictionary '''
+        self.x = values.get('x')
+        self.y = values.get('y')
+        self.scale = values.get('scale')
+
+        # set entry text for each entry box
+        self.entry1.set_text(str(self.x))
+        self.entry2.set_text(str(self.y))
+        self.entry3.set_text(str(self.scale))
 
     def process_input(self):
         if self.incoming_buffer1 and self.incoming_buffer2:
@@ -492,18 +519,76 @@ class CompositeNode(CustomNode):
             self.buffer = self.incoming_buffer1.dup()
             # use ontario backend for image processing
             self.image_builder1.load_from_buffer(self.incoming_buffer1)
-            self.image_builder1.composite(self.incoming_buffer2,
-                                          self.opacity,
-                                          self.x,
-                                          self.y,
-                                          self.scale)
-
+            self.image_builder2.load_from_buffer(self.incoming_buffer2)
+            self.image_builder2.translate(self.x, self.y)
+            self.image_builder2.resize(self.scale, self.scale)
+            self.image_builder1.composite(self.image_builder2)
             self.image_builder1.save_to_buffer(self.buffer)
             self.image_builder1.process()
             print("Comp output: ", self.buffer)
 
         # update buffer saved in map and resend reference
         self.value_update()
+
+    def entry_change(self, entry, entry_id):
+        '''
+        Checks entry input, updates values, and processes buffer
+        '''
+
+        self.grab_focus()
+
+        if entry_id == 1:
+            # let sanitize our inputs
+            try:
+                value = float(entry.get_text())
+                entry.set_text(str(value))
+                if value < -1000000:
+                    entry.set_text("-1000000.0")
+                    value = -1000000.0
+                elif value > 1000000:
+                    entry.set_text("1000000.0")
+                    value = 1000000.0
+            except ValueError:
+                entry.set_text("0.0")
+                value = 0.0
+
+            self.x = value
+
+        elif entry_id == 2:
+            # let sanitize our inputs
+            try:
+                value = float(entry.get_text())
+                entry.set_text(str(value))
+                if value < -1000000:
+                    entry.set_text("-1000000.0")
+                    value = -1000000.0
+                elif value > 1000000:
+                    entry.set_text("1000000.0")
+                    value = 1000000.0
+            except ValueError:
+                entry.set_text("0.0")
+                value = 0.0
+
+            self.y = value
+
+        elif entry_id == 3:
+            # let sanitize our inputs
+            try:
+                value = float(entry.get_text())
+                entry.set_text(str(value))
+                if value < -9000.0:
+                    entry.set_text("-9000.0")
+                    value = -9000.0
+                elif value > 9000.0:
+                    entry.set_text("9000.0")
+                    value = 9000.0
+            except ValueError:
+                entry.set_text("100.0")
+                value = 100.0
+
+            self.scale = value
+
+        self.process_input()
 
     def process_ouput(self):
         '''
@@ -595,7 +680,7 @@ class CompositeNode(CustomNode):
 
 
 class BlurNode(CustomNode):
-    __gtype_name__ = 'BlurNode'
+    __gtype_name__ = 'GaussBlur'
 
     def __init__(self, node_window, *args, **kwds) -> None:
         super().__init__(*args, **kwds)
@@ -652,25 +737,18 @@ class BlurNode(CustomNode):
         self.node_socket_output.connect(
             "socket_connect", self.node_socket_connect)
 
-    def remove(self, node):
-        self.destroy()
-
     def get_values(self):
 
         ''' Returns dictionary of current state of custom values for the node '''
 
-        custom_values = {}
-        custom_values["std_dev_x"] = self.std_dev_x
-        custom_values["std_dev_y"] = self.std_dev_y
+        custom_values = {"std_dev_x": self.std_dev_x,
+                         "std_dev_y": self.std_dev_y}
 
         return custom_values
 
     def set_values(self, values: dict):
 
         ''' Sets custom node defaults from dictionary '''
-
-        print("Bruh1: ", values.get('std_dev_x'))
-        print("Bruh2: ", values.get('std_dev_y'))
         self.std_dev_x = values.get('std_dev_x')
         self.std_dev_y = values.get('std_dev_y')
 
@@ -709,19 +787,21 @@ class BlurNode(CustomNode):
         Checks entry input, update values, and processes buffer
         '''
 
-        value = float(entry.get_text())
-
-        # remove keyboard focus from entry box
-        entry.grab_remove()
+        self.grab_focus()
 
         # let sanitize our inputs
         try:
+            value = float(entry.get_text())
+            entry.set_text(str(value))
             if value < 0:
-                entry.set_text("0")
+                entry.set_text("0.0")
+                value = 0.0
             elif value > 100:
-                entry.set_text("1")
+                entry.set_text("100.0")
+                value = 100.0
         except ValueError:
-            entry.set_text("0")
+            entry.set_text("0.0")
+            value = 0.0
 
         # set new values
         if entry_id == 1:
@@ -729,6 +809,212 @@ class BlurNode(CustomNode):
 
         elif entry_id == 2:
             self.std_dev_y = value
+
+        self.process_input()
+
+    def value_update(self):
+        '''
+        Processes image and sends out updated buffer reference
+        '''
+
+        did_process = self.process_ouput()
+
+        if not did_process:
+            print("Error: could not process invert")
+
+        self.node_socket_output.write(bytes(self.buffer_id, 'utf8'))
+
+    def node_socket_disconnect(self, socket, sink):
+        '''
+        Processes socket disconnect and updates output accordingly
+        '''
+
+        # reset buffer reference information
+        self.incoming_buffer_id = None
+        self.incoming_buffer = None
+        self.buffer = None
+        self.layer = None
+        self.process_input()
+
+    def node_socket_connect(self, sink, source):
+        '''
+        Sends buffer reference upon initial socket connection
+        '''
+
+        self.value_update()
+
+    def node_socket_incoming(self, socket, payload):
+        '''
+        Updates node internal state upon update from socket.
+        '''
+
+        # reset buffer reference information
+        self.incoming_buffer_id = None
+        self.incoming_buffer = None
+        self.buffer = None
+        self.layer = None
+
+        # set new buffer information
+        if payload:
+            self.image_context.reset_context()
+            self.incoming_buffer_id = payload.decode('utf-8')
+            print("Buffer ID incoming: ", self.incoming_buffer_id)
+
+            self.incoming_buffer = self.node_window.buffer_map.get(
+                self.incoming_buffer_id)[0]
+
+            self.layer = self.node_window.buffer_map.get(
+                self.incoming_buffer_id)[1]
+
+            print("Invert Incoming: ", self.incoming_buffer)
+
+            self.process_input()
+        else:
+            print("Error!!!")
+
+
+class BrightContNode(CustomNode):
+    __gtype_name__ = 'BrightCont'
+
+    def __init__(self, node_window, *args, **kwds) -> None:
+        super().__init__(*args, **kwds)
+
+        self.node_window = node_window
+        self.buffer_id = str(uuid.uuid1())
+        self.buffer = None
+        self.layer = None
+
+        # default operation arguments
+        self.brightness: float = 0.0
+        self.contrast: float = 1.0
+
+        # initialize our image context for the gegl nodes
+        self.image_context = ontario.ImageContext()
+        self.image_builder = ontario.ImageBuilder(self.image_context)
+
+        self.set_label("Bright/Contrast")
+
+        # add argument fields
+        self.label1 = Gtk.Label(label="Brightness")
+        self.label2 = Gtk.Label(label="Contrast")
+
+        self.entry1 = Gtk.Entry()
+        self.entry2 = Gtk.Entry()
+
+        self.entry1.set_text(str(self.brightness))
+        self.entry2.set_text(str(self.contrast))
+
+        self.entry1.connect("activate", self.entry_change, 1)
+        self.entry2.connect("activate", self.entry_change, 2)
+
+        self.item_add(self.label1, GtkNodes.NodeSocketIO.DISABLE)
+        self.item_add(self.entry1, GtkNodes.NodeSocketIO.DISABLE)
+        self.item_add(self.label2, GtkNodes.NodeSocketIO.DISABLE)
+        self.item_add(self.entry2, GtkNodes.NodeSocketIO.DISABLE)
+
+        # create node input socket
+        label: Gtk.Label = Gtk.Label.new("Image")
+        label.set_xalign(0.0)
+        self.node_socket_input = self.item_add(
+            label, GtkNodes.NodeSocketIO.SINK)
+        self.node_socket_input.connect(
+            "socket_incoming", self.node_socket_incoming)
+        self.node_socket_input.connect(
+            "socket_disconnect", self.node_socket_disconnect)
+
+        # create node output socket
+        label: Gtk.Label = Gtk.Label.new("Image")
+        label.set_xalign(1.0)
+        self.node_socket_output = self.item_add(
+            label, GtkNodes.NodeSocketIO.SOURCE)
+        self.node_socket_output.connect(
+            "socket_connect", self.node_socket_connect)
+
+    def get_values(self):
+
+        ''' Returns dictionary of current state of custom values for the node '''
+
+        custom_values = {"brightness": self.brightness,
+                         "contrast": self.contrast}
+
+        return custom_values
+
+    def set_values(self, values: dict):
+
+        ''' Sets custom node defaults from dictionary '''
+        self.brightness = values.get('brightness')
+        self.contrast = values.get('contrast')
+
+        # set entry text for each entry box
+        self.entry1.set_text(str(self.brightness))
+        self.entry2.set_text(str(self.contrast))
+
+    def process_input(self):
+        if self.incoming_buffer:
+            # set internal copy of buffer
+            self.buffer = self.incoming_buffer.dup()
+
+            # use ontario backend for image processing
+            self.image_builder.load_from_buffer(self.buffer)
+            self.image_builder.brightness_contrast(self.brightness, self.contrast)
+            self.image_builder.save_to_buffer(self.buffer)
+            self.image_builder.process()
+
+        # update buffer saved in map and resend reference
+        self.value_update()
+
+    def process_ouput(self):
+        '''
+        Updates buffer reference in map
+        '''
+
+        print("Buffer: ", self.buffer)
+        self.node_window.buffer_map[self.buffer_id] = [self.buffer, self.layer]
+
+        if self.buffer:
+            return True
+        return False
+
+    def entry_change(self, entry, entry_id):
+        '''
+        Checks entry input, updates values, and processes buffer
+        '''
+
+        self.grab_focus()
+
+        if entry_id == 1:
+            # let sanitize our inputs
+            try:
+                value = float(entry.get_text())
+                entry.set_text(str(value))
+                if value < -1:
+                    entry.set_text("-1.0")
+                    value = -1.0
+                elif value > 1.0:
+                    entry.set_text("1.0")
+                    value = 1.0
+            except ValueError:
+                entry.set_text("0.0")
+                value = 0.0
+
+            self.brightness = value
+
+        elif entry_id == 2:
+             # let sanitize our inputs
+            try:
+                value = float(entry.get_text())
+                entry.set_text(str(value))
+                if value < 0:
+                    entry.set_text("0.0")
+                    value = 0.0
+                elif value > 2.0:
+                    entry.set_text("2.0")
+                    value = 2.0
+            except ValueError:
+                entry.set_text("1.0")
+                value = 1.0
+
+            self.contrast = value
 
         self.process_input()
 
