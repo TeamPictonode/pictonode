@@ -16,6 +16,7 @@ export default defineComponent({
       firstName: null as string | null,
       lastName: null as string | null,
       password: null as string | null,
+      realname: null as string | null,
     }
   }),
   name: "Register",
@@ -39,8 +40,19 @@ export default defineComponent({
     confirmPassword(template: string) {
       //to do
     },
-    setRegister() {
-      //to do
+    register() {
+      this.user.firstName && this.user.lastName ? this.user.realname = this.user.firstName + this.user.lastName : this.user.realname = null
+      setRegister(this.user)
+        .then(() => {
+          console.log("Registration completed");
+          this.$router.push("/login");
+        })
+        .catch((error) => {
+          const errorCode = error.code;
+          const errorMessage = error.message;
+          console.log(errorCode);
+          console.log(errorMessage);
+        });
     }
   }
 });
@@ -83,7 +95,7 @@ export default defineComponent({
     </v-card-text>
     <v-card-actions>
       <v-spacer />
-      <v-btn color="primary" @input="setRegister">Register</v-btn>
+      <v-btn color="primary" @input="register">Register</v-btn>
     </v-card-actions>
   </v-card>
 </template>

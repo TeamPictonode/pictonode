@@ -23,8 +23,17 @@ export default defineComponent({
     setPassword(template: string) {
       this.user.password = template
     },
-    checkLogin() {
-      ///to do
+    login() {
+      checkLogin(this.user)
+        .then(() => {
+          this.$router.push("/home");
+        })
+        .catch((error) => {
+          const errorCode = error.code;
+          const errorMessage = error.message;
+          console.log(errorCode);
+          console.log(errorMessage);
+        });
     }
   }
 });
@@ -41,7 +50,7 @@ export default defineComponent({
     </v-card-text>
     <v-card-actions>
       <v-spacer />
-      <v-btn color="primary" @input="checkLogin">Login</v-btn>
+      <v-btn color="primary" @input="login">Login</v-btn>
     </v-card-actions>
   </v-card>
 </template>
