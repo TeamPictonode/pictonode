@@ -109,7 +109,7 @@ export function loadPipeline(
   let y = 0;
 
   for (const node of pipeline.nodes) {
-    if (node.template === "input" && "image" in node.values) {
+    if (node.template === "ImgSrc" && "image" in node.values) {
       specificDataMap.set(node.id.toString(), {
         type: SpecificDataType.InputImage,
         imageId: node.values["image"],
