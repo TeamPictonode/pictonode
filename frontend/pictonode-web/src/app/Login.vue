@@ -10,8 +10,10 @@ import { checkLogin } from "../api";
 
 export default defineComponent({
   data: () => ({
-    username: null as string | null,
-    password: null as string | null,
+    user: {
+      username: null as string | null,
+      password: null as string | null,
+    }
   }),
   name: "Login",
   methods: {

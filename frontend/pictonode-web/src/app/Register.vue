@@ -10,29 +10,31 @@ import { setRegister } from "../api"
 
 export default defineComponent({
   data: () => ({
-    username: null as string | null,
-    email: null as string | null,
-    firstName: null as string | null,
-    lastName: null as string | null,
-    password: null as string | null,
+    user: {
+      username: null as string | null,
+      email: null as string | null,
+      firstName: null as string | null,
+      lastName: null as string | null,
+      password: null as string | null,
+    }
   }),
   name: "Register",
 
   methods:{
     addUsername(template: string) {
-      this.username = template
+      this.user.username = template
     },
     addEmail(template: string) {
-      this.email = template
+      this.user.email = template
     },
     addFirstName(template: string) {
-      this.firstName = template
+      this.user.firstName = template
     },
     addLastName(template: string) {
-      this.lastName = template
+      this.user.lastName = template
     },
     setPassword(template: string) {
-      this.password = template
+      this.user.password = template
     },
     confirmPassword(template: string) {
       //to do
