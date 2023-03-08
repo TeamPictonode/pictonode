@@ -60,6 +60,12 @@ def load_from_zip(
                 values = node["values"]
                 img_path = values["image"]
 
+                # Check if the image is in the zip file
+                if img_path not in zip_file.namelist():
+                    # Just set the image to -1
+                    node["values"]["image"] = -1
+                    continue
+
                 # Load the image
                 image = zip_file.read(img_path)
                 ext = path.splitext(img_path)[1]
