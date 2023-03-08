@@ -44,13 +44,13 @@ export default defineComponent({
     <v-card-title class="text-center">Login</v-card-title>
     <v-card-text>
       <v-form>
-        <v-text-field label="Username" solo @input="setUsername"/>
-        <v-text-field type="password" label="Password" @input="setPassword"/>
+        <v-text-field label="Username" solo @input="setUsername" aria-required/>
+        <v-text-field type="password" label="Password" @input="setPassword" aria-required/>
       </v-form>
     </v-card-text>
     <v-card-actions>
       <v-spacer />
-      <v-btn color="primary" @input="login">Login</v-btn>
+      <v-btn color="primary" @click="login">Login</v-btn>
     </v-card-actions>
   </v-card>
 </template>

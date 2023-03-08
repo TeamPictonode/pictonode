@@ -41,6 +41,7 @@ export default defineComponent({
       //to do
     },
     register() {
+      console.log("I am getting called")
       this.user.firstName && this.user.lastName ? this.user.realname = this.user.firstName + this.user.lastName : this.user.realname = null
       setRegister(this.user)
         .then(() => {
@@ -66,28 +67,28 @@ export default defineComponent({
         <v-container>
           <v-row>
             <v-col cols="12">
-              <v-text-field label="Username" solo @input="addUsername"/>
+              <v-text-field label="Username" solo @input="addUsername" aria-required/>
             </v-col>
           </v-row>
           <v-row>
             <v-col cols="12">
-              <v-text-field label="Email" solo @input="addEmail"/>
+              <v-text-field label="Email" solo @input="addEmail" aria-required />
             </v-col>
           </v-row>
           <v-row>
             <v-col cols="12" sm="6">
-              <v-text-field label="First Name" solo @input="addFirstName"/>
+              <v-text-field label="First Name" solo @input="addFirstName" aria-required/>
             </v-col>
             <v-col cols="12" sm="6">
-              <v-text-field label="Last Name" solo @input="addLastName"/>
+              <v-text-field label="Last Name" solo @input="addLastName" aria-required/>
             </v-col>
           </v-row>
           <v-row>
             <v-col cols="6">
-              <v-text-field type="password" label="Password" @input="setPassword"/>
+              <v-text-field type="password" label="Password" @input="setPassword" aria-required/>
             </v-col>
             <v-col cols="6">
-              <v-text-field type="password" label="Confirm Password" @input="confirmPassword"/>
+              <v-text-field type="password" label="Confirm Password" @input="confirmPassword" aria-required/>
             </v-col>
           </v-row>
         </v-container>
@@ -95,7 +96,7 @@ export default defineComponent({
     </v-card-text>
     <v-card-actions>
       <v-spacer />
-      <v-btn color="primary" @input="register">Register</v-btn>
+      <v-btn color="primary" @click="register">Register</v-btn>
     </v-card-actions>
   </v-card>
 </template>
