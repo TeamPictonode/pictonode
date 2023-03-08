@@ -1,4 +1,3 @@
-import os
 import json
 import urllib.parse
 import urllib.request
@@ -72,8 +71,7 @@ class LoginBox(Gtk.Box):
         self.password_entry.set_margin_right(button_padding)
 
 
-        #realname entry label
-
+        # realname entry label
         self.realname_label = Gtk.Label(label="Name")
 
         # entry for realname,
@@ -112,7 +110,6 @@ class LoginBox(Gtk.Box):
         self.url = "https://pictonode.com/api"
         self.is_registering = False
 
-
     def __on_cancel(self, event):
         self.destroy()
 
@@ -137,10 +134,10 @@ class LoginBox(Gtk.Box):
             username = self.username_entry.get_text()
             password = self.password_entry.get_text()
             print(realname, username, password)
-        
-            data_raw = {"username":username,
-                    "password":password,
-                    "realname":realname}
+
+            data_raw = {"username": username,
+                        "password": password,
+                        "realname": realname}
 
             data_as_json = json.dumps(data_raw).encode("utf-8")
             headers = {"Content-Type": "application/json"}
@@ -157,21 +154,21 @@ class LoginBox(Gtk.Box):
         username = self.username_entry.get_text()
         password = self.password_entry.get_text()
         print(username, password)
-        
-        data_raw = {"username":username,
-                    "password":password}
+
+        data_raw = {"username": username,
+                    "password": password}
 
         data_as_json = json.dumps(data_raw).encode("utf-8")
         headers = {"Content-Type": "application/json"}
 
-        req = urllib.request.Request(self.url+"/login", data_as_json, headers,method='POST')
+        req = urllib.request.Request(self.url+"/login", data_as_json, headers, method='POST')
 
         try:
             response = urllib.request.urlopen(req)
             if response.status == 200:
                 print("login_response", response.status)
                 self.destroy()
-                
+
         except Exception as e:
             print(e)
 
@@ -179,7 +176,7 @@ class LoginBox(Gtk.Box):
         self.realname_label.hide()
         self.realname_entry.hide()
         self.cancel_register_button.hide()
-        
+
     def __username_activate(self, entry):
         self.password_entry.grab_focus()
 
@@ -191,18 +188,3 @@ class LoginBox(Gtk.Box):
 
     def __on_hide_toggle(self):
         pass
-
-
-# test stuff
-
-'''
-window = Gtk.Window(title="Test Window")
-overlay = Gtk.Overlay()
-frame = Gtk.Frame()
-login = LoginBox(orientation=Gtk.Orientation.VERTICAL, spacing=10)
-frame.add(login)
-window.add(overlay)
-overlay.add_overlay(frame)
-window.show_all()
-Gtk.main()
-'''

@@ -38,6 +38,7 @@ def json_interpreter(node_view, window, **kwargs):
         node_str = node["template"]
         x = node["metadata"]["x"]
         y = node["metadata"]["y"]
+        expanded = node.get("metadata").get("expanded")
 
         if node_str in instantiation_dict:
             # add node at given position
@@ -46,6 +47,8 @@ def json_interpreter(node_view, window, **kwargs):
             node_obj.set_property("x", x)
             node_obj.set_property("y", y)
             node_obj.set_values(node.get("values"))
+            print(expanded)
+            node_obj.set_expanded(expanded)
 
             nodes_loaded[node["id"]] = node_obj
 
