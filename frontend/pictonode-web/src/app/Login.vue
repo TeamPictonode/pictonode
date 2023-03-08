@@ -13,21 +13,21 @@ export default defineComponent({
     user: {
       username: null as string | null,
       password: null as string | null,
-    }
+    },
   }),
   name: "Login",
   methods: {
     setUsername(template: string) {
-      this.user.username = template
+      this.user.username = template;
     },
     setPassword(template: string) {
-      this.user.password = template
+      this.user.password = template;
     },
     login() {
-      const user:JSON = <JSON><unknown>{
-        "username": `${this.user.username}`,
-        "password": `${this.user.password}`
-      }
+      const user: JSON = <JSON>(<unknown>{
+        username: `${this.user.username}`,
+        password: `${this.user.password}`,
+      });
       checkLogin(user)
         .then(() => {
           this.$router.push("/");
@@ -38,8 +38,8 @@ export default defineComponent({
           console.log(errorCode);
           console.log(errorMessage);
         });
-    }
-  }
+    },
+  },
 });
 </script>
 
@@ -48,8 +48,18 @@ export default defineComponent({
     <v-card-title class="text-center">Login</v-card-title>
     <v-card-text>
       <v-form>
-        <v-text-field label="Username" solo @input="setUsername" aria-required/>
-        <v-text-field type="password" label="Password" @input="setPassword" aria-required/>
+        <v-text-field
+          label="Username"
+          solo
+          @input="setUsername"
+          aria-required
+        />
+        <v-text-field
+          type="password"
+          label="Password"
+          @input="setPassword"
+          aria-required
+        />
       </v-form>
     </v-card-text>
     <v-card-actions>

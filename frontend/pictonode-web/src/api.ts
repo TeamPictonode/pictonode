@@ -28,7 +28,7 @@ export function processPipeline(pipeline: any): Promise<File> {
 }
 
 export function setRegister(credentials: any): Promise<boolean> {
-  return API.post("/register", credentials,{ responseType: "json"}).then(
+  return API.post("/register", credentials, { responseType: "json" }).then(
     (response) => response.data
   );
 }
@@ -41,9 +41,9 @@ export function savePipeline(pipeline: any): Promise<File> {
 }
 
 export function checkLogin(credentials: any): Promise<boolean> {
-  return API.post("/login", credentials, { responseType: "json"}).then(
+  return API.post("/login", credentials, { responseType: "json" }).then(
     (response) => response.data
-  )
+  );
 }
 
 export function loadPipeline(zip: File): Promise<any[]> {
