@@ -14,9 +14,9 @@ The web backend for Pictonode is currently live at http://pictonode.com.
 
 ## Credits
 
-- The web interface was written by John Nunley and Grace Meredith.
-- The shared backend "Ontario" was written by John Nunley and Parker Nelms.
-- The GIMP frontend was written by Parker Nelms and Stephen Foster.
+- The web interface was written by John Nunley (@notgull) and Grace Meredith (@meredith-grace).
+- The shared backend "Ontario" was written by John Nunley and Parker Nelms (@parkern342).
+- The GIMP frontend was written by Parker Nelms and Stephen Foster (@Stehfyn).
 
 ## License
 
