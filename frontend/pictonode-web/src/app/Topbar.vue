@@ -60,7 +60,6 @@ export default defineComponent({
               </v-btn></router-link
             >
           </v-list-item>
-          <v-list-item> Settings (TODO) </v-list-item>
         </v-list>
       </v-menu>
     </v-app-bar>
@@ -70,7 +69,8 @@ export default defineComponent({
           prepend-icon="mdi-account"
           title="My Account"
         ></v-list-item>
-        <v-list-item title="Save Project //TODO"></v-list-item>
+        <v-list-item title="Save Pipeline"></v-list-item>
+        <v-list-item title="Load Pipeline"></v-list-item>
       </v-list>
     </v-navigation-drawer>
   </v-layout>

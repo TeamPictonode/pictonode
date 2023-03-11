@@ -10,6 +10,7 @@
   "license": "AGPL-3.0-or-later",
   "dependencies": {
     "@baklavajs/core": "^1.10.2",
+    "@baklavajs/plugin-engine": "^1.10.2",
     "@baklavajs/plugin-options-vue3": "^1.9.3",
     "@baklavajs/plugin-renderer-vue3": "^1.9.3",
     "@mdi/font": "^7.0.96",
