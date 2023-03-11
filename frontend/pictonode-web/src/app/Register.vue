@@ -10,7 +10,7 @@ import { threadId } from "worker_threads";
 import { setRegister } from "../api";
 
 export default defineComponent({
-  data: () => ({ 
+  data: () => ({
     user: {
       username: null as string | null,
       fullName: null as string | null,
@@ -18,7 +18,7 @@ export default defineComponent({
       confirmPassword: null as string | null,
     },
     errorMessage: "Passwords do not match",
-    error: false
+    error: false,
   }),
   name: "Register",
   methods: {
@@ -65,7 +65,8 @@ export default defineComponent({
                 label="Username"
                 solo
                 v-model="user.username"
-                aria-required>
+                aria-required
+              >
               </v-text-field>
             </v-col>
           </v-row>
@@ -96,7 +97,7 @@ export default defineComponent({
                 @input="validateForm"
                 aria-required
               />
-              <p v-if="error" style="color:red">{{ errorMessage }}</p>
+              <p v-if="error" style="color: red">{{ errorMessage }}</p>
             </v-col>
           </v-row>
         </v-container>
@@ -104,12 +105,12 @@ export default defineComponent({
     </v-card-text>
     <v-card-actions>
       <v-spacer />
-      <v-btn color="primary" @click="register">Register</v-btn>
+      <v-btn color="#bddde9" rounded="pill" @click="register">Register</v-btn>
     </v-card-actions>
   </v-card>
 </template>
 
-<style scoped lang="scss">
+<style lang="scss">
 #register {
   padding: 1rem;
   margin: 1rem;

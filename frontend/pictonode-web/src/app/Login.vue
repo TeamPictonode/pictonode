@@ -58,12 +58,12 @@ export default defineComponent({
     </v-card-text>
     <v-card-actions>
       <v-spacer />
-      <v-btn color="primary" @click="login">Login</v-btn>
+      <v-btn color="#bddde9" rounded="pill" @click="login">Login</v-btn>
     </v-card-actions>
   </v-card>
 </template>
 
-<style scoped lang="scss">
+<style lang="scss">
 #login {
   padding: 1rem;
   margin: 1rem;
