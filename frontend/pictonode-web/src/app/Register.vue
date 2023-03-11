@@ -6,9 +6,50 @@
 
 <script lang="ts">
 import { defineComponent } from "vue";
+import { threadId } from "worker_threads";
+import { setRegister } from "../api";
 
 export default defineComponent({
+  data: () => ({
+    user: {
+      username: null as string | null,
+      fullName: null as string | null,
+      password: null as string | null,
+      confirmPassword: null as string | null,
+    },
+    errorMessage: "Passwords do not match",
+    error: false,
+  }),
   name: "Register",
+  methods: {
+    register() {
+      const user: JSON = <JSON>(<unknown>{
+        username: `${this.user.username}`,
+        realname: `${this.user.fullName}`,
+        password: `${this.user.password}`,
+      });
+      setRegister(user)
+        .then(() => {
+          console.log("Registration completed");
+          this.$router.push("/login");
+        })
+        .catch((error) => {
+          const errorCode = error.code;
+          const errorMessage = error.message;
+          console.log(errorCode);
+          console.log(errorMessage);
+        });
+    },
+
+    validateForm() {
+      if (this.user.password !== this.user.confirmPassword) {
+        this.error = true;
+        return false;
+      }
+      this.error = false;
+      return true;
+    },
+  },
 });
 </script>
 
@@ -20,28 +61,43 @@ export default defineComponent({
         <v-container>
           <v-row>
             <v-col cols="12">
-              <v-text-field label="Username" solo />
-            </v-col>
-          </v-row>
-          <v-row>
-            <v-col cols="12">
-              <v-text-field label="Email" solo />
+              <v-text-field
+                label="Username"
+                solo
+                v-model="user.username"
+                aria-required
+              >
+              </v-text-field>
             </v-col>
           </v-row>
           <v-row>
             <v-col cols="12" sm="6">
-              <v-text-field label="First Name" solo />
-            </v-col>
-            <v-col cols="12" sm="6">
-              <v-text-field label="Last Name" solo />
+              <v-text-field
+                label="Name"
+                solo
+                v-model="user.fullName"
+                aria-required
+              />
             </v-col>
           </v-row>
           <v-row>
             <v-col cols="6">
-              <v-text-field type="password" label="Password" />
+              <v-text-field
+                type="password"
+                label="Password"
+                v-model="user.password"
+                aria-required
+              />
             </v-col>
             <v-col cols="6">
-              <v-text-field type="password" label="Confirm Password" />
+              <v-text-field
+                type="password"
+                label="Confirm Password"
+                v-model="user.confirmPassword"
+                @input="validateForm"
+                aria-required
+              />
+              <p v-if="error" style="color: red">{{ errorMessage }}</p>
             </v-col>
           </v-row>
         </v-container>
@@ -49,12 +105,12 @@ export default defineComponent({
     </v-card-text>
     <v-card-actions>
       <v-spacer />
-      <v-btn color="primary">Register</v-btn>
+      <v-btn color="#bddde9" rounded="pill" @click="register">Register</v-btn>
     </v-card-actions>
   </v-card>
 </template>
 
-<style scoped lang="scss">
+<style lang="scss">
 #register {
   padding: 1rem;
   margin: 1rem;

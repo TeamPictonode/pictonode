@@ -6,9 +6,34 @@
 
 <script lang="ts">
 import { defineComponent } from "vue";
+import { checkLogin } from "../api";
 
 export default defineComponent({
+  data: () => ({
+    user: {
+      username: null as string | null,
+      password: null as string | null,
+    },
+  }),
   name: "Login",
+  methods: {
+    login() {
+      const user: JSON = <JSON>(<unknown>{
+        username: `${this.user.username}`,
+        password: `${this.user.password}`,
+      });
+      checkLogin(user)
+        .then(() => {
+          this.$router.push("/");
+        })
+        .catch((error) => {
+          const errorCode = error.code;
+          const errorMessage = error.message;
+          console.log(errorCode);
+          console.log(errorMessage);
+        });
+    },
+  },
 });
 </script>
 
@@ -17,18 +42,28 @@ export default defineComponent({
     <v-card-title class="text-center">Login</v-card-title>
     <v-card-text>
       <v-form>
-        <v-text-field label="Username" solo />
-        <v-text-field type="password" label="Password" />
+        <v-text-field
+          label="Username"
+          solo
+          v-model="user.username"
+          aria-required
+        />
+        <v-text-field
+          type="password"
+          label="Password"
+          v-model="user.password"
+          aria-required
+        />
       </v-form>
     </v-card-text>
     <v-card-actions>
       <v-spacer />
-      <v-btn color="primary">Login</v-btn>
+      <v-btn color="#bddde9" rounded="pill" @click="login">Login</v-btn>
     </v-card-actions>
   </v-card>
 </template>
 
-<style scoped lang="scss">
+<style lang="scss">
 #login {
   padding: 1rem;
   margin: 1rem;
