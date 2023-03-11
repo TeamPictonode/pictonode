@@ -7,7 +7,7 @@ then
 fi
 
 ontario=../../../../../backend/ontario/ontario
-plugins_dir=~/.var/app/org.gimp.GIMP/config/GIMP/2.99/plug-ins
+plugins_dir=~/plug-ins
 
 cp -r ../../pictonode $plugins_dir
 cp -r ./output/introspection $plugins_dir/pictonode

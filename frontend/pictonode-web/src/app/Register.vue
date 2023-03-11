@@ -10,32 +10,22 @@ import { threadId } from "worker_threads";
 import { setRegister } from "../api";
 
 export default defineComponent({
-  data: () => ({
+  data: () => ({ 
     user: {
       username: null as string | null,
-      firstName: null as string | null,
+      fullName: null as string | null,
       password: null as string | null,
+      confirmPassword: null as string | null,
     },
+    errorMessage: "Passwords do not match",
+    error: false
   }),
   name: "Register",
-
   methods: {
-    addUsername(template: string) {
-      this.user.username = template;
-    },
-    addFirstName(template: string) {
-      this.user.firstName = template;
-    },
-    setPassword(template: string) {
-      this.user.password = template;
-    },
-    confirmPassword(template: string) {
-      //to do
-    },
     register() {
       const user: JSON = <JSON>(<unknown>{
         username: `${this.user.username}`,
-        realname: `${this.user.firstName}`,
+        realname: `${this.user.fullName}`,
         password: `${this.user.password}`,
       });
       setRegister(user)
@@ -49,6 +39,15 @@ export default defineComponent({
           console.log(errorCode);
           console.log(errorMessage);
         });
+    },
+
+    validateForm() {
+      if (this.user.password !== this.user.confirmPassword) {
+        this.error = true;
+        return false;
+      }
+      this.error = false;
+      return true;
     },
   },
 });
@@ -65,9 +64,9 @@ export default defineComponent({
               <v-text-field
                 label="Username"
                 solo
-                @input="addUsername"
-                aria-required
-              />
+                v-model="user.username"
+                aria-required>
+              </v-text-field>
             </v-col>
           </v-row>
           <v-row>
@@ -75,7 +74,7 @@ export default defineComponent({
               <v-text-field
                 label="Name"
                 solo
-                @input="addFirstName"
+                v-model="user.fullName"
                 aria-required
               />
             </v-col>
@@ -85,7 +84,7 @@ export default defineComponent({
               <v-text-field
                 type="password"
                 label="Password"
-                @input="setPassword"
+                v-model="user.password"
                 aria-required
               />
             </v-col>
@@ -93,9 +92,11 @@ export default defineComponent({
               <v-text-field
                 type="password"
                 label="Confirm Password"
-                @input="confirmPassword"
+                v-model="user.confirmPassword"
+                @input="validateForm"
                 aria-required
               />
+              <p v-if="error" style="color:red">{{ errorMessage }}</p>
             </v-col>
           </v-row>
         </v-container>

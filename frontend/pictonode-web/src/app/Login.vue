@@ -17,12 +17,6 @@ export default defineComponent({
   }),
   name: "Login",
   methods: {
-    setUsername(template: string) {
-      this.user.username = template;
-    },
-    setPassword(template: string) {
-      this.user.password = template;
-    },
     login() {
       const user: JSON = <JSON>(<unknown>{
         username: `${this.user.username}`,
@@ -51,13 +45,13 @@ export default defineComponent({
         <v-text-field
           label="Username"
           solo
-          @input="setUsername"
+          v-model="user.username"
           aria-required
         />
         <v-text-field
           type="password"
           label="Password"
-          @input="setPassword"
+          v-model="user.password"
           aria-required
         />
       </v-form>
