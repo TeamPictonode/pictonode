@@ -58,7 +58,7 @@ export default defineComponent({
     </v-card-text>
     <v-card-actions>
       <v-spacer />
-      <v-btn color="#bddde9" rounded="pill" @click="login">Login</v-btn>
+      <v-btn color="black" rounded="pill" @click="login">Login</v-btn>
     </v-card-actions>
   </v-card>
 </template>

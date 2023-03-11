@@ -105,7 +105,7 @@ export default defineComponent({
     </v-card-text>
     <v-card-actions>
       <v-spacer />
-      <v-btn color="#bddde9" rounded="pill" @click="register">Register</v-btn>
+      <v-btn color="black" rounded="pill" @click="register">Register</v-btn>
     </v-card-actions>
   </v-card>
 </template>

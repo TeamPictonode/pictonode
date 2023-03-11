@@ -7,6 +7,7 @@ import Homepage from "./app/Homepage.vue";
 import Login from "./app/Login.vue";
 import Register from "./app/Register.vue";
 import Aboutpage from "./app/Aboutpage.vue";
+import BaklavaTest from "./app/BaklavaTest.vue";
 import * as VueRouter from "vue-router";
 
 const ROUTES = [
@@ -15,6 +16,7 @@ const ROUTES = [
   { path: "/login", component: Login },
   { path: "/register", component: Register },
   { path: "/about", component: Aboutpage },
+  { path: "/baklava", component: BaklavaTest },
 ];
 
 export default VueRouter.createRouter({

@@ -12,9 +12,13 @@ import { createVuetify } from "vuetify";
 import "./style/basics.scss";
 import "@mdi/font/css/materialdesignicons.css";
 
+import { BaklavaVuePlugin } from "@baklavajs/plugin-renderer-vue3";
+import "@baklavajs/plugin-renderer-vue3/dist/styles.css";
+
 window.onload = () => {
   const instance = createApp(App);
   instance.use(createVuetify());
   instance.use(Router);
+  instance.use(BaklavaVuePlugin);
   instance.mount("#app");
 };
