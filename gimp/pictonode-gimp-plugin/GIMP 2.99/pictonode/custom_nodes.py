@@ -222,7 +222,7 @@ class OutputNode(CustomNode):
         # have to override output remove to deal with button lock and display update
 
         # create confirmation dialog box first
-        dialog = Gtk.Dialog(title="Delete node: Are you sure?",
+        dialog = Gtk.Dialog(title="Are you sure?",
                             parent=None, flags=0)
         dialog.add_buttons(Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL,
                            Gtk.STOCK_OK, Gtk.ResponseType.OK)
