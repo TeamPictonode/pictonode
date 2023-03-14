@@ -3,7 +3,6 @@
 import os
 import uuid
 import ontario
-import uuid
 
 # autopep8 off
 import gi
