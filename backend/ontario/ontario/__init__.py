@@ -337,6 +337,7 @@ class ImageBuilder:
         node = self.__parent.create_child("gegl:gaussian-blur")
         node.set_property("std-dev-x", x)
         node.set_property("std-dev-y", y)
+        node.set_property("clip-extent", False)
 
         # Connect the last node to the save node.
         self.__nodes[-1].link(node)

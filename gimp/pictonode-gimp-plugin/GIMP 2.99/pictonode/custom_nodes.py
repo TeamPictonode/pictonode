@@ -541,11 +541,8 @@ class CompositeNode(CustomNode):
             self.image_builder2.load_from_buffer(self.incoming_buffer2)
             self.image_builder2.translate(self.x, self.y)
 
-            width = int(self.scale * self.buffer.get_property("width"))
-            height = int(self.scale * self.buffer.get_property("height"))
-
-            print("Width: ", width)
-            print("Height: ", height)
+            width = int(self.scale * self.incoming_buffer2.get_property("width"))
+            height = int(self.scale * self.incoming_buffer2.get_property("height"))
 
             self.image_builder2.resize(width, height)
             self.image_builder1.composite(self.image_builder2)
