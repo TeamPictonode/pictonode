@@ -30,6 +30,8 @@ class AboutDialog(Gtk.AboutDialog):
         self.set_comments("Pictonode is a node-based image editor that implements the GEGL image processing library. This version is meant to be a plugin for GIMP.")
         self.set_license_type(Gtk.License.AGPL_3_0)
         self.set_program_name("Pictonode")
+        self.set_website("https://pictonode.com/")
+        self.set_website_label("Pictonode")
 
         # logo_path = os.path.abspath("assets/pictonode_logo.png")
 
