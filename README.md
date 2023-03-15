@@ -6,6 +6,10 @@ The web backend for Pictonode is currently live at http://pictonode.com.
 
 ## Screenshots
 
+**GIMP Frontend**
+
+![GIMP Frontend](./assets/screenshot3.png)
+
 **Web Frontend**
 
 ![Web Frontend](./assets/screenshot1.png)
