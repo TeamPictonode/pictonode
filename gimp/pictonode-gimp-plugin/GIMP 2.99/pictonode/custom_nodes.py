@@ -96,9 +96,6 @@ class ImgSrcNode(CustomNode):
         # create dropdown with layers
         self.list_store = Gtk.ListStore(str, int)
         self.list_store.append(["Select a Layer", -1])
-        for i, d in enumerate(self.layers):
-            self.list_store.append(["Layer: " + d.get_name(), i])
-            print("Layer: ", d)
 
         self.layer_combobox = Gtk.ComboBox.new_with_model_and_entry(self.list_store)
         self.layer_combobox.set_margin_top(20)
@@ -116,7 +113,18 @@ class ImgSrcNode(CustomNode):
             label, GtkNodes.NodeSocketIO.SOURCE)
         self.node_socket_output.connect(
             "socket_connect", self.node_socket_connect)
+        
+    def set_layers(self, layers):
+        self.layers = layers
+        #placeholder setting until we know what we want to do
+        self.list_store.clear()
+        self.list_store.append(["Select a Layer", -1])
+        self.layer_combobox.set_active(0)
 
+        for i, d in enumerate(self.layers):
+            self.list_store.append(["Layer: " + d.get_name(), i])
+            print("Layer: ", d)
+        
     def change_layer(self, combo):
         iter = combo.get_active_iter()
         if iter is not None:

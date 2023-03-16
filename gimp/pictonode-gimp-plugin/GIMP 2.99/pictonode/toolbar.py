@@ -67,7 +67,6 @@ class ProjectToolbar(Gtk.Window):
         self.init = True
 
         self.connect("destroy", Gtk.main_quit)
-        self.show_all()
 
     def icon_clicked(self, widget: Gtk.IconView):
         if self.mode != "Debug":
@@ -78,19 +77,22 @@ class ProjectToolbar(Gtk.Window):
 
     def add_project(self, prjname: str, pixbuf: Pixbuf) -> None:
         """Store the prjname aligned with itself in the list store so we have easy removal."""
-        self._projects.append(prjname)
-        self.liststore.append([pixbuf, prjname])
-        self.resize(64, len(self._projects) * 64)
-        if self.init:
-            self.iconview.select_path(Gtk.TreePath.new_first())
-            self.init = False
+        if prjname not in self._projects:
+            self._projects.append(prjname)
+            self.liststore.append([pixbuf, prjname])
+            #self.resize(64, len(self._projects) * 64)
+            if self.init:
+                from manager import PictonodeManager
+                self.iconview.select_path(Gtk.TreePath.new_first())
+                PictonodeManager().set_current_project(self.liststore[self.iconview.get_selected_items()[0]][1])
+                self.init = False
 
     def remove_project(self, prjname: str) -> None:
         remove_index = self._projects.index(prjname)
         self._projects.pop(remove_index)
         iter = self.liststore.get_iter((remove_index,))
         self.liststore.remove(iter)
-        self.resize(64, len(self._projects) * 64)
+        #self.resize(64, len(self._projects) * 64)
     
     def update_project_thumbnail(self, prjname: str, pixbuf: Pixbuf) -> None:
         if prjname in self._projects:

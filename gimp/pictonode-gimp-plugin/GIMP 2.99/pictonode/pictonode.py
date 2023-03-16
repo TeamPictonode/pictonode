@@ -132,11 +132,12 @@ class Pictonode (Gimp.PlugIn):
                                             Gimp.PDBProcType.PLUGIN,
                                             self.run, None)
 
-        procedure.set_image_types("RGB*, GRAY*")
+        procedure.set_image_types("*")
         procedure.set_sensitivity_mask(Gimp.ProcedureSensitivityMask.DRAWABLE |
                                        Gimp.ProcedureSensitivityMask.DRAWABLES |
-                                       Gimp.ProcedureSensitivityMask.NO_DRAWABLES)
-
+                                       Gimp.ProcedureSensitivityMask.NO_DRAWABLES |
+                                       Gimp.ProcedureSensitivityMask.NO_IMAGE )
+        
         procedure.set_documentation(_("Pictonode"),
                                     _("Launches Pictonode plugin"),
                                     name)
