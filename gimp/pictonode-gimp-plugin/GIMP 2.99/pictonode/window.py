@@ -79,7 +79,7 @@ screen_height = screen.get_height()
 
 class PluginWindow(Gtk.Window):
 
-    def __init__(self, layers: list, **kwargs):
+    def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
         self.set_border_width(20)
@@ -101,7 +101,7 @@ class PluginWindow(Gtk.Window):
         self.buffer_map = {}
 
         # set drawables from project
-        self.layers = layers
+        self.layers = []
 
         # make menu bar
         menu_bar = Gtk.MenuBar.new()
@@ -292,6 +292,7 @@ class PluginWindow(Gtk.Window):
 
         # create new node and add it to the NodeView widget
         new_node = cn.ImgSrcNode(self)
+        new_node.set_layers(self.layers)
         self.node_view.add(new_node)
 
         # grab cursor position and move node to it
@@ -376,6 +377,16 @@ class PluginWindow(Gtk.Window):
         self.node_view.show_all()
         self.show_all()
 
+    def set_layers(self, layers):
+        self.layers = layers[:]
+        #find all children
+        nodes = self.node_view.get_children()
+        for node in nodes:
+            if isinstance(node, cn.ImgSrcNode):
+                print("updating ImgSrcNode")
+                node.set_layers(self.layers)
+
+
     def save_graph(self, widget=None):
 
         # TODO: add json with attributes for each node
@@ -402,14 +413,16 @@ class PluginWindow(Gtk.Window):
         # if ok response, that means a file was chosen, save the node graph as
         # that file
         if response == Gtk.ResponseType.OK:
-            fn = save_dialog.get_filename()
-            save_dialog.destroy()
+
+            fn = save_dialog.get_filename()[:]
+
             dictionary = serialize_nodes(self.node_view)
 
             # credit geeksforgeeks
             with open(fn, "w") as outfile:
                 json.dump(dictionary, outfile, indent=2)
-
+            
+            save_dialog.destroy()
             return None
 
         # close the dialog
@@ -441,12 +454,12 @@ class PluginWindow(Gtk.Window):
         # then call the json interpreter to build the graph
         if response == Gtk.ResponseType.OK:
 
-            fn = open_dialog.get_filename()
-            open_dialog.destroy()
-
+            fn = open_dialog.get_filename()[:]
+            
             # delete current node_view nodes
             for node in self.node_view.get_children():
-                node.destroy()
+                # On the last reference of the node widget, destroy is called by Gtk safely
+                self.node_view.remove(node)
 
             f = open(fn)
             json_string = json.load(f)
@@ -458,8 +471,9 @@ class PluginWindow(Gtk.Window):
 
             self.node_view.show_all()
 
+            open_dialog.destroy()
             f.close()
-
+            
             return None
 
         # close the dialog
