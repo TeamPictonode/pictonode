@@ -470,6 +470,7 @@ class PluginWindow(Gtk.Window):
                 print(E)
 
             self.node_view.show_all()
+            self.set_layers(self.layers)
 
             open_dialog.destroy()
             f.close()
