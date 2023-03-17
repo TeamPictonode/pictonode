@@ -69,8 +69,6 @@ export default defineComponent({
     id="rendered-view"
     tile
     color="#e1e9d0"
-    width="500"
-    height="500"
   >
     <div class="rendered-view">
     <canvas id="imgview" ref="inner" width="400" height="400" margin-right="30rem">

@@ -19,3 +19,17 @@ export const MathNode = new NodeBuilder("MathNode")
         n.getInterface("Result").value = result;
     })
     .build();
+
+export const ImageNode = new NodeBuilder("InputImage")
+    .setName("Input Image")
+    .addOption("Upload image", "ButtonOption")
+    .addOutputInterface("Result")
+    .build();
+
+export const RenderedNode = new NodeBuilder("RenderedImage")
+    .setName("Rendered Image")
+    .addInputInterface("Image")
+    .onCalculate (n => {
+        
+    })
+    .build();

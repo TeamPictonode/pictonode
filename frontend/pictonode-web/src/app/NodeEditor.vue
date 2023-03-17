@@ -15,12 +15,13 @@
   import { defineComponent } from "vue";
 
   import { DisplayNode } from "../components/nodes/DisplayNode";
-  import { MathNode } from "../components/nodes/BaklavaNodes";
+  import { MathNode, ImageNode, RenderedNode } from "../components/nodes/BaklavaNodes";
+  import  InputNode  from "../components/nodes/NodeData/InputNode.vue";
 
   import RenderedView from "./RenderedView.vue";
 
   export default defineComponent({
-    components: { RenderedView },
+    components: { RenderedView, InputNode },
     data: () => ({
     img: undefined as HTMLCanvasElement | undefined,
     editor: new Editor(),
@@ -33,10 +34,15 @@
     this.editor.use(this.engine);
     this.viewPlugin.enableMinimap = true;
 
+    this.viewPlugin.registerOption("ButtonOption", InputNode);
+
     this.editor.registerNodeType("DisplayNode", DisplayNode);
     this.editor.registerNodeType("MathNode", MathNode);
+    this.editor.registerNodeType("ImageNode", ImageNode);
+    this.editor.registerNodeType("RenderedNode", RenderedNode);
     const node1 = this.addNodeWithCoordinates(MathNode, 100, 140);
     const node2 = this.addNodeWithCoordinates(DisplayNode, 400, 140);
+    const node3 = this.addNodeWithCoordinates(ImageNode, 300, 160);
     this.editor.addConnection(node1.getInterface("Result"), node2.getInterface("Value"));
     this.engine.calculate();
 
