@@ -12,9 +12,13 @@ export default defineComponent({
   emits: {
     updated: (data: SpecificData) => true,
   },
+  data: () => ({
+    imgName: "image"
+  }),
   methods: {
     onFileChange(e: any) {
       const file = e.target.files[0];
+      this.imgName = file.name;
 
       uploadImage(file).then((id) => {
         this.$emit("updated", {
@@ -28,5 +32,15 @@ export default defineComponent({
 </script>
 
 <template>
-  <v-file-input @change="onFileChange" />
+  <label htmlFor='image'>
+                    {{ imgName }}
+                    <input 
+                        type='file' 
+                        id='file' 
+                        name="file"
+                        placeholder="Upload an Image" 
+                        required 
+                        @change={onFileChange}
+                        />
+                </label>
 </template>

@@ -20,16 +20,34 @@ export const MathNode = new NodeBuilder("MathNode")
     })
     .build();
 
+export const DisplayNode = new NodeBuilder("DisplayNode")
+    .setName("Display")
+    .addInputInterface("Value")
+    .addOption("ValueText", "TextOption")
+    .addOption("Test", "InputOption")
+    .onCalculate(n => {
+        let value = n.getInterface("Value").value;
+        if (typeof value === "number") {
+            value = value.toFixed(3);
+        }
+        n.setOptionValue("ValueText", value);
+    })
+    .build();
+
 export const ImageNode = new NodeBuilder("InputImage")
     .setName("Input Image")
     .addOption("Upload image", "ButtonOption")
     .addOutputInterface("Result")
+    .onCalculate(n => {
+        let img = n.getOptionValue("Upload image")
+        n.getInterface("Result").value = img
+    })
     .build();
 
 export const RenderedNode = new NodeBuilder("RenderedImage")
     .setName("Rendered Image")
     .addInputInterface("Image")
     .onCalculate (n => {
-        
+        console.log(n.getInterface("Image").value)
     })
     .build();
