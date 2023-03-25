@@ -3,7 +3,6 @@
 import os
 import uuid
 import ontario
-import uuid
 
 # autopep8 off
 import gi
@@ -22,6 +21,9 @@ GIRepository.Repository.prepend_library_path(
             os.path.abspath(__file__)) +
         "/libs"))
 
+gi.require_version('GimpUi', '3.0')
+from gi.repository import GimpUi  # noqa
+
 gi.require_version("GtkNodes", "0.1")
 from gi.repository import GtkNodes  # noqa
 
@@ -37,7 +39,7 @@ from gi.repository import GdkPixbuf  # noqa
 
 # node classes based on examples from img.py in the gtknodes project
 
-# First, define different node types using GtkNodes.Node as a base type
+# First, define generic custom node type using GtkNodes.Node as a base type
 # implement gegl node operations using ontario backend
 
 
@@ -54,7 +56,17 @@ class CustomNode(GtkNodes.Node):
         pass
 
     def remove(self, node):
-        self.destroy()
+        dialog = Gtk.Dialog(title="Are you sure?", parent=None, flags=0)
+        dialog.add_buttons(Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL,
+                           Gtk.STOCK_OK, Gtk.ResponseType.OK)
+
+        dialog.set_default_size(75, 50)
+
+        response = dialog.run()
+        dialog.destroy()
+
+        if response == Gtk.ResponseType.OK:
+            self.destroy()
 
     def get_values(self):
         return {}
@@ -80,14 +92,10 @@ class ImgSrcNode(CustomNode):
         self.image_builder = None
 
         self.set_label("Image Source")
-        self.connect("node_func_clicked", self.remove)
 
         # create dropdown with layers
         self.list_store = Gtk.ListStore(str, int)
         self.list_store.append(["Select a Layer", -1])
-        for i, d in enumerate(self.layers):
-            self.list_store.append(["Layer: " + d.get_name(), i])
-            print("Layer: ", d)
 
         self.layer_combobox = Gtk.ComboBox.new_with_model_and_entry(self.list_store)
         self.layer_combobox.set_margin_top(20)
@@ -105,7 +113,18 @@ class ImgSrcNode(CustomNode):
             label, GtkNodes.NodeSocketIO.SOURCE)
         self.node_socket_output.connect(
             "socket_connect", self.node_socket_connect)
+        
+    def set_layers(self, layers):
+        self.layers = layers
+        #placeholder setting until we know what we want to do
+        self.list_store.clear()
+        self.list_store.append(["Select a Layer", -1])
+        self.layer_combobox.set_active(0)
 
+        for i, d in enumerate(self.layers):
+            self.list_store.append(["Layer: " + d.get_name(), i])
+            print("Layer: ", d)
+        
     def change_layer(self, combo):
         iter = combo.get_active_iter()
         if iter is not None:
@@ -131,7 +150,7 @@ class ImgSrcNode(CustomNode):
 
         print("Buffer: ", self.buffer)
         self.node_window.buffer_map[self.buffer_id] = [self.buffer,
-                                                        self.layer]
+                                                       self.layer]
 
         if self.buffer:
             return True
@@ -164,7 +183,6 @@ class OutputNode(CustomNode):
         self.image_builder = ontario.ImageBuilder(self.image_context)
 
         self.set_label("Output Node")
-        self.connect("node_func_clicked", self.remove)
 
         # initialize save file button and set it to disabled by default
         self.save_file_button: Gtk.Button = Gtk.Button(label="Save Image")
@@ -208,25 +226,35 @@ class OutputNode(CustomNode):
         dialog.destroy()
 
     def remove(self, node):
-        # unlock output node
-        self.node_window.output_node_lock(False)
+        # have to override output remove to deal with button lock and display update
 
-        # delete display image
-        if os.path.exists("/tmp/gimp/temp.png"):
-            os.remove("/tmp/gimp/temp.png")
-            self.node_window.display_output()
+        # create confirmation dialog box first
+        dialog = Gtk.Dialog(title="Are you sure?",
+                            parent=None, flags=0)
+        dialog.add_buttons(Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL,
+                           Gtk.STOCK_OK, Gtk.ResponseType.OK)
 
-        self.destroy()
+        dialog.set_default_size(75, 50)
+
+        response = dialog.run()
+
+        if response == Gtk.ResponseType.OK:
+            dialog.destroy()
+            # unlock output node
+            self.node_window.output_node_lock(False)
+
+            # delete display image
+            if os.path.exists("/tmp/gimp/temp.png"):
+                os.remove("/tmp/gimp/temp.png")
+                self.node_window.display_output()
+
+            self.destroy()
+
+        dialog.destroy()
 
     def update_display(self):
         if self.incoming_buffer:
-            # display changes
-            pixbuf = GdkPixbuf.Pixbuf.new(GdkPixbuf.Colorspace.RGB,
-                                        True,
-                                        8,
-                                        self.incoming_buffer.props.width,
-                                        self.incoming_buffer.props.height)
-
+            # update image displayed
             self.image_builder.load_from_buffer(self.incoming_buffer)
             self.image_builder.save_to_file("/tmp/gimp/temp.png")
             self.image_builder.process()
@@ -234,6 +262,7 @@ class OutputNode(CustomNode):
             self.node_window.display_output()
             self.image_context.reset_context()
         else:
+            # delete image displayed
             os.remove("/tmp/gimp/temp.png")
             self.node_window.display_output()
 
@@ -296,7 +325,6 @@ class InvertNode(CustomNode):
         self.image_builder = ontario.ImageBuilder(self.image_context)
 
         self.set_label("Image Invert")
-        self.connect("node_func_clicked", self.remove)
 
         # create node input socket
         label: Gtk.Label = Gtk.Label.new("Image")
@@ -422,9 +450,9 @@ class CompositeNode(CustomNode):
         self.layer = None
 
         # default operation arguments
-        self.x: float = -50.0
-        self.y: float = -60.0
-        self.scale: float = 100.0
+        self.x: float = 0.0
+        self.y: float = 0.0
+        self.scale: float = 1.0
 
         # initialize our image context for the gegl nodes
         self.image_context = ontario.ImageContext()
@@ -432,7 +460,6 @@ class CompositeNode(CustomNode):
         self.image_builder2 = ontario.ImageBuilder(self.image_context)
 
         self.set_label("Image Composite")
-        self.connect("node_func_clicked", self.remove)
 
         # add argument fields
         self.label1 = Gtk.Label(label="X translate")
@@ -468,7 +495,7 @@ class CompositeNode(CustomNode):
         self.node_socket_input.connect(
             "socket_incoming", self.node_socket_incoming, 1)
         self.node_socket_input.connect(
-            "socket_disconnect", self.node_socket_disconnect)
+            "socket_disconnect", self.node_socket_disconnect, 1)
 
         # input socket 2
         label: Gtk.Label = Gtk.Label.new("Image")
@@ -478,7 +505,7 @@ class CompositeNode(CustomNode):
         self.node_socket_input.connect(
             "socket_incoming", self.node_socket_incoming, 2)
         self.node_socket_input.connect(
-            "socket_disconnect", self.node_socket_disconnect)
+            "socket_disconnect", self.node_socket_disconnect, 2)
 
         # create node output socket
         label: Gtk.Label = Gtk.Label.new("Image")
@@ -521,7 +548,11 @@ class CompositeNode(CustomNode):
             self.image_builder1.load_from_buffer(self.incoming_buffer1)
             self.image_builder2.load_from_buffer(self.incoming_buffer2)
             self.image_builder2.translate(self.x, self.y)
-            self.image_builder2.resize(self.scale, self.scale)
+
+            width = int(self.scale * self.incoming_buffer2.get_property("width"))
+            height = int(self.scale * self.incoming_buffer2.get_property("height"))
+
+            self.image_builder2.resize(width, height)
             self.image_builder1.composite(self.image_builder2)
             self.image_builder1.save_to_buffer(self.buffer)
             self.image_builder1.process()
@@ -699,7 +730,6 @@ class BlurNode(CustomNode):
         self.image_builder = ontario.ImageBuilder(self.image_context)
 
         self.set_label("Image Blur")
-        self.connect("node_func_clicked", self.remove)
 
         # add argument fields
         self.xlabel = Gtk.Label(label="std-dev-x")

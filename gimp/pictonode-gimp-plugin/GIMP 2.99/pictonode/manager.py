@@ -28,6 +28,9 @@ from gi.repository import GtkNodes  # noqa
 gi.require_version('Gimp', '3.0')
 from gi.repository import Gimp  # noqa
 
+gi.require_version('GimpUi', '3.0')
+from gi.repository import GimpUi
+
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk  # noqa
 
@@ -40,6 +43,9 @@ from gi.repository import Gio  # noqa
 gi.require_version("GObject", "2.0")
 from gi.repository import GObject # noqa
 from gi.repository import GdkPixbuf # noqa
+
+gi.require_version("GLib", "2.0")
+from gi.repository import GLib
 
 gi.require_version("cairo", "1.0")
 from gi.repository import cairo # noqa
@@ -94,40 +100,50 @@ class PictonodeManager(metaclass=SingletonConstruction):
         self.__load_settings_ini()
         self.__load_projects_ini()
 
+        self.toolbar = ProjectToolbar()
+        self.main_window = window.PluginWindow()
+
+        self.image_displays = {}
+        self.image_names = {}
         self.images_with_xcf = []
         self.images_without_xcf = []
-        self.__update_xcf_image_association()
 
-        self.current_user = "test"
-
-        for img in self.images_with_xcf:
-            self.__add_local_project(img)
-
-        self.main_window: window.PluginWindow
-
-        self.toolbar = ProjectToolbar()
-        for img in self.images_with_xcf:
-            self.toolbar.add_project(os.path.splitext(os.path.basename(img.get_xcf_file().get_path()))[0], img.get_thumbnail(64,64,1))
-
-        self.set_current_user(self.current_user)
+        self.current_user = ""
+        self.current_project = ""
+        self.init_layers = True
 
     def run(self):
+        GLib.timeout_add(1000, self.__update)
 
-        ''' This run() will be gutted just checking out some pocs for parker'''
+        self.set_gtk_theme()
+
+        self.toolbar.show_all()
+        self.main_window.show_all()
+
+        Gtk.main()
+
+    def set_gtk_theme(theme_name="Adwaita"):
         theme_name = "Adwaita"
         settings = Gtk.Settings.get_default()
         settings.set_property("gtk-theme-name", theme_name)
 
+    def __update(self):
+        try:
+            added, removed = self.__update_xcf_image_association()
+            self.__propagate_xcf_image_association_changes(added, removed)
 
-        layers = self.image.list_layers()
-        print(layers)
+            if self.init_layers and (len(self.images_with_xcf) > 0):
+                self.init_layers = False
+                print("set layers init")
+                print(self.images_with_xcf[0].list_layers())
+                self.main_window.set_layers(self.images_with_xcf[0].list_layers())      
 
-        self.main_window = window.PluginWindow(self.image.list_layers())
-        self.main_window.show_all()
-        Gtk.main()
+        except Exception as e:
+            print(e)
+        return True
+
 
     # we should disambiguate between loaded local projects and unloaded
-
     @threadsafe
     def set_current_user(self, username):
         self.current_user = username
@@ -135,8 +151,29 @@ class PictonodeManager(metaclass=SingletonConstruction):
 
     @threadsafe
     def set_current_project(self, prjname):
-        if prjname in self.local_projects.keys():
-            print(prjname)
+        for img in self.images_with_xcf:
+            if img.get_name() == prjname:
+                if prjname != self.current_project:
+                    #potentially handlers for saving related things
+                    self.current_project = prjname
+                    #probably should emit and event and have handlers connected, therefore not
+                    #dependent on discrete timesteps where multiple changes in some dt are aliased,
+                    #fine for now.
+                    layers = self.get_image_from_prjname(self.current_project).list_layers()
+                    self.main_window.set_layers(layers)
+                    print(self.current_project)
+
+    @threadsafe
+    def get_image_from_prjname(self, prjname):
+        for image, name in self.image_names.items():
+            if name == prjname:
+                return image
+        return None
+    
+    @threadsafe
+    def __add_local_projects_to_toolbar(self):
+        for img in self.images_with_xcf:
+            self.toolbar.add_project(img.get_name(), img.get_thumbnail(64,64,1))
 
     @threadsafe
     def __add_local_project(self, image):
@@ -218,13 +255,81 @@ class PictonodeManager(metaclass=SingletonConstruction):
 
     @threadsafe
     def __update_xcf_image_association(self):
-        self.images_with_xcf = set(
-            filter(lambda img: img.get_xcf_file(), Gimp.list_images()))
-        self.images_without_xcf = set(
-            Gimp.list_images()) - self.images_with_xcf
+        images_with_xcf, images_without_xcf = self.__get_current_images()
+        added, removed = self.__cross_check_images(images_with_xcf, images_without_xcf)
+        return added, removed
+    
+    @threadsafe
+    def __propagate_xcf_image_association_changes(self, added, removed):
+        for img in added:
+            self.toolbar.add_project(self.image_names.get(img), img.get_thumbnail(64,64,1))
+        for img in removed:
+            self.toolbar.remove_project(self.image_names.pop(img))
+            self.image_names.pop(img)
 
-        self.images_with_xcf = list(self.images_with_xcf)
-        self.images_without_xcf = list(self.images_without_xcf)
+    @threadsafe
+    def __get_current_images(self):
+        images_with_xcf = list(filter(lambda img: img.get_xcf_file(), Gimp.list_images()))
+        images_without_xcf = []
+
+        for img in Gimp.list_images():
+            if img not in images_with_xcf:
+                images_without_xcf.append(img)
+
+        return images_with_xcf, images_without_xcf
+    
+    @threadsafe
+    def __cross_check_images(self, images_with_xcf, images_without_xcf):
+        added_images = []
+        for img in images_with_xcf:
+            if img not in self.images_with_xcf:
+                # GIMP state can still change between update and now
+                try:
+                    # We fail here, no harm no foul
+                    self.image_displays.update({img:Gimp.Display.get_by_id(img.get_id())})
+                    # But if we fail here, not chill. Gotta fix image_displays
+                    try:
+                        self.image_names.update({img:img.get_name()})
+                    except AttributeError:
+                        self.image_displays.pop()
+
+                    self.images_with_xcf.append(img)
+                    added_images.append(img)
+                except AttributeError:
+                    pass
+
+
+        for img in images_without_xcf:
+            if img not in self.images_without_xcf:
+                # GIMP state can still change between update and now
+                try:
+                    # We fail here, no harm no foul
+                    self.image_displays.update({img:Gimp.Display.get_by_id(img.get_id())})
+                    # But if we fail here, not chill. Gotta fix image_displays
+                    try:
+                        self.image_names.update({img:img.get_name()})
+                    except AttributeError:
+                        self.image_displays.pop()
+
+                    self.images_without_xcf.append(img)
+                    added_images.append(img)
+                except AttributeError:
+                    pass
+
+        removed_images = []
+        for img in self.images_with_xcf:
+            if img not in images_with_xcf:
+                self.images_with_xcf.remove(img)
+                self.image_displays.pop(img)
+                removed_images.append(img)
+
+        for img in self.images_without_xcf:
+            if img not in images_without_xcf:
+                self.images_without_xcf.remove(img)
+                self.image_displays.pop(img)
+                removed_images.append(img)
+
+        return added_images, removed_images
 
     @threadsafe
     def __image_xcf_association_to_str(self):
