@@ -49,7 +49,13 @@
             n.position.x = x;
             n.position.y = y;
             return n;
-        }
+        },
+
+        updateCanvas(canvas: HTMLCanvasElement) {
+          console.log("updated img canvas");
+          console.log(canvas);
+          this.img = canvas;
+    },
   }
   });
 

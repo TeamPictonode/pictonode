@@ -85,6 +85,7 @@ export default defineComponent({
   padding: 1rem;
   margin: 1rem;
   display: flexbox;
-  align-content: space-between;
+  justify-content: center;
+  align-items: center;
 }
 </style>

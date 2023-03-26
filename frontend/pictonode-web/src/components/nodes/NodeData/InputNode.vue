@@ -7,16 +7,19 @@ import { NodeTemplateComponentProps } from "../NodeTypes";
 import { SpecificData, SpecificDataType } from "../getPipeline";
 import { uploadImage } from "../../../api";
 
+import { srcImgIds } from "../BaklavaNodes"
+
 export default defineComponent({
   props: NodeTemplateComponentProps,
   emits: {
     updated: (data: SpecificData) => true,
   },
   data: () => ({
-    imgName: "image"
+    imgName: "image",
   }),
   methods: {
     onFileChange(e: any) {
+      console.log("made it to on file change")
       const file = e.target.files[0];
       this.imgName = file.name;
 
@@ -25,6 +28,7 @@ export default defineComponent({
           type: SpecificDataType.InputImage,
           imageId: id,
         });
+        srcImgIds.push(id)
       });
     },
   },
@@ -36,11 +40,11 @@ export default defineComponent({
                     {{ imgName }}
                     <input 
                         type='file' 
-                        id='file' 
+                        id="file"
                         name="file"
                         placeholder="Upload an Image" 
                         required 
-                        @change={onFileChange}
+                        v-on:change="onFileChange"
                         />
                 </label>
 </template>
