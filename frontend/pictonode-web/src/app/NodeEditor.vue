@@ -39,6 +39,8 @@
     this.editor.registerNodeType("MathNode", MathNode);
     this.editor.registerNodeType("ImageNode", ImageNode);
     this.editor.registerNodeType("RenderedNode", RenderedNode);
+    const node1 = this.addNodeWithCoordinates(ImageNode, 100, 140)
+    const node2 = this.addNodeWithCoordinates(RenderedNode, 500, 140)
     this.engine.calculate();
 
   },
@@ -50,12 +52,6 @@
             n.position.y = y;
             return n;
         },
-
-        updateCanvas(canvas: HTMLCanvasElement) {
-          console.log("updated img canvas");
-          console.log(canvas);
-          this.img = canvas;
-    },
   }
   });
 

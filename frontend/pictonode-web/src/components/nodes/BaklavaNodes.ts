@@ -42,6 +42,7 @@ export const ImageNode = new NodeBuilder("InputImage")
     .addOption("Upload image", "ButtonOption")
     .addOutputInterface("Result")
     .onCalculate(n => {
+        console.log("INPUT CALCULATE")
         let pipeline: JSON = <JSON>(<unknown> {
             nodes: [
                 {
@@ -64,7 +65,7 @@ export const RenderedNode = new NodeBuilder("RenderedImage")
     .setName("Rendered Image")
     .addInputInterface("Image")
     .onCalculate (n => {
-        console.log()
+        console.log("OUTPUT CALCULATE")
         let pipeline = n.getInterface("Image").value
         if(pipeline) {
             let node = {
@@ -93,18 +94,22 @@ export const RenderedNode = new NodeBuilder("RenderedImage")
                 image.src = URL.createObjectURL(imageFile);
         
                 // Create a canvas element and draw the image on it.
-                const canvas = document.createElement("canvas");
-                const context = canvas.getContext("2d");
+                const canvas = <HTMLCanvasElement> document.getElementById("imgview");
+                if(canvas){
+                    const context = canvas.getContext("2d");
         
-                if (!context) {
-                throw new Error("Could not get canvas context");
+                    if (!context) {
+                        throw new Error("Could not get canvas context");
+                    }
+
+                    context.clearRect(0, 0, canvas.width, canvas.height)
+        
+                    image.onload = () => {
+                    canvas.width = image.width;
+                    canvas.height = image.height;
+                    context.drawImage(image, 0, 0);
+                    };
                 }
-        
-                image.onload = () => {
-                canvas.width = image.width;
-                canvas.height = image.height;
-                context.drawImage(image, 0, 0);
-                };
             });
         }
     })
@@ -112,3 +117,4 @@ export const RenderedNode = new NodeBuilder("RenderedImage")
 
     export let srcImgIds = new Array()
     let ID = 0
+    

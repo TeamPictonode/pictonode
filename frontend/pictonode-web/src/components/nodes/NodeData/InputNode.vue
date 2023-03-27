@@ -18,12 +18,12 @@ export default defineComponent({
     imgName: "image",
   }),
   methods: {
-    onFileChange(e: any) {
+   async onFileChange(e: any) {
       console.log("made it to on file change")
       const file = e.target.files[0];
       this.imgName = file.name;
 
-      uploadImage(file).then((id) => {
+      await uploadImage(file).then((id) => {
         this.$emit("updated", {
           type: SpecificDataType.InputImage,
           imageId: id,

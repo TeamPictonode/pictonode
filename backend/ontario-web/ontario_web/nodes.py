@@ -672,6 +672,10 @@ class Pipeline(Generic[T, M]):
         Link two nodes together and return the link object.
         """
 
+        print(self.__nodes)
+        print(fromId)
+        print(self.__nodes[fromId])
+
         from_node = self.__nodes[fromId]
         to_node = self.__nodes[toId]
 
