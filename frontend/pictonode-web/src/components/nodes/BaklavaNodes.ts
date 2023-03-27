@@ -43,6 +43,8 @@ export const ImageNode = new NodeBuilder("InputImage")
     .addOutputInterface("Result")
     .onCalculate(n => {
         console.log("INPUT CALCULATE")
+        srcImgs.push(ID)
+        let i = srcImgs.indexOf(ID)
         let pipeline: JSON = <JSON>(<unknown> {
             nodes: [
                 {
@@ -50,7 +52,7 @@ export const ImageNode = new NodeBuilder("InputImage")
                     template: 'ImgSrc',
                     metadata: {},
                     values: {
-                        image: srcImgIds[srcImgIds.length-1]
+                        image: srcImgIds[i]
                     }
                 }
             ],
@@ -156,7 +158,6 @@ export const RenderedNode = new NodeBuilder("RenderedImage")
                 let pipeline = n.getInterface("Top Image").value
                 let pipeline2 = n.getInterface("Bottom Image").value
 
-
                 let node = {
                     id: ID,
                     template: "CompOver",
@@ -178,7 +179,7 @@ export const RenderedNode = new NodeBuilder("RenderedImage")
                     from: pipeline2.nodes[pipeline2.nodes.length-1].id,
                     to: node.id,
                     fromIndex: 0,
-                    toIndex: 0,
+                    toIndex: 1,
                     metadata: {}
                 }
 
@@ -202,5 +203,6 @@ export const RenderedNode = new NodeBuilder("RenderedImage")
         .build();
 
     export let srcImgIds = new Array()
+    export let srcImgs = new Array()
     let ID = 0
     
