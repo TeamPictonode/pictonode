@@ -57,9 +57,11 @@
 
 </script>
 <style>
+
   .b {
     height: 90%;
     width: 100vw;
     position: relative;
+    border-top: 10px solid black;
   }
 </style>

@@ -22,7 +22,7 @@
             tag="v-btn"
             style="color: white"
           >
-            <v-btn rounded="pill" size="large" color="#bddde9">
+            <v-btn rounded="pill" size="large" color="#474545">
               Create a new Project
             </v-btn>
           </router-link>
@@ -34,7 +34,7 @@
             tag="v-btn"
             style="color: white"
           >
-            <v-btn rounded="pill" size="large" color="#bddde9">
+            <v-btn rounded="pill" size="large" color="#474545">
               baklava test
             </v-btn>
           </router-link>
@@ -52,7 +52,7 @@
 #homepage {
   padding: 1rem;
   margin-left: 20rem;
-  background: #bddde9;
+  background: #474545;
   width: 700px;
   height: 500px;
   border-radius: 25px;

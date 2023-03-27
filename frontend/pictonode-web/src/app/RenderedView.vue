@@ -35,7 +35,7 @@ function update(canvas: HTMLCanvasElement, img: HTMLCanvasElement | undefined) {
 
       ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
     } else {
-      ctx.fillStyle = "grey";
+      ctx.fillStyle = "transparent";
       ctx.fillRect(0, 0, canvas.width, canvas.height);
     }
   }
@@ -63,13 +63,6 @@ export default defineComponent({
 </script>
 
 <template>
-  <v-card
-    ref="toplevel"
-    class="mx-auto"
-    id="rendered-view"
-    tile
-    color="#e1e9d0"
-  >
     <div class="rendered-view">
     <canvas id="imgview" ref="inner" width="400" height="400" margin-right="30rem">
       <v-tooltip activator="parent" location="top"
@@ -77,15 +70,13 @@ export default defineComponent({
       >
     </canvas>
   </div>
-  </v-card>
 </template>
 
 <style scoped lang="scss">
 .rendered-view {
-  padding: 1rem;
-  margin: 1rem;
-  display: flexbox;
-  justify-content: center;
-  align-items: center;
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+  width: 40%;
 }
 </style>

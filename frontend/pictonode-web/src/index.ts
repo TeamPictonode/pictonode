@@ -13,7 +13,6 @@ import "./style/basics.scss";
 import "@mdi/font/css/materialdesignicons.css";
 
 import { BaklavaVuePlugin } from "@baklavajs/plugin-renderer-vue3";
-import "@baklavajs/plugin-renderer-vue3/dist/styles.css";
 
 window.onload = () => {
   const instance = createApp(App);

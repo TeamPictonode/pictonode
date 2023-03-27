@@ -2,5 +2,12 @@
 
 // This file in its entirety was written by John Nunley and Grace Meredith.
 
-@import "@vue-flow/core/dist/style.css";
-@import "@vue-flow/core/dist/theme-default.css";
+@import "@baklavajs/plugin-renderer-vue3/dist/styles/variables.scss";
+
+// change variables here
+$color-connection-default: #b39a36;
+$color-pattern-default: white;
+$color-pattern-line: #ebe1e1;
+$color-pattern-black: #ffebeb67;
+
+@import "@baklavajs/plugin-renderer-vue3/dist/styles/styles.scss";
