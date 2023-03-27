@@ -645,17 +645,17 @@ class Pipeline(Generic[T, M]):
         Creates a node.
         """
 
-        node = Node(
-            self.__templateTable,
-            template,
-            values,
-            metadata,
-            self.__nextId)
         if not id:
             id = self.__nextId
             self.__nextId += 1
         else:
             self.__nextId = max(self.__nextId, id + 1)
+        node = Node(
+            self.__templateTable,
+            template,
+            values,
+            metadata,
+            id)
         self.__nodes[id] = node
         return node
 
@@ -790,7 +790,8 @@ def deserializePipeline(
         node = pipeline.createNode(
             serializedNode["template"],
             serializedNode.get("metadata", None),
-            serializedNode.get("values", {})
+            serializedNode.get("values", {}),
+            serializedNode.get("id", None),
         )
         node.setId(serializedNode["id"])
 
