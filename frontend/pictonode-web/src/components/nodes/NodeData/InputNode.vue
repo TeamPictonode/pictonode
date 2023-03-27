@@ -29,6 +29,7 @@ export default defineComponent({
           imageId: id,
         });
         srcImgIds.push(id)
+        console.log(srcImgIds)
       });
     },
   },

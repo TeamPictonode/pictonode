@@ -14,7 +14,7 @@
   import { Engine } from "@baklavajs/plugin-engine";
   import { defineComponent } from "vue";
 
-  import { MathNode, ImageNode, RenderedNode, DisplayNode } from "../components/nodes/BaklavaNodes";
+  import { ImageNode, RenderedNode, InvertNode, CompositeNode } from "../components/nodes/BaklavaNodes";
   import  InputNode  from "../components/nodes/NodeData/InputNode.vue";
 
   import RenderedView from "./RenderedView.vue";
@@ -35,12 +35,12 @@
 
     this.viewPlugin.registerOption("ButtonOption", InputNode);
 
-    this.editor.registerNodeType("DisplayNode", DisplayNode);
-    this.editor.registerNodeType("MathNode", MathNode);
     this.editor.registerNodeType("ImageNode", ImageNode);
     this.editor.registerNodeType("RenderedNode", RenderedNode);
+    this.editor.registerNodeType("InvertNode", InvertNode);
+    this.editor.registerNodeType("Composite", CompositeNode);
     const node1 = this.addNodeWithCoordinates(ImageNode, 100, 140)
-    const node2 = this.addNodeWithCoordinates(RenderedNode, 500, 140)
+    const node2 = this.addNodeWithCoordinates(RenderedNode, 1000, 140)
     this.engine.calculate();
 
   },
