@@ -89,6 +89,11 @@ class PluginWindow(Gtk.Window):
         self.overlay = Gtk.Overlay()
         self.add(self.overlay)
 
+        # variables used for image zooming
+        self.pixbuf = None
+        self.width_mult = 1
+        self.height_mult = 1
+
         # reset preview image
         if os.path.isfile("/tmp/gimp/temp.png"):
             os.remove("/tmp/gimp/temp.png")
@@ -167,6 +172,7 @@ class PluginWindow(Gtk.Window):
             image_css_provider, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION)
 
         self.image_scrolled.add_with_viewport(self.image)
+        self.image_scrolled.add_events(Gdk.EventMask.SCROLL_MASK)
         self.image_scrolled.connect('scroll-event', self.on_scroll)
 
         scrolled_window.set_policy(
@@ -272,12 +278,32 @@ class PluginWindow(Gtk.Window):
         ''' Scroll event for zooming on image '''
 
         accel_mask = Gtk.accelerator_get_default_mod_mask()
-        if event.state & accel_mask == Gdk.ModifierType.CONTROL_MASK:
+        print("Mod mask: ", accel_mask)
+        if (event.state & accel_mask) == Gdk.ModifierType.CONTROL_MASK:
             direction = event.get_scroll_deltas()[2]
-            if direction > 0: # scroll down
-                self.set_zoom_level(self.get_zoom_level() - 0.1)
+
+            print("Direction: ", direction)
+
+            if direction > 0:
+                # this may cause some slight warping due to rounding errors?
+                self.width_mult -= 0.1
+                self.height_mult -= 0.1
             else:
-                self.set_zoom_level(self.get_zoom_level() + 0.1)
+                                # this may cause some slight warping due to rounding errors?
+                self.width_mult += 0.1
+                self.height_mult += 0.1
+
+            self.__draw_zoomed_image()
+
+    def __draw_zoomed_image(self):
+        # redraws image based on window's current zoom multiplier
+        width = self.pixbuf.get_property("width")
+        height = self.pixbuf.get_property("height")
+        new_pixbuf = self.pixbuf.scale_simple(int(self.width_mult * width),
+                                              (self.height_mult * height),
+                                              GdkPixbuf.InterpType.BILINEAR)
+
+        self.image.set_from_pixbuf(new_pixbuf)
 
     def output_node_lock(self, has_out_node: bool):
         ''' User should only ever be allowed one output node at any time '''
@@ -490,3 +516,6 @@ class PluginWindow(Gtk.Window):
 
         # Create Gtk.Image from file (to change to pixbuf later)
         self.image.set_from_file("/tmp/gimp/temp.png")
+        self.pixbuf = self.image.get_pixbuf()
+
+        self.__draw_zoomed_image()
