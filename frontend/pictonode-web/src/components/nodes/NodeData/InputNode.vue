@@ -7,7 +7,7 @@ import { NodeTemplateComponentProps } from "../NodeTypes";
 import { SpecificData, SpecificDataType } from "../getPipeline";
 import { uploadImage } from "../../../api";
 
-import { srcImgIds } from "../BaklavaNodes"
+import { srcImgs, Img } from "../BaklavaNodes"
 
 export default defineComponent({
   props: NodeTemplateComponentProps,
@@ -18,18 +18,22 @@ export default defineComponent({
     imgName: "image",
   }),
   methods: {
-   async onFileChange(e: any) {
+   onFileChange(e: any) {
       console.log("made it to on file change")
       const file = e.target.files[0];
       this.imgName = file.name;
 
-      await uploadImage(file).then((id) => {
+      uploadImage(file).then((id) => {
         this.$emit("updated", {
           type: SpecificDataType.InputImage,
           imageId: id,
         });
-        srcImgIds.push(id)
-        console.log(srcImgIds)
+        const img: Img = {
+          id: id,
+          used: false
+        }
+
+        srcImgs.push(img)
       });
     },
   },

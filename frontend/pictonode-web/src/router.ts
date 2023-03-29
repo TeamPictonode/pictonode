@@ -16,7 +16,7 @@ const ROUTES = [
   { path: "/login", component: Login },
   { path: "/register", component: Register },
   { path: "/about", component: Aboutpage },
-  { path: "/baklava", component: NodeEditor },
+  { path: "/editor", component: NodeEditor },
 ];
 
 export default VueRouter.createRouter({

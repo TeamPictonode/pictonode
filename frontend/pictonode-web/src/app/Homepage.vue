@@ -18,7 +18,7 @@
         <v-list-item>
           <router-link
             class="text-body-1"
-            to="/canvas"
+            to="/editor"
             tag="v-btn"
             style="color: white"
           >
@@ -26,21 +26,6 @@
               Create a new Project
             </v-btn>
           </router-link>
-        </v-list-item>
-        <v-list-item>
-          <router-link
-            class="text-body-1"
-            to="/baklava"
-            tag="v-btn"
-            style="color: white"
-          >
-            <v-btn rounded="pill" size="large" color="#474545">
-              baklava test
-            </v-btn>
-          </router-link>
-        </v-list-item>
-        <v-list-item>
-          <p>Open an existing project (TODO)</p>
         </v-list-item>
       </v-list>
     </div>

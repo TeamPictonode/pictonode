@@ -1,4 +1,7 @@
 import { NodeBuilder } from "@baklavajs/core";
+import { SelectOption } from "@baklavajs/plugin-options-vue3";
+import { WatchIgnorePlugin } from "webpack";
+
 import {
     processPipeline
   } from "../../api"
@@ -8,24 +11,7 @@ export const ImageNode = new NodeBuilder("InputImage")
     .addOption("Upload image", "ButtonOption")
     .addOutputInterface("Result")
     .onCalculate(n => {
-        console.log("INPUT CALCULATE")
-        srcImgs.push(ID)
-        let i = srcImgs.indexOf(ID)
-        let pipeline: JSON = <JSON>(<unknown> {
-            nodes: [
-                {
-                    id: ID,
-                    template: 'ImgSrc',
-                    metadata: {},
-                    values: {
-                        image: srcImgIds[srcImgIds.length-1]
-                    }
-                }
-            ],
-            links: [],      
-        });
-        ID++;
-        n.getInterface("Result").value = pipeline
+        n.getInterface("Result").value = getInitialPipeline();
     })
     .build();
 
@@ -33,53 +19,8 @@ export const RenderedNode = new NodeBuilder("RenderedImage")
     .setName("Rendered Image")
     .addInputInterface("Image")
     .onCalculate (n => {
-        console.log("OUTPUT CALCULATE")
         let pipeline = n.getInterface("Image").value
-        if(pipeline) {
-            let node = {
-                id: ID,
-                template: "ImgOut",
-                metadata: {},
-                values: {}
-            }
-            ID++
-            let link = {
-                id: ID,
-                from: pipeline.nodes[pipeline.nodes.length-1].id,
-                to: node.id,
-                fromIndex: 0,
-                toIndex: 0,
-                metadata: {}
-            }
-            ID++
-            pipeline.nodes.push(node)
-            pipeline.links.push(link)
-            pipeline.output = node.id
-
-            processPipeline(pipeline).then((imageFile) => {
-                // Create an image element and set its source to the image file.
-                const image = new Image();
-                image.src = URL.createObjectURL(imageFile);
-        
-                // Create a canvas element and draw the image on it.
-                const canvas = <HTMLCanvasElement> document.getElementById("imgview");
-                if(canvas){
-                    const context = canvas.getContext("2d");
-        
-                    if (!context) {
-                        throw new Error("Could not get canvas context");
-                    }
-
-                    context.clearRect(0, 0, canvas.width, canvas.height)
-        
-                    image.onload = () => {
-                    canvas.width = image.width;
-                    canvas.height = image.height;
-                    context.drawImage(image, 0, 0);
-                    };
-                }
-            });
-        }
+        finalProcess(pipeline)
     })
     .build();
 
@@ -168,7 +109,91 @@ export const RenderedNode = new NodeBuilder("RenderedImage")
         })
         .build();
 
-    export let srcImgIds = new Array()
     export let srcImgs = new Array()
+    export type Img = {
+        id: number,
+        used: boolean
+    };
     let ID = 0
+
+    function getImgID() {
+        console.log(srcImgs)
+        for (var i in srcImgs) {
+            if(srcImgs[i].used == false) {
+                srcImgs[i].used = true
+                return srcImgs[i].id;
+            }
+        }
+    }
+
+ function getInitialPipeline() {
+    console.log("INPUT CALCULATE")
+    let imgID = getImgID();
+    const pipeline: JSON = <JSON>(<unknown> {
+        nodes: [
+            {
+                id: ID,
+                template: 'ImgSrc',
+                metadata: {},
+                values: {
+                    image: imgID
+                }
+            }
+        ],
+        links: [],      
+        });
+        ID++;
+        return pipeline
+}
+
+    async function finalProcess(pipeline: any) {
+                console.log("OUTPUT CALCULATE")
+                console.log(pipeline)
+                if(pipeline) {
+                    console.log("got a pipeline")
+                    let node = {
+                        id: ID,
+                        template: "ImgOut",
+                        metadata: {},
+                        values: {}
+                    }
+                    ID++
+                    let link = {
+                        id: ID,
+                        from: pipeline.nodes[pipeline.nodes.length-1].id,
+                        to: node.id,
+                        fromIndex: 0,
+                        toIndex: 0,
+                        metadata: {}
+                    }
+                    ID++
+                    pipeline.nodes.push(node)
+                    pipeline.links.push(link)
+                    pipeline.output = node.id
+
+                    processPipeline(pipeline).then((imageFile) => {
+                // Create an image element and set its source to the image file.
+                        const image = new Image();
+                        image.src = URL.createObjectURL(imageFile);
+        
+                    // Create a canvas element and draw the image on it.
+                        const canvas = <HTMLCanvasElement> document.getElementById("imgview");
+                        if(canvas){
+                            const context = canvas.getContext("2d");
+        
+                            if (!context) {
+                                throw new Error("Could not get canvas context");
+                            }
+
+                            context.clearRect(0, 0, canvas.width, canvas.height)
+        
+                            image.onload = () => {
+                            canvas.width = image.width;
+                            canvas.height = image.height;
+                            context.drawImage(image, 0, 0);
+                            };
+                        }
+                    });
+                }
+    }
     
