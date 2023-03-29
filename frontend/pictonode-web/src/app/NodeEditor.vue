@@ -14,7 +14,7 @@
   import { Engine } from "@baklavajs/plugin-engine";
   import { defineComponent } from "vue";
 
-  import { ImageNode, RenderedNode, InvertNode, CompositeNode } from "../components/nodes/BaklavaNodes";
+  import { ImageNode, RenderedNode, InvertNode, CompositeNode, BriCon, GaussBlur } from "../components/nodes/BaklavaNodes";
   import  InputNode  from "../components/nodes/NodeData/InputNode.vue";
   import RenderedView from "./RenderedView.vue";
 
@@ -39,16 +39,12 @@
     this.editor.registerNodeType("RenderedNode", RenderedNode);
     this.editor.registerNodeType("InvertNode", InvertNode);
     this.editor.registerNodeType("Composite", CompositeNode);
+    this.editor.registerNodeType("Brightness/Contrast", BriCon);
+    this.editor.registerNodeType("Gauss Blur", GaussBlur)
     const node1 = this.addNodeWithCoordinates(ImageNode, 100, 140)
     const node2 = this.addNodeWithCoordinates(RenderedNode, 1000, 140)
 
-    //this.editor.addConnection(node1.getInterface("Result"), node2.getInterface("Image"))
-    wait(200).then(() => {
-      this.engine.calculate()
-    })
-    const e = this.engine.events.beforeCalculate
-    e.addListener(Symbol() , wait(200).then)
-
+    this.engine.calculate()
   },
   methods: {
         addNodeWithCoordinates(nodeType: any, x: any, y: any) {

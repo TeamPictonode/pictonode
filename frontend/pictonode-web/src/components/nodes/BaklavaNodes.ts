@@ -19,6 +19,7 @@ export const RenderedNode = new NodeBuilder("RenderedImage")
     .setName("Rendered Image")
     .addInputInterface("Image")
     .onCalculate (n => {
+        //resetList()
         let pipeline = n.getInterface("Image").value
         finalProcess(pipeline)
     })
@@ -108,6 +109,96 @@ export const RenderedNode = new NodeBuilder("RenderedImage")
             }
         })
         .build();
+    
+    export const BriCon = new NodeBuilder("Brightness Contrast")
+        .setName("Brightness/Contrast")
+        .addInputInterface("Image")
+        .addOption("Brightness", "NumberOption", 0)
+        .addOption("Contrast", "NumberOption", 0)
+        .addOutputInterface("Result")
+        .onCalculate(n => {
+            if(n.getOptionValue("Brightness") < -3) {
+                n.setOptionValue("Brightness", -3)
+            }
+            if(n.getOptionValue("Brightness") > 3) {
+                n.setOptionValue("Brightness", 3)
+            }
+            if(n.getOptionValue("Contrast") < -5) {
+                n.setOptionValue("Contrast", -5)
+            }
+            if(n.getOptionValue("Contrast") > 5) {
+                n.setOptionValue("Contrast", 5)
+            }
+
+            let pipeline = n.getInterface("Image").value
+            if(pipeline) {
+                let node = {
+                    id: ID,
+                    template: "BrightCont",
+                    metadata: {},
+                    values: {
+                        brightness: n.getOptionValue("Brightness"),
+                        contrast: n.getOptionValue("Contrast")
+                    }
+                }
+
+                let link = {
+                    id: ID,
+                    from: pipeline.nodes[pipeline.nodes.length-1].id,
+                    to: node.id,
+                    fromIndex: 0,
+                    toIndex: 0,
+                    metadata: {}
+                }
+
+                ID++
+                pipeline.nodes.push(node)
+                pipeline.links.push(link)
+                n.getInterface("Result").value = pipeline
+            }
+        })
+        .build();
+
+    export const GaussBlur = new NodeBuilder("Gauss Blur")
+        .setName("Gauss Blur")
+        .addInputInterface("Image")
+        .addOption("X", "NumberOption", 0)
+        .addOption("Y", "NumberOption", 0)
+        .addOutputInterface("Result")
+        .onCalculate(n=> {
+            let pipeline = n.getInterface("Image").value
+            if(pipeline) {
+                let node = {
+                    id: ID,
+                    template: "BrightCont",
+                    metadata: {},
+                    values: {
+                        std_dev_x: n.getOptionValue("X"),
+                        std_dev_y: n.getOptionValue("Y")
+                    }
+                }
+
+                let link = {
+                    id: ID,
+                    from: pipeline.nodes[pipeline.nodes.length-1].id,
+                    to: node.id,
+                    fromIndex: 0,
+                    toIndex: 0,
+                    metadata: {}
+                }
+
+                ID++
+                pipeline.nodes.push(node)
+                pipeline.links.push(link)
+                n.getInterface("Result").value = pipeline
+            }
+        })
+        .build();
+
+
+
+
+///extra calculations will prob move this to it's own file once I finalize the logic
 
     export let srcImgs = new Array()
     export type Img = {
@@ -118,11 +209,19 @@ export const RenderedNode = new NodeBuilder("RenderedImage")
 
     function getImgID() {
         console.log(srcImgs)
-        for (var i in srcImgs) {
-            if(srcImgs[i].used == false) {
-                srcImgs[i].used = true
-                return srcImgs[i].id;
-            }
+        //for (var i in srcImgs) {
+          //  if(srcImgs[i].used == false) {
+            //    srcImgs[i].used = true
+              //  return srcImgs[i].id;
+           // }
+        //}
+
+        return srcImgs[srcImgs.length -1].id
+    }
+
+    function resetList() {
+        for(var i in srcImgs) {
+            srcImgs[i].used == false
         }
     }
 

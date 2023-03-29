@@ -77,6 +77,7 @@ export default defineComponent({
   display: block;
   margin-left: auto;
   margin-right: auto;
+  margin-bottom: 10%;
   width: 40%;
 }
 </style>
