@@ -18,17 +18,14 @@
         <v-list-item>
           <router-link
             class="text-body-1"
-            to="/canvas"
+            to="/editor"
             tag="v-btn"
             style="color: white"
           >
-            <v-btn rounded="pill" size="large" color="#bddde9">
+            <v-btn rounded="pill" size="large" color="#474545">
               Create a new Project
             </v-btn>
           </router-link>
-        </v-list-item>
-        <v-list-item>
-          <p>Open an existing project (TODO)</p>
         </v-list-item>
       </v-list>
     </div>
@@ -40,7 +37,7 @@
 #homepage {
   padding: 1rem;
   margin-left: 20rem;
-  background: #bddde9;
+  background: #474545;
   width: 700px;
   height: 500px;
   border-radius: 25px;

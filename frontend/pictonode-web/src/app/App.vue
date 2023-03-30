@@ -26,13 +26,11 @@ export default defineComponent({
 
 <style>
 #pictonode {
-  background-image: linear-gradient(
-    to top,
-    #c6d4e9,
-    #bddde9,
-    #bfe3e2,
-    #cce7d7,
-    #e1e9d0
-  );
+  background-image: linear-gradient(45deg, #cfcaca 25%, transparent 25%),
+    linear-gradient(-45deg, #cfcaca 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, #cfcaca 75%),
+    linear-gradient(-45deg, transparent 75%, #cfcaca 75%);
+  background-size: 20px 20px;
+  background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
 }
 </style>

@@ -23,10 +23,13 @@ export default defineComponent({
 
 <template>
   <v-layout>
-    <v-app-bar color="#e1e9d0" pictonode>
-      <v-app-bar-nav-icon @click.stop="drawer = !drawer"></v-app-bar-nav-icon>
+    <v-app-bar color="#474545" pictonode>
+      <v-app-bar-nav-icon
+        style="color: white"
+        @click.stop="drawer = !drawer"
+      ></v-app-bar-nav-icon>
       <v-toolbar-title>
-        <router-link to="/" tag="v-btn" style="color: black">
+        <router-link to="/" tag="v-btn" style="color: white">
           <v-btn> Pictonode </v-btn>
         </router-link>
 
@@ -34,7 +37,7 @@ export default defineComponent({
           class="text-body-1"
           to="/about"
           tag="v-btn"
-          style="color: black"
+          style="color: white"
         >
           <v-btn> About Page </v-btn>
         </router-link>
@@ -43,34 +46,35 @@ export default defineComponent({
       <v-menu rounded="pill" slide-x left bottom>
         <template #activator="{ props }">
           <v-btn icon v-bind="props">
-            <v-icon>mdi-dots-vertical</v-icon>
+            <v-icon color="white">mdi-dots-vertical</v-icon>
           </v-btn>
         </template>
 
         <v-list>
           <v-list-item>
-            <router-link to="/login" tag="v-btn" style="color: black">
-              <v-btn rounded="pill" color="#e1e9d0"> Login </v-btn>
+            <router-link to="/login" tag="v-btn" style="color: white">
+              <v-btn rounded="pill" color="#474545"> Login </v-btn>
             </router-link>
           </v-list-item>
           <v-list-item>
-            <router-link to="/register" tag="v-btn" style="color: black">
-              <v-btn rounded="pill" color="#e1e9d0">
+            <router-link to="/register" tag="v-btn" style="color: white">
+              <v-btn rounded="pill" color="#474545">
                 Register
               </v-btn></router-link
             >
           </v-list-item>
-          <v-list-item> Settings (TODO) </v-list-item>
         </v-list>
       </v-menu>
     </v-app-bar>
-    <v-navigation-drawer color="#e1e9d0" v-model="drawer">
+    <v-navigation-drawer color="#474545" v-model="drawer">
       <v-list>
         <v-list-item
+          style="color: white"
           prepend-icon="mdi-account"
           title="My Account"
         ></v-list-item>
-        <v-list-item title="Save Project //TODO"></v-list-item>
+        <v-list-item style="color: white" title="Save Pipeline"></v-list-item>
+        <v-list-item style="color: white" title="Load Pipeline"></v-list-item>
       </v-list>
     </v-navigation-drawer>
   </v-layout>

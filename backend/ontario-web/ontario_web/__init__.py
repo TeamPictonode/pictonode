@@ -121,6 +121,8 @@ def create_app(test_config=None):
     def process():
         # The body of the request should be a JSON pipeline
         pipeline = request.get_json()
+        print("PIPELINE: ")
+        print(pipeline)
         id = random.randint(0, 1000000000)
         filename = f"/tmp/ontario/out{id}.webp"
         processor.process(pipeline, im, filename)
