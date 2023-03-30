@@ -63,8 +63,14 @@ export default defineComponent({
 </script>
 
 <template>
-    <div class="rendered-view">
-    <canvas id="imgview" ref="inner" width="400" height="400" margin-right="30rem">
+  <div class="rendered-view">
+    <canvas
+      id="imgview"
+      ref="inner"
+      width="400"
+      height="400"
+      margin-right="30rem"
+    >
       <v-tooltip activator="parent" location="top"
         >Try Uploading an Image to the Image input</v-tooltip
       >
