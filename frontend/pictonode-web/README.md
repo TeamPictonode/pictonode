@@ -34,3 +34,17 @@ $ node --version
 to see the version you're running.
 
 Whatever you do, do not install Node/NVM in the latest WSL. There are a handful of bugs there.
+
+## Baklava JS: How it we're using it
+
+BaklavaJS is a javascript library that renders nodes and handles a lot of our node-graph interface. Here are the basics you should know:
+
+-The editor itself comes from Baklava's Core, and is rendered through ViewPlugin.
+-On create, we must use the editor to register each node type we have created, and then use the engine to run the initial calculation.
+-Baklava auto-recalculates the entire node tree dynamically with eachn option/input change
+
+-for the ImgsSrc input, we are able to register a vue component as an option, using the option-plugin. Unfortunately, due to Baklava's asynchronous behavior, and the asynchronous behavior of uploading files, we are only allowing one upload per img src node as the processes screw up the calculation process. Baklava currenty doesn't have a recalculate option, and I have yet to sort out a viable solution to this.
+
+-Each node created recieves a current pipeline and adds it's node/link attributes to the pipeline before passing it on the next node. Once it reaches the final rendered node, it does the final process of sending the completed pipeline to ontario and updated our canvas tag with the new rendered image.
+
+-currently every node-type is functioning except composite node returns 500, and brightness/contrast doesn't seem to have any visual affect to the rendered image.
