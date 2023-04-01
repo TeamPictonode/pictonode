@@ -7,7 +7,7 @@ import { NodeTemplateComponentProps } from "../NodeTypes";
 import { SpecificData, SpecificDataType } from "../getPipeline";
 import { uploadImage } from "../../../api";
 
-import { srcImgs, Img } from "../BaklavaNodes";
+import { srcImgs } from "../CalculateNodes";
 
 export default defineComponent({
   props: NodeTemplateComponentProps,
@@ -16,24 +16,22 @@ export default defineComponent({
   },
   data: () => ({
     imgName: "image",
+    fileExists: false,
   }),
   methods: {
     onFileChange(e: any) {
       console.log("made it to on file change");
       const file = e.target.files[0];
       this.imgName = file.name;
+      this.fileExists = true;
 
       uploadImage(file).then((id) => {
         this.$emit("updated", {
           type: SpecificDataType.InputImage,
           imageId: id,
         });
-        const img: Img = {
-          id: id,
-          used: false,
-        };
 
-        srcImgs.push(img);
+        srcImgs.push(id);
       });
     },
   },
@@ -44,6 +42,7 @@ export default defineComponent({
   <label htmlFor="image">
     {{ imgName }}
     <input
+      v-if="!fileExists"
       type="file"
       id="file"
       name="file"

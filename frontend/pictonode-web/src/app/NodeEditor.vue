@@ -40,7 +40,7 @@ export default defineComponent({
 
     this.viewPlugin.enableMinimap = true;
 
-    this.viewPlugin.registerOption("ButtonOption", InputNode);
+    this.viewPlugin.registerOption("UploadOption", InputNode);
 
     this.editor.registerNodeType("ImageNode", ImageNode);
     this.editor.registerNodeType("RenderedNode", RenderedNode);
@@ -60,10 +60,6 @@ export default defineComponent({
       n.position.x = x;
       n.position.y = y;
       return n;
-    },
-
-    recalculate() {
-      this.engine.calculate();
     },
   },
 });
