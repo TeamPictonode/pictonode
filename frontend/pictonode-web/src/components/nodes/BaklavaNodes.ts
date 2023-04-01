@@ -27,12 +27,10 @@ export const ImageNode = new NodeBuilder("InputImage")
       nodeIds[n.id] = id;
       id++;
     }
-    n.getInterface("Result").value = <JSON>(
-      (<unknown>{
-        nodes: [addNodeToPipeline(nodeIds[n.id], "ImgSrc", { image: imgID })],
-        links: [{}],
-      })
-    );
+    n.getInterface("Result").value = <JSON>(<unknown>{
+      nodes: [addNodeToPipeline(nodeIds[n.id], "ImgSrc", { image: imgID })],
+      links: [{}],
+    });
   })
   .build();
 
