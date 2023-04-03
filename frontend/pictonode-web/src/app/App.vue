@@ -17,7 +17,7 @@ export default defineComponent({
 
 <template>
   <v-app :id="'pictonode'">
-    <Topbar style="position: sticky; top: 0;"/>
+    <Topbar style="position: sticky; top: 0" />
     <v-main>
       <router-view />
     </v-main>

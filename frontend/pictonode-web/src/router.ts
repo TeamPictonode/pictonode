@@ -8,7 +8,7 @@ import Login from "./app/Login.vue";
 import Register from "./app/Register.vue";
 import Aboutpage from "./app/Aboutpage.vue";
 import NodeEditor from "./app/NodeEditor.vue";
-import Tutorial from "./app/Tutorial.vue"
+import Tutorial from "./app/Tutorial.vue";
 import * as VueRouter from "vue-router";
 
 const ROUTES = [

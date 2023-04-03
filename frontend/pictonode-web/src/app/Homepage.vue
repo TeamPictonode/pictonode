@@ -7,7 +7,11 @@
 <template>
   <div class="home-items">
     <div id="homepage">
-      <img class="pictonode-logo" src="https://pictonode.s3.us-west-2.amazonaws.com/pictonode_logo.png" alt="Pictonode Logo">
+      <img
+        class="pictonode-logo"
+        src="https://pictonode.s3.us-west-2.amazonaws.com/pictonode_logo.png"
+        alt="Pictonode Logo"
+      />
       <p class="text-center" style="color: white; font-size: 50px">
         Your new favorite image editor
       </p>
