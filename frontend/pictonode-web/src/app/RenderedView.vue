@@ -42,19 +42,13 @@ function update(canvas: HTMLCanvasElement, img: HTMLCanvasElement | undefined) {
 }
 
 export default defineComponent({
-  props: ["img", "ticks"],
+  props: ["img"],
   mounted() {
     // @ts-ignore
     update(this.$refs.inner, this.img);
   },
   watch: {
     img() {
-      // @ts-ignore
-      update(this.$refs.inner, this.img);
-    },
-    ticks() {
-      // This is a bogus hack, please fix!
-
       // @ts-ignore
       update(this.$refs.inner, this.img);
     },

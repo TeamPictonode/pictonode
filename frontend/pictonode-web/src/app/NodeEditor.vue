@@ -23,6 +23,8 @@ import {
   GaussBlur,
 } from "../components/nodes/BaklavaNodes";
 import InputNode from "../components/nodes/NodeData/InputNode.vue";
+import getPipeline from "../components/nodes/getPipeline";
+
 import RenderedView from "./RenderedView.vue";
 
 export default defineComponent({
@@ -51,6 +53,13 @@ export default defineComponent({
     const node1 = this.addNodeWithCoordinates(ImageNode, 100, 140);
     const node2 = this.addNodeWithCoordinates(RenderedNode, 1000, 140);
 
+    // Update the rendered view when the engine ticks.
+    const pictosymbol = Symbol("Pictonode Event Listener");
+    this.editor.events.addConnection.addListener(pictosymbol, () => this.onUpdate());
+    this.editor.events.addNode.addListener(pictosymbol, () => this.onUpdate());
+    this.editor.events.removeConnection.addListener(pictosymbol, () => this.onUpdate());
+    this.editor.events.removeNode.addListener(pictosymbol, () => this.onUpdate());
+
     this.engine.calculate();
   },
   methods: {
@@ -61,6 +70,11 @@ export default defineComponent({
       n.position.y = y;
       return n;
     },
+
+    onUpdate() {
+      const pipeline = getPipeline(this.editor.nodes, this.editor.connections);
+      // TODO
+    }
   },
 });
 
