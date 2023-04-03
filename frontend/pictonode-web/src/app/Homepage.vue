@@ -35,11 +35,14 @@
 <style scoped lang="scss">
 @import url("https://fonts.googleapis.com/css2?family=Alfa+Slab+One&family=Poppins:wght@300&display=swap");
 #homepage {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
   padding: 1rem;
   margin-left: 5rem;
   background: #474545;
   width: 1050px;
-  height: 400px;
   border-radius: 25px;
 }
 

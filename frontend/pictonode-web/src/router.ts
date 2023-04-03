@@ -8,6 +8,7 @@ import Login from "./app/Login.vue";
 import Register from "./app/Register.vue";
 import Aboutpage from "./app/Aboutpage.vue";
 import NodeEditor from "./app/NodeEditor.vue";
+import Tutorial from "./app/Tutorial.vue"
 import * as VueRouter from "vue-router";
 
 const ROUTES = [
@@ -17,6 +18,7 @@ const ROUTES = [
   { path: "/register", component: Register },
   { path: "/about", component: Aboutpage },
   { path: "/editor", component: NodeEditor },
+  { path: "/Tutorial", component: Tutorial },
 ];
 
 export default VueRouter.createRouter({

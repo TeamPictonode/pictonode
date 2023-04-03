@@ -41,6 +41,14 @@ export default defineComponent({
         >
           <v-btn> About Page </v-btn>
         </router-link>
+        <router-link
+          class="text-body-1"
+          to="/tutorial"
+          tag="v-btn"
+          style="color: white"
+        >
+          <v-btn> Tutorial </v-btn>
+        </router-link>
       </v-toolbar-title>
       <v-spacer />
       <v-menu rounded="pill" slide-x left bottom>
