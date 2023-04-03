@@ -7,8 +7,12 @@
 <template>
   <div class="home-items">
     <div id="homepage">
-      <p class="welcome text-center">Pictonode</p>
-      <p class="text-center" style="color: white">
+      <img
+        class="pictonode-logo"
+        src="https://pictonode.s3.us-west-2.amazonaws.com/pictonode_logo.png"
+        alt="Pictonode Logo"
+      />
+      <p class="text-center" style="color: white; font-size: 50px">
         Your new favorite image editor
       </p>
     </div>
@@ -35,11 +39,14 @@
 <style scoped lang="scss">
 @import url("https://fonts.googleapis.com/css2?family=Alfa+Slab+One&family=Poppins:wght@300&display=swap");
 #homepage {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
   padding: 1rem;
-  margin-left: 20rem;
+  margin-left: 5rem;
   background: #474545;
-  width: 700px;
-  height: 500px;
+  width: 1050px;
   border-radius: 25px;
 }
 
@@ -60,5 +67,12 @@
 .home-items {
   display: flex;
   flex-direction: row;
+  align-items: center;
+  justify-content: center;
+}
+
+.pictonode-logo {
+  width: auto;
+  height: 250px;
 }
 </style>
