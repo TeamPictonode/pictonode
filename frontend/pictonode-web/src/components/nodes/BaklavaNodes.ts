@@ -14,7 +14,7 @@ import {
 
 let id = 0;
 
-export const ImageNode = new NodeBuilder("InputImage")
+export const ImageNode = new NodeBuilder("ImgSrc")
   .setName("Input Image")
   .addOption("Upload image", "UploadOption")
   .addOutputInterface("Result")
@@ -34,7 +34,7 @@ export const ImageNode = new NodeBuilder("InputImage")
   })
   .build();
 
-export const RenderedNode = new NodeBuilder("RenderedImage")
+export const RenderedNode = new NodeBuilder("ImgOut")
   .setName("Rendered Image")
   .addInputInterface("Image")
   .onCalculate((n) => {
@@ -62,7 +62,7 @@ export const RenderedNode = new NodeBuilder("RenderedImage")
   })
   .build();
 
-export const InvertNode = new NodeBuilder("Invert Node")
+export const InvertNode = new NodeBuilder("Invert")
   .setName("Invert")
   .addInputInterface("Image")
   .addOutputInterface("Result")
@@ -90,7 +90,7 @@ export const InvertNode = new NodeBuilder("Invert Node")
   })
   .build();
 
-export const CompositeNode = new NodeBuilder("Composite Node")
+export const CompositeNode = new NodeBuilder("CompOver")
   .setName("Composite")
   .addInputInterface("Top Image")
   .addInputInterface("Bottom Image")
@@ -131,7 +131,7 @@ export const CompositeNode = new NodeBuilder("Composite Node")
   })
   .build();
 
-export const BriCon = new NodeBuilder("Brightness Contrast")
+export const BriCon = new NodeBuilder("BrightCont")
   .setName("Brightness/Contrast")
   .addInputInterface("Image")
   .addOption("Brightness", "NumberOption", 0)
@@ -181,7 +181,7 @@ export const BriCon = new NodeBuilder("Brightness Contrast")
   })
   .build();
 
-export const GaussBlur = new NodeBuilder("Gauss Blur")
+export const GaussBlur = new NodeBuilder("GaussBlur")
   .setName("Gauss Blur")
   .addInputInterface("Image")
   .addOption("X", "NumberOption", 0)
