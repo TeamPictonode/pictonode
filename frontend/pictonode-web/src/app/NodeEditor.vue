@@ -24,6 +24,7 @@ import {
 } from "../components/nodes/BaklavaNodes";
 import InputNode from "../components/nodes/NodeData/InputNode.vue";
 import getPipeline from "../components/nodes/getPipeline";
+import { processPipeline } from "../api";
 
 import RenderedView from "./RenderedView.vue";
 
@@ -55,10 +56,16 @@ export default defineComponent({
 
     // Update the rendered view when the engine ticks.
     const pictosymbol = Symbol("Pictonode Event Listener");
-    this.editor.events.addConnection.addListener(pictosymbol, () => this.onUpdate());
+    this.editor.events.addConnection.addListener(pictosymbol, () =>
+      this.onUpdate()
+    );
     this.editor.events.addNode.addListener(pictosymbol, () => this.onUpdate());
-    this.editor.events.removeConnection.addListener(pictosymbol, () => this.onUpdate());
-    this.editor.events.removeNode.addListener(pictosymbol, () => this.onUpdate());
+    this.editor.events.removeConnection.addListener(pictosymbol, () =>
+      this.onUpdate()
+    );
+    this.editor.events.removeNode.addListener(pictosymbol, () =>
+      this.onUpdate()
+    );
 
     this.engine.calculate();
   },
@@ -72,9 +79,28 @@ export default defineComponent({
     },
 
     onUpdate() {
+      // Convert the pipeline to the pictonode format.
       const pipeline = getPipeline(this.editor.nodes, this.editor.connections);
-      // TODO
-    }
+
+      // Process the pipeline.
+      processPipeline(pipeline).then((img) => {
+        // Cast the file into an image.
+        const image = new Image();
+        image.src = URL.createObjectURL(img);
+
+        image.onload = () => {
+          // Cast the image into a canvas.
+          const canvas = document.createElement("canvas");
+          canvas.width = image.width;
+          canvas.height = image.height;
+          const ctx = canvas.getContext("2d");
+          if (ctx) {
+            ctx.drawImage(image, 0, 0);
+            this.img = canvas;
+          }
+        };
+      });
+    },
   },
 });
 
