@@ -3,17 +3,11 @@
 
 <script lang="ts">
 import { defineComponent } from "vue";
-import { NodeTemplateComponentProps } from "../NodeTypes";
-import { SpecificData, SpecificDataType } from "../getPipeline";
 import { uploadImage } from "../../../api";
 
 import { srcImgs } from "../CalculateNodes";
 
 export default defineComponent({
-  props: NodeTemplateComponentProps,
-  emits: {
-    updated: (data: SpecificData) => true,
-  },
   data: () => ({
     imgName: "image",
     fileExists: false,
@@ -26,11 +20,6 @@ export default defineComponent({
       this.fileExists = true;
 
       uploadImage(file).then((id) => {
-        this.$emit("updated", {
-          type: SpecificDataType.InputImage,
-          imageId: id,
-        });
-
         srcImgs.push(id);
       });
     },
