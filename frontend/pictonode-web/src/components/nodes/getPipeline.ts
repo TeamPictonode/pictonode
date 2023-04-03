@@ -2,6 +2,7 @@
 // This file was written by John Nunley.
 
 import { Editor, Node, Connection } from "@baklavajs/core";
+import ValueTracker from "./ValueTracker";
 
 export interface SerializedPipeline {
   nodes: SerializedNode[];
@@ -21,37 +22,44 @@ export interface SerializedLink {
   fromIndex: number;
   to: number;
   toIndex: number;
-  id: number;
+  id: string;
   metadata: any;
 }
 
 export default function getPipeline(
-  bcNodes: ReadonlyArray<any>,
-  bcConnections: ReadonlyArray<any>
+  editor: Editor,
+  values: ValueTracker
 ): SerializedPipeline {
   const nodes: SerializedNode[] = [];
   const links: SerializedLink[] = [];
   let output = -1;
 
-  bcNodes.forEach((node) => {
+  editor.nodes.forEach((node) => {
+    // Take the integer part of node.id to get the id of the node.
+    // This is because node.id is a string of the form "node_<id>".
+    const node_id = getNodeId(node);
+
     const result: SerializedNode = {
-      id: node.id,
-      template: node.template,
-      values: {}, // TODO
-      metadata: {},
+      id: node_id,
+      template: node.type,
+      values: values.get_value(node.id),
+      metadata: {}, // TODO
     };
 
-    // TODO: Set output.
+    // Set output.
+    if (node.type === "ImgOut") {
+      output = node_id;
+    }
 
     nodes.push(result);
   });
 
-  bcConnections.forEach((link) => {
+  editor.connections.forEach((link) => {
     const result: SerializedLink = {
-      from: link.from.node.id,
-      fromIndex: 0, // TODO
-      to: link.to.node.id,
-      toIndex: 0, // TODO
+      from: getNodeId(link.from.parent),
+      fromIndex: link.from.index,
+      to: getNodeId(link.to.parent),
+      toIndex: link.to.index,
       id: link.id,
       metadata: {},
     };
@@ -64,4 +72,12 @@ export default function getPipeline(
     links,
     output,
   };
+}
+
+function getNodeId(node: INode): number {
+  return parseInt(node.id.split("_")[1]);
+}
+
+interface INode {
+  id: string;
 }

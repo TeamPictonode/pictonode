@@ -17,7 +17,7 @@ let id = 0;
 export const ImageNode = new NodeBuilder("ImgSrc")
   .setName("Input Image")
   .addOption("Upload image", "UploadOption")
-  .addOutputInterface("Result")
+  .addOutputInterface("Result", { index: 0 })
   .onCalculate((n) => {
     var imgID: number = nodeList.includes(n.id)
       ? imgNodes[n.id]
@@ -36,7 +36,7 @@ export const ImageNode = new NodeBuilder("ImgSrc")
 
 export const RenderedNode = new NodeBuilder("ImgOut")
   .setName("Rendered Image")
-  .addInputInterface("Image")
+  .addInputInterface("Image", undefined, undefined, { index: 0 })
   .onCalculate((n) => {
     let pipeline = n.getInterface("Image").value;
     if (pipeline) {
@@ -64,8 +64,8 @@ export const RenderedNode = new NodeBuilder("ImgOut")
 
 export const InvertNode = new NodeBuilder("Invert")
   .setName("Invert")
-  .addInputInterface("Image")
-  .addOutputInterface("Result")
+  .addInputInterface("Image", undefined, undefined, { index: 0 })
+  .addOutputInterface("Result", { index: 0 })
   .onCalculate((n) => {
     let pipeline = n.getInterface("Image").value;
     if (pipeline) {
@@ -92,9 +92,9 @@ export const InvertNode = new NodeBuilder("Invert")
 
 export const CompositeNode = new NodeBuilder("CompOver")
   .setName("Composite")
-  .addInputInterface("Top Image")
-  .addInputInterface("Bottom Image")
-  .addOutputInterface("Result")
+  .addInputInterface("Top Image", undefined, undefined, { index: 0 })
+  .addInputInterface("Bottom Image", undefined, undefined, { index: 1 })
+  .addOutputInterface("Result", { index: 0 })
   .onCalculate((n) => {
     if (
       n.getInterface("Top Image").value &&
@@ -133,10 +133,10 @@ export const CompositeNode = new NodeBuilder("CompOver")
 
 export const BriCon = new NodeBuilder("BrightCont")
   .setName("Brightness/Contrast")
-  .addInputInterface("Image")
+  .addInputInterface("Image", undefined, undefined, { index: 0 })
   .addOption("Brightness", "NumberOption", 0)
   .addOption("Contrast", "NumberOption", 0)
-  .addOutputInterface("Result")
+  .addOutputInterface("Result", { index: 0 })
   .onCalculate((n) => {
     //set hard limits to option values -3 <= brightness <= 3 & -5 <= contrast <= 5
     if (n.getOptionValue("Brightness") < -3) {
@@ -183,10 +183,10 @@ export const BriCon = new NodeBuilder("BrightCont")
 
 export const GaussBlur = new NodeBuilder("GaussBlur")
   .setName("Gauss Blur")
-  .addInputInterface("Image")
+  .addInputInterface("Image", undefined, undefined, { index: 0 })
   .addOption("X", "NumberOption", 0)
   .addOption("Y", "NumberOption", 0)
-  .addOutputInterface("Result")
+  .addOutputInterface("Result", { index: 0 })
   .onCalculate((n) => {
     let pipeline = n.getInterface("Image").value;
     if (pipeline) {

@@ -25,6 +25,7 @@ import {
 import InputNode from "../components/nodes/NodeData/InputNode.vue";
 import getPipeline from "../components/nodes/getPipeline";
 import { processPipeline } from "../api";
+import ValueTracker from "../components/nodes/ValueTracker";
 
 import RenderedView from "./RenderedView.vue";
 
@@ -32,9 +33,10 @@ export default defineComponent({
   components: { RenderedView, InputNode },
   data: () => ({
     img: undefined as HTMLCanvasElement | undefined,
-    editor: new Editor(),
-    viewPlugin: new ViewPlugin(),
-    engine: new Engine(true),
+    editor: new Editor() as Editor,
+    viewPlugin: new ViewPlugin() as ViewPlugin,
+    engine: new Engine(true) as Engine,
+    tracker: new ValueTracker() as ValueTracker,
   }),
   created() {
     this.editor.use(this.viewPlugin);
@@ -80,7 +82,12 @@ export default defineComponent({
 
     onUpdate() {
       // Convert the pipeline to the pictonode format.
-      const pipeline = getPipeline(this.editor.nodes, this.editor.connections);
+      // @ts-ignore
+      const pipeline = getPipeline(
+        this.editor.nodes,
+        this.editor.connections,
+        this.tracker
+      );
 
       // Process the pipeline.
       processPipeline(pipeline).then((img) => {
