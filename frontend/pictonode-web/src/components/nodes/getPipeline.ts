@@ -33,7 +33,31 @@ export default function getPipeline(
   const links: SerializedLink[] = [];
   let output = -1;
 
-  // TODO
+  bcNodes.forEach((node) => {
+    const result: SerializedNode = {
+      id: node.id,
+      template: node.template,
+      values: {}, // TODO
+      metadata: {},
+    };
+
+    // TODO: Set output.
+
+    nodes.push(result);
+  });
+
+  bcConnections.forEach((link) => {
+    const result: SerializedLink = {
+      from: link.from.node.id,
+      fromIndex: 0, // TODO
+      to: link.to.node.id,
+      toIndex: 0, // TODO
+      id: link.id,
+      metadata: {},
+    };
+
+    links.push(result);
+  });
 
   return {
     nodes,
