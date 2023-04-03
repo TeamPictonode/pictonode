@@ -6,7 +6,6 @@
 
 <script lang="ts">
 import { defineComponent } from "vue";
-import { threadId } from "worker_threads";
 import { setRegister } from "../api";
 
 export default defineComponent({

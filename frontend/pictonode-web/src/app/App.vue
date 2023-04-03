@@ -8,10 +8,9 @@
 import { defineComponent } from "vue";
 import RenderedView from "./RenderedView.vue";
 import Topbar from "./Topbar.vue";
-import Widgets from "./Widgets.vue";
 
 export default defineComponent({
-  components: { RenderedView, Topbar, Widgets },
+  components: { RenderedView, Topbar },
 });
 </script>
 
