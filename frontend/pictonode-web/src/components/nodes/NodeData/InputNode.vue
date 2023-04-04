@@ -4,10 +4,15 @@
 <script lang="ts">
 import { defineComponent } from "vue";
 import { uploadImage } from "../../../api";
-
-import { srcImgs } from "../CalculateNodes";
+import ValueTracker, { TrackedValue, TrackedValueType } from "../ValueTracker";
 
 export default defineComponent({
+  props: {
+    node: {
+      type: Object,
+      required: true,
+    },
+  },
   data: () => ({
     imgName: "image",
     fileExists: false,
@@ -20,7 +25,11 @@ export default defineComponent({
       this.fileExists = true;
 
       uploadImage(file).then((id) => {
-        srcImgs.push(id);
+        ValueTracker.get_instance().set_value({
+          node_id: this.node.id,
+          type: TrackedValueType.SrcImage,
+          image: id,
+        });
       });
     },
   },

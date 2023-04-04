@@ -26,10 +26,7 @@ export interface SerializedLink {
   metadata: any;
 }
 
-export default function getPipeline(
-  editor: Editor,
-  values: ValueTracker
-): SerializedPipeline {
+export default function getPipeline(editor: Editor): SerializedPipeline {
   const nodes: SerializedNode[] = [];
   const links: SerializedLink[] = [];
   let output = -1;
@@ -42,7 +39,7 @@ export default function getPipeline(
     const result: SerializedNode = {
       id: node_id,
       template: node.type,
-      values: values.get_value(node.id),
+      values: ValueTracker.get_instance().get_value(node.id),
       metadata: {}, // TODO
     };
 
@@ -61,7 +58,7 @@ export default function getPipeline(
       to: getNodeId(link.to.parent),
       toIndex: link.to.index,
       id: link.id,
-      metadata: {},
+      metadata: {}, // TODO
     };
 
     links.push(result);

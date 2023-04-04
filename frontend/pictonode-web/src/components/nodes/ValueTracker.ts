@@ -12,14 +12,25 @@ type CommonData = {
 
 export type TrackedValue = {
   type: TrackedValueType.SrcImage;
-  image_id: number;
+  image: number;
 } & CommonData;
 
 export default class ValueTracker {
   private values: TrackedValue[];
 
-  constructor() {
+  // Singleton.
+  private static instance: ValueTracker;
+
+  private constructor() {
     this.values = [];
+  }
+
+  public static get_instance(): ValueTracker {
+    if (!ValueTracker.instance) {
+      ValueTracker.instance = new ValueTracker();
+    }
+
+    return ValueTracker.instance;
   }
 
   public set_value(value: TrackedValue): void {
@@ -35,12 +46,15 @@ export default class ValueTracker {
     this.values.push(value);
   }
 
-  public get_value(node_id: string): TrackedValue[] {
-    const result: TrackedValue[] = [];
+  public get_value(node_id: string): Record<string, any> {
+    const result: Record<string, any> = {};
 
     this.values.forEach((value) => {
       if (value.node_id === node_id) {
-        result.push(value);
+        switch (value.type) {
+          case TrackedValueType.SrcImage:
+            result["image"] = value.image;
+        }
       }
     });
 

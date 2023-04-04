@@ -36,7 +36,6 @@ export default defineComponent({
     editor: new Editor() as Editor,
     viewPlugin: new ViewPlugin() as ViewPlugin,
     engine: new Engine(true) as Engine,
-    tracker: new ValueTracker() as ValueTracker,
   }),
   created() {
     this.editor.use(this.viewPlugin);
@@ -45,6 +44,7 @@ export default defineComponent({
 
     this.viewPlugin.enableMinimap = true;
 
+    // @ts-ignore
     this.viewPlugin.registerOption("UploadOption", InputNode);
 
     this.editor.registerNodeType("ImageNode", ImageNode);
@@ -83,11 +83,7 @@ export default defineComponent({
     onUpdate() {
       // Convert the pipeline to the pictonode format.
       // @ts-ignore
-      const pipeline = getPipeline(
-        this.editor.nodes,
-        this.editor.connections,
-        this.tracker
-      );
+      const pipeline = getPipeline(this.editor);
 
       // Process the pipeline.
       processPipeline(pipeline).then((img) => {
