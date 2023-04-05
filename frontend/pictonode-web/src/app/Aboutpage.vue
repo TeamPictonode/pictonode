@@ -1,24 +1,56 @@
 <template>
-  <div id="aboutpage">
-    <p class="text-h5 text-center">Pictonode</p>
-    <div class="about">
-      <p class="text-h6 text-center">
+  <div class="about-items">
+    <div style="position: fixed; align-self: flex-start">
+      <router-link to="/" tag="v-btn" style="color: white">
+        <v-btn color="#474545" rounded="pill"> back to home </v-btn>
+      </router-link>
+    </div>
+    <div class="about-logo">
+      <img
+        src="https://pictonode.s3.us-west-2.amazonaws.com/pictonode_logo.png"
+        alt="Pictonode Logo"
+        style="height: auto; width: 500px"
+      />
+    </div>
+    <div class="about-logo about-header">
+      <h1 class="about-body-content about-header">About Pictonode</h1>
+      <p class="about-body-content about-paragraph">
+        Here, you will find a summary about the Pictonode: Image Editor Project
+        and its developers
+      </p>
+    </div>
+    <div class="about-logo about-header">
+      <h1 class="about-body-content about-header">Context:</h1>
+      <p class="about-body-content about-paragraph">
         CS 426 Senior Project in Computer Science, Spring 2023, University of
         Nevada, Reno, Department of Computer Science and Engineering
       </p>
-      <p class="text-h6 text-center">Team #7: Team Picto</p>
-      <p class="text-h6 text-center">
-        Developers: John Nunley, Stephen Foster, Parker Nelms, & Grace Meredith
-      </p>
-      <p class="text-h6 text-center">
-        Instructors: Dr. Dave Feil-Seifer, Mrs. Devrin Lee
-      </p>
-      <p class="text-h6 text-center">Advisor: Dr. Alireza Tavakkoli</p>
     </div>
-    <div class="about">
-      <h1 class="text-h4 text-center">Project Description</h1>
-      <P class="text-center"
-        >The main goals of Pictonode include helping artists save time on their
+    <div class="about-logo about-header">
+      <h1 class="about-body-content about-header">Developers:</h1>
+      <p class="about-body-content about-paragraph">
+        John Nunley, Stephen Foster, Grace Meredith, & Parker Nelms
+      </p>
+      <img
+        class="about-images"
+        src="https://pictonode.s3.us-west-2.amazonaws.com/PictonodeDevs.jpg"
+        alt="Initial Nodes"
+      />
+      <h1 class="about-body-content about-header">Instructors:</h1>
+      <p class="about-body-content about-paragraph">
+        Dr. Dave Feil-Seifer, Mrs. Devrin Lee
+      </p>
+      <h1 class="about-body-content about-header" style="margin-top: 1em">
+        Advisor:
+      </h1>
+      <p class="about-body-content about-paragraph">
+        Dr. Alireza Tavakkoli (Professor at UNR)
+      </p>
+    </div>
+    <div class="about-logo about-header">
+      <h1 class="about-body-content about-header">Project Description:</h1>
+      <p class="about-body-content about-paragraph">
+        The main goals of Pictonode include helping artists save time on their
         projects, create a lightweight environment for beginner digital artists,
         and innovate GIMP’s non-destructive image editing with a fresh user
         interface. Pictonode implements node-based editing for users, so they
@@ -43,18 +75,45 @@
         Typescript for the backend. Essentially, Pictonode will have two
         front-end systems for the web-app and GIMP plugin, which will share a
         daemon for the node processing.
-      </P>
+      </p>
     </div>
-    <div class="about">
-      <h1 class="text-h4 text-center">Related Projects and Resources</h1>
-      <v-list class="text-center list">
+    <div class="about-logo about-header">
+      <h1 class="about-body-content about-header">About the Devs:</h1>
+      <h2 class="about-body-content about-2nd-header">John Nunley</h2>
+      <p class="about-body-content about-paragraph">
+        John designed & developed the backend system for Pictonode. He also
+        assisted in some of the front-end development for the website. His main
+        interests include Italian architecture and cyber security.
+      </p>
+      <h2 class="about-body-content about-2nd-header">Parker Nelms</h2>
+      <p class="about-body-content about-paragraph">
+        Parker implemented most of the UI for our native GIMP Plugin
+        application. His interests include music and data science.
+      </p>
+      <h2 class="about-body-content about-2nd-header">Stephen Foster</h2>
+      <p class="about-body-content about-paragraph">
+        Stephen designed the architecture, and helped implement the UI for our
+        native GIMP Plugin application. His interests include teaching his
+        friends how to program, and game development.
+      </p>
+      <h2 class="about-body-content about-2nd-header">Grace Meredith</h2>
+      <p class="about-body-content about-paragraph">
+        Grace implemented most of the front-end design for the website. Her main
+        interests include art and web development.
+      </p>
+    </div>
+    <div class="about-logo about-header">
+      <h1 class="about-body-content about-header">
+        Related Projects and Resources:
+      </h1>
+      <v-list class="text-center button-list">
         <v-list-item>
           <a
             class="text-body-1 buttonLinks"
             href="https://github.com/notgull/pictonode"
             tag="v-btn"
           >
-            <v-btn rounded="pill" color="#e1e9d0" size="x-large">
+            <v-btn rounded="pill" color="#c3dee5" size="x-large">
               Github Repo
             </v-btn>
           </a>
@@ -65,7 +124,7 @@
             href="https://www.blender.org"
             tag="v-btn"
           >
-            <v-btn rounded="pill" color="#e1e9d0" size="x-large">
+            <v-btn rounded="pill" color="#c3dee5" size="x-large">
               Blender
             </v-btn>
           </a>
@@ -76,7 +135,7 @@
             href="https://www.gimp.org"
             tag="v-btn"
           >
-            <v-btn rounded="pill" color="#e1e9d0" size="x-large"> GIMP </v-btn>
+            <v-btn rounded="pill" color="#c3dee5" size="x-large"> GIMP </v-btn>
           </a>
         </v-list-item>
         <v-list-item>
@@ -85,7 +144,7 @@
             href="https://www.gegl.org"
             tag="v-btn"
           >
-            <v-btn rounded="pill" color="#e1e9d0" size="x-large"> GEGL </v-btn>
+            <v-btn rounded="pill" color="#c3dee5" size="x-large"> GEGL </v-btn>
           </a>
         </v-list-item>
         <v-list-item>
@@ -94,7 +153,7 @@
             href="https://github.com/aluntzer/gtknodes"
             tag="v-btn"
           >
-            <v-btn rounded="pill" color="#e1e9d0" size="x-large">
+            <v-btn rounded="pill" color="#c3dee5" size="x-large">
               GTKNodes
             </v-btn>
           </a>
@@ -105,7 +164,7 @@
             href=" https://github.com/AliensGroup/Gtk.NodeGraph"
             tag="v-btn"
           >
-            <v-btn rounded="pill" color="#e1e9d0" size="x-large">
+            <v-btn rounded="pill" color="#c3dee5" size="x-large">
               GTK.NodeGraph
             </v-btn>
           </a>
@@ -116,22 +175,65 @@
 </template>
 
 <style scoped lang="scss">
-#aboutpage {
+.about-items {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  position: relative;
+}
+.about-logo {
+  background-color: #474545;
+  display: flex;
+  flex-direction: column;
+  align-content: space-between;
+  width: 1500px;
   padding: 1rem;
-  margin: 1rem;
+  border-radius: 25px;
+  color: white;
+  margin: 2rem;
 }
 
-.about {
-  margin-bottom: 50px;
+.about-body-content {
+  align-self: flex-start;
+  padding-left: 3rem;
 }
-.list {
-  display: flex;
-  flex-direction: row;
-  justify-content: space-around;
-  align-items: center;
-  background-color: #bddde9;
+
+.about-header {
+  font-size: 40px;
+}
+
+.about-2nd-header {
+  font-size: 25px;
+  margin-top: 1rem;
+}
+
+.about-paragraph {
+  font-size: 20px;
+  margin-top: 1rem;
+}
+
+.about-images {
+  height: auto;
+  width: 80%;
+  border-radius: 25px;
+  align-self: center;
+  margin-top: 3rem;
+  margin-bottom: 3rem;
 }
 .buttonLinks {
-  color: black;
+  color: #474545;
+}
+.about-images {
+  height: auto;
+  width: 80%;
+  border-radius: 25px;
+  align-self: center;
+  margin-top: 3rem;
+}
+.button-list {
+  display: flex;
+  flex-direction: row;
+  background-color: transparent;
 }
 </style>
