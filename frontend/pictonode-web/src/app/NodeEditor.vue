@@ -112,11 +112,13 @@ export default defineComponent({
           image.onload = () => {
             // Cast the image into a canvas.
             const canvas = document.createElement("canvas");
-            canvas.width = image.width;
-            canvas.height = image.height;
+            const actualWidth = 50;
+            const actualHeight = (actualWidth / image.width) * image.height;
+            canvas.width = actualWidth;
+            canvas.height = actualHeight;
             const ctx = canvas.getContext("2d");
             if (ctx) {
-              ctx.drawImage(image, 0, 0);
+              ctx.drawImage(image, 0, 0, actualWidth, actualHeight);
               this.img = canvas;
             }
           };
