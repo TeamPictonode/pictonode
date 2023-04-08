@@ -6,42 +6,38 @@
 
 <script lang="ts">
 import { defineComponent } from "vue";
-import { setRegister } from "../api";
+import { useStore } from 'vuex'
+import { ref } from 'vue'
+import store from "../store";
 
 export default defineComponent({
   data: () => ({
-    user: {
-      username: null as string | null,
-      fullName: null as string | null,
-      password: null as string | null,
-      confirmPassword: null as string | null,
-    },
+    username: ref(null as string | null),
+    fullName: ref(null as string | null),
+    password: ref(null as string | null),
+    confirmPassword: null as string | null,
     errorMessage: "Passwords do not match",
     error: false,
   }),
+
+  setup() {
+    const store = useStore()
+  },
+  
   name: "Register",
   methods: {
-    register() {
+    async register() {
       const user: JSON = <JSON>(<unknown>{
-        username: `${this.user.username}`,
-        realname: `${this.user.fullName}`,
-        password: `${this.user.password}`,
+        username: `${this.username}`,
+        realname: `${this.fullName}`,
+        password: `${this.password}`,
       });
-      setRegister(user)
-        .then(() => {
-          console.log("Registration completed");
-          this.$router.push("/login");
-        })
-        .catch((error) => {
-          const errorCode = error.code;
-          const errorMessage = error.message;
-          console.log(errorCode);
-          console.log(errorMessage);
-        });
+      await store.dispatch('register', user)
+      this.$router.push("/login");
     },
 
     validateForm() {
-      if (this.user.password !== this.user.confirmPassword) {
+      if (this.password !== this.confirmPassword) {
         this.error = true;
         return false;
       }
@@ -63,7 +59,7 @@ export default defineComponent({
               <v-text-field
                 label="Username"
                 solo
-                v-model="user.username"
+                v-model="username"
                 aria-required
               >
               </v-text-field>
@@ -74,7 +70,7 @@ export default defineComponent({
               <v-text-field
                 label="Name"
                 solo
-                v-model="user.fullName"
+                v-model="fullName"
                 aria-required
               />
             </v-col>
@@ -84,7 +80,7 @@ export default defineComponent({
               <v-text-field
                 type="password"
                 label="Password"
-                v-model="user.password"
+                v-model="password"
                 aria-required
               />
             </v-col>
@@ -92,7 +88,7 @@ export default defineComponent({
               <v-text-field
                 type="password"
                 label="Confirm Password"
-                v-model="user.confirmPassword"
+                v-model="confirmPassword"
                 @input="validateForm"
                 aria-required
               />
