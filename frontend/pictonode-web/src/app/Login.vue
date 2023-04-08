@@ -6,17 +6,17 @@
 
 <script lang="ts">
 import { defineComponent } from "vue";
-import { ref } from 'vue'
-import { useStore } from 'vuex'
+import { ref } from "vue";
+import { useStore } from "vuex";
 import store from "../store";
 
 export default defineComponent({
   data: () => ({
-      username: ref(null as string | null),
-      password: ref(null as string | null),
+    username: ref(null as string | null),
+    password: ref(null as string | null),
   }),
   setup() {
-    const store = useStore()
+    const store = useStore();
   },
   name: "Login",
   methods: {
@@ -26,7 +26,7 @@ export default defineComponent({
         password: `${this.password}`,
       });
 
-      await store.dispatch('login', user)
+      await store.dispatch("login", user);
       this.$router.push("/");
     },
   },
@@ -38,12 +38,7 @@ export default defineComponent({
     <v-card-title class="text-center">Login</v-card-title>
     <v-card-text>
       <v-form>
-        <v-text-field
-          label="Username"
-          solo
-          v-model="username"
-          aria-required
-        />
+        <v-text-field label="Username" solo v-model="username" aria-required />
         <v-text-field
           type="password"
           label="Password"

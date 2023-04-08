@@ -6,8 +6,8 @@
 
 <script lang="ts">
 import { defineComponent } from "vue";
-import { useStore } from 'vuex'
-import { ref } from 'vue'
+import { useStore } from "vuex";
+import { ref } from "vue";
 import store from "../store";
 
 export default defineComponent({
@@ -21,9 +21,9 @@ export default defineComponent({
   }),
 
   setup() {
-    const store = useStore()
+    const store = useStore();
   },
-  
+
   name: "Register",
   methods: {
     async register() {
@@ -32,7 +32,7 @@ export default defineComponent({
         realname: `${this.fullName}`,
         password: `${this.password}`,
       });
-      await store.dispatch('register', user)
+      await store.dispatch("register", user);
       this.$router.push("/login");
     },
 

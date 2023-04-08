@@ -1,18 +1,18 @@
-import {createStore} from "vuex"
+import { createStore } from "vuex";
 import { checkLogin, setRegister } from "./api";
 
 const store = createStore({
   state: {
     user: {
       loggedIn: false,
-      data: null
-    }
+      data: null,
+    },
   },
 
   getters: {
-    user(state){
-      return state.user
-    }
+    user(state) {
+      return state.user;
+    },
   },
 
   mutations: {
@@ -21,29 +21,15 @@ const store = createStore({
     },
     SET_USER(state, data) {
       state.user.data = data;
-    }
+    },
   },
 
   actions: {
-    async register(context, { user }){
+    async register(context, { user }) {
       setRegister(user)
-      .then(() => {
-        context.commit('SET_USER', Response)
-        console.log("Registration completed");
-      })
-      .catch((error) => {
-        const errorCode = error.code;
-        const errorMessage = error.message;
-        console.log(errorCode);
-        console.log(errorMessage);
-      });
-    },
-
-    async login(context, { user }){
-      checkLogin(user)
         .then(() => {
-          context.commit('SET_USER', Response)
-          context.commit('SET_LOGGED_IN', true)
+          context.commit("SET_USER", Response);
+          console.log("Registration completed");
         })
         .catch((error) => {
           const errorCode = error.code;
@@ -53,12 +39,26 @@ const store = createStore({
         });
     },
 
-    async logout(context){
-      //need to add api call to log out
-      context.commit('SET_USER', null)
-      context.commit('SET_LOGGED_IN', false)
+    async login(context, { user }) {
+      checkLogin(user)
+        .then(() => {
+          context.commit("SET_USER", Response);
+          context.commit("SET_LOGGED_IN", true);
+        })
+        .catch((error) => {
+          const errorCode = error.code;
+          const errorMessage = error.message;
+          console.log(errorCode);
+          console.log(errorMessage);
+        });
     },
-  }
-})
 
-export default store
+    async logout(context) {
+      //need to add api call to log out
+      context.commit("SET_USER", null);
+      context.commit("SET_LOGGED_IN", false);
+    },
+  },
+});
+
+export default store;

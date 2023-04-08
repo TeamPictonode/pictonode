@@ -7,8 +7,8 @@
 <script lang="ts">
 import { profile } from "console";
 import { defineComponent } from "vue";
-import { useStore } from 'vuex'
-import { ref } from 'vue'
+import { useStore } from "vuex";
+import { ref } from "vue";
 import store from "../store";
 
 export default defineComponent({
@@ -20,7 +20,7 @@ export default defineComponent({
   }),
 
   setup() {
-    const store = useStore()
+    const store = useStore();
   },
   watch: {
     group() {
@@ -30,14 +30,14 @@ export default defineComponent({
   computed: {
     user() {
       return store.getters.user;
-    }
+    },
   },
   methods: {
     async signout() {
-      await store.dispatch('logOut')
+      await store.dispatch("logOut");
       this.$router.push("/login");
-    }
-  }
+    },
+  },
 });
 </script>
 
@@ -76,10 +76,18 @@ export default defineComponent({
 
         <v-list v-if="user.loggedIn">
           <v-list-item>
-            <v-btn rounded="pill" color="#474545" style="color: white">Account</v-btn>
+            <v-btn rounded="pill" color="#474545" style="color: white"
+              >Account</v-btn
+            >
           </v-list-item>
           <v-list-item>
-            <v-btn rounded="pill" color="#474545" @click="signout()" style="color: white">Log Out</v-btn>
+            <v-btn
+              rounded="pill"
+              color="#474545"
+              @click="signout()"
+              style="color: white"
+              >Log Out</v-btn
+            >
           </v-list-item>
         </v-list>
 
