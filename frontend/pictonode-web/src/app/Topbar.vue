@@ -7,15 +7,35 @@
 <script lang="ts">
 import { profile } from "console";
 import { defineComponent } from "vue";
+import { useStore } from "vuex";
+import { ref } from "vue";
+import store from "../store";
+
 export default defineComponent({
   name: "Topbar",
   data: () => ({
     drawer: false,
     group: null,
+    loggedIn: false,
   }),
+
+  setup() {
+    const store = useStore();
+  },
   watch: {
     group() {
       this.drawer = false;
+    },
+  },
+  computed: {
+    user() {
+      return store.getters.user;
+    },
+  },
+  methods: {
+    async signout() {
+      await store.dispatch("logOut");
+      this.$router.push("/login");
     },
   },
 });
@@ -24,10 +44,6 @@ export default defineComponent({
 <template>
   <v-layout>
     <v-app-bar color="#474545" pictonode>
-      <v-app-bar-nav-icon
-        style="color: white"
-        @click.stop="drawer = !drawer"
-      ></v-app-bar-nav-icon>
       <v-toolbar-title>
         <router-link to="/" tag="v-btn" style="color: white">
           <v-btn> Pictonode </v-btn>
@@ -58,7 +74,24 @@ export default defineComponent({
           </v-btn>
         </template>
 
-        <v-list>
+        <v-list v-if="user.loggedIn">
+          <v-list-item>
+            <v-btn rounded="pill" color="#474545" style="color: white"
+              >Account</v-btn
+            >
+          </v-list-item>
+          <v-list-item>
+            <v-btn
+              rounded="pill"
+              color="#474545"
+              @click="signout()"
+              style="color: white"
+              >Log Out</v-btn
+            >
+          </v-list-item>
+        </v-list>
+
+        <v-list v-else>
           <v-list-item>
             <router-link to="/login" tag="v-btn" style="color: white">
               <v-btn rounded="pill" color="#474545"> Login </v-btn>
@@ -74,17 +107,6 @@ export default defineComponent({
         </v-list>
       </v-menu>
     </v-app-bar>
-    <v-navigation-drawer color="#474545" v-model="drawer">
-      <v-list>
-        <v-list-item
-          style="color: white"
-          prepend-icon="mdi-account"
-          title="My Account"
-        ></v-list-item>
-        <v-list-item style="color: white" title="Save Pipeline"></v-list-item>
-        <v-list-item style="color: white" title="Load Pipeline"></v-list-item>
-      </v-list>
-    </v-navigation-drawer>
   </v-layout>
 </template>
 

@@ -33,5 +33,8 @@
     "webpack-dev-server": "^4.11.1",
     "webpack-plugin-vuetify": "^2.0.0",
     "webpack-stream": "^7.0.0"
+  },
+  "dependencies": {
+    "vuex": "^4.0.2"
   }
 }

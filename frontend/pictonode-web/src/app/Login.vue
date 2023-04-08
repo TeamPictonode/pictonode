@@ -6,32 +6,28 @@
 
 <script lang="ts">
 import { defineComponent } from "vue";
-import { checkLogin } from "../api";
+import { ref } from "vue";
+import { useStore } from "vuex";
+import store from "../store";
 
 export default defineComponent({
   data: () => ({
-    user: {
-      username: null as string | null,
-      password: null as string | null,
-    },
+    username: ref(null as string | null),
+    password: ref(null as string | null),
   }),
+  setup() {
+    const store = useStore();
+  },
   name: "Login",
   methods: {
-    login() {
+    async login() {
       const user: JSON = <JSON>(<unknown>{
-        username: `${this.user.username}`,
-        password: `${this.user.password}`,
+        username: `${this.username}`,
+        password: `${this.password}`,
       });
-      checkLogin(user)
-        .then(() => {
-          this.$router.push("/");
-        })
-        .catch((error) => {
-          const errorCode = error.code;
-          const errorMessage = error.message;
-          console.log(errorCode);
-          console.log(errorMessage);
-        });
+
+      await store.dispatch("login", user);
+      this.$router.push("/");
     },
   },
 });
@@ -42,16 +38,11 @@ export default defineComponent({
     <v-card-title class="text-center">Login</v-card-title>
     <v-card-text>
       <v-form>
-        <v-text-field
-          label="Username"
-          solo
-          v-model="user.username"
-          aria-required
-        />
+        <v-text-field label="Username" solo v-model="username" aria-required />
         <v-text-field
           type="password"
           label="Password"
-          v-model="user.password"
+          v-model="password"
           aria-required
         />
       </v-form>
