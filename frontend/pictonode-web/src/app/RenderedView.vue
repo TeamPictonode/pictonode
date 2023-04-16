@@ -6,6 +6,7 @@
 
 <script lang="ts">
 import { defineComponent } from "vue";
+import * as download from "downloadjs";
 
 function update(canvas: HTMLCanvasElement, img: HTMLCanvasElement | undefined) {
   const ctx = canvas.getContext("2d");
@@ -53,6 +54,19 @@ export default defineComponent({
       update(this.$refs.inner, this.img);
     },
   },
+  methods: {
+    save() {
+      // @ts-ignore
+      const inner: HTMLCanvasElement = this.$refs.inner;
+
+      // Save to blob.
+      inner.toBlob((blob) => {
+        if (blob) {
+          download(blob, "rendered.png", "image/png");
+        }
+      }, "image/png");
+    },
+  },
 });
 </script>
 
@@ -64,9 +78,10 @@ export default defineComponent({
       width="400"
       height="400"
       margin-right="30rem"
+      @click="save"
     >
       <v-tooltip activator="parent" location="top"
-        >Try Uploading an Image to the Image input</v-tooltip
+        >Try Uploading an Image to the Image input, click to save</v-tooltip
       >
     </canvas>
   </div>
