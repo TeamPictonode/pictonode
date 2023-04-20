@@ -67,7 +67,6 @@ export default defineComponent({
         }
       }, "image/png");
     },
-    
   },
 });
 </script>

@@ -3,9 +3,27 @@
     <RenderedView :img="img" :pipeline="pipeline" :setPipeline="setPipeline" />
   </div>
   <div class="b">
-    <v-btn rounded="pill" color="#474545" @click="saveToFile" style="color: white">Save to File</v-btn>
-    <v-btn rounded="pill" color="#474545" @click="saveToServer" style="color: white">Save to Server</v-btn>
-    <v-btn rounded="pill" color="#474545" @click="loadFromFile" style="color: white">Load from File</v-btn>
+    <v-btn
+      rounded="pill"
+      color="#474545"
+      @click="saveToFile"
+      style="color: white"
+      >Save to File</v-btn
+    >
+    <v-btn
+      rounded="pill"
+      color="#474545"
+      @click="saveToServer"
+      style="color: white"
+      >Save to Server</v-btn
+    >
+    <v-btn
+      rounded="pill"
+      color="#474545"
+      @click="loadFromFile"
+      style="color: white"
+      >Load from File</v-btn
+    >
     <baklava-editor :plugin="viewPlugin" />
   </div>
 </template>
