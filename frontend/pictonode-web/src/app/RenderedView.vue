@@ -7,7 +7,7 @@
 <script lang="ts">
 import { defineComponent } from "vue";
 import * as download from "downloadjs";
-import { savePipeline } from "../api";
+import { savePipeline, loadPipeline } from "../api";
 
 function update(canvas: HTMLCanvasElement, img: HTMLCanvasElement | undefined) {
   const ctx = canvas.getContext("2d");
@@ -44,7 +44,7 @@ function update(canvas: HTMLCanvasElement, img: HTMLCanvasElement | undefined) {
 }
 
 export default defineComponent({
-  props: ["img", "pipeline"],
+  props: ["img", "pipeline", "setPipeline"],
   mounted() {
     // @ts-ignore
     update(this.$refs.inner, this.img);
@@ -68,9 +68,26 @@ export default defineComponent({
       }, "image/png");
     },
     saveToFile() {
-      savePipeline(this.pipeline).then(res => {
+      savePipeline(this.pipeline).then((res) => {
         download(res, "pipeline.zip", "application/zip");
-      })
+      });
+    },
+    loadFromFile() {
+      // Open a file dialog.
+      const input = document.createElement("input");
+      input.type = "file";
+      input.accept = ".zip";
+
+      input.onchange = (e) => {
+        const file = (e.target as HTMLInputElement).files?.[0];
+        if (file) {
+          loadPipeline(file).then((res) => {
+            this.setPipeline(res);
+          });
+        }
+      };
+
+      input.click();
     },
   },
 });
@@ -90,7 +107,8 @@ export default defineComponent({
             @click="save"
           >
             <v-tooltip activator="parent" location="top"
-              >Try Uploading an Image to the Image input, click to save</v-tooltip
+              >Try Uploading an Image to the Image input, click to
+              save</v-tooltip
             >
           </canvas>
         </v-col>
@@ -98,6 +116,9 @@ export default defineComponent({
           <v-list>
             <v-list-item @click="saveToFile">
               Save Pipeline to File
+            </v-list-item>
+            <v-list-item @click="loadFromFile">
+              Load Pipeline from File
             </v-list-item>
           </v-list>
         </v-col>

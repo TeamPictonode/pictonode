@@ -1,6 +1,6 @@
 <template>
   <div>
-    <RenderedView :img="img" :pipeline="pipeline" />
+    <RenderedView :img="img" :pipeline="pipeline" :setPipeline="setPipeline" />
   </div>
   <div class="b">
     <baklava-editor :plugin="viewPlugin" />
@@ -23,7 +23,7 @@ import {
   GaussBlur,
 } from "../components/nodes/BaklavaNodes";
 import InputNode from "../components/nodes/NodeData/InputNode.vue";
-import getPipeline from "../components/nodes/getPipeline";
+import getPipeline, { installPipeline } from "../components/nodes/getPipeline";
 import { processPipeline } from "../api";
 import ValueTracker from "../components/nodes/ValueTracker";
 
@@ -84,6 +84,12 @@ export default defineComponent({
       n.position.x = x;
       n.position.y = y;
       return n;
+    },
+
+    setPipeline(pipeline: any) {
+      // @ts-ignore
+      installPipeline(this.editor, pipeline);
+      this.onUpdate();
     },
 
     onUpdate() {

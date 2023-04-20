@@ -90,10 +90,7 @@ export function uploadProject(
   );
 }
 
-export function reuploadProject(
-  id: number,
-  file: File
-): Promise<boolean> {
+export function reuploadProject(id: number, file: File): Promise<boolean> {
   const formData = new FormData();
   formData.append("id", id.toString());
   formData.append("file", file);
