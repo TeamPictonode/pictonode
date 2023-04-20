@@ -3,6 +3,13 @@
     <RenderedView :img="img" />
   </div>
   <div class="b">
+      <v-btn
+              rounded="pill"
+              color="#474545"
+              @click="prettify()"
+              style="color: white"
+              >Prettify</v-btn
+            >
     <baklava-editor :plugin="viewPlugin" />
   </div>
 </template>
@@ -78,6 +85,35 @@ export default defineComponent({
       n.position.x = x;
       n.position.y = y;
       return n;
+    },
+
+    prettify() {
+     //position does exist you liar
+     var nodes = this.editor.nodes
+     var sortedNodes = []
+     var i, j, temp;
+     var swapped;
+
+     for(i=0; i < nodes.length; i++) {
+      swapped = false;
+      for (j = 0; j < nodes.length - i - 1; j++) {
+        if (nodes[j].position.x > nodes[j + 1].position.x)
+                {
+                    // swap arr[j] and arr[j+1]
+                    temp = nodes[j];
+                    sortedNodes[j] = nodes[j + 1];
+                    sortedNodes[j + 1] = temp;
+                    swapped = true;
+                }
+        else {
+          sortedNodes[j] = nodes[j]
+        }
+      }
+      if (swapped == false) {
+        break;
+      }
+     }
+
     },
 
     onUpdate() {
@@ -164,7 +200,6 @@ export default defineComponent({
   },
 });
 
-const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 </script>
 <style>
 .b {
@@ -172,5 +207,15 @@ const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
   width: 100vw;
   position: relative;
   border-top: 10px solid black;
+}
+.hint {
+    position: absolute;
+    top: 1rem;
+    left: 1rem;
+    z-index: 5;
+    padding: 1rem;
+    background: transparent;
+    color: white;
+    pointer-events: none;
 }
 </style>
