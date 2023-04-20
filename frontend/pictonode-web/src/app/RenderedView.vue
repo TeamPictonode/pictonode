@@ -67,37 +67,6 @@ export default defineComponent({
         }
       }, "image/png");
     },
-    saveToFile() {
-      savePipeline(this.pipeline).then((res) => {
-        download(res, "pipeline.zip", "application/zip");
-      });
-    },
-    loadFromFile() {
-      // Open a file dialog.
-      const input = document.createElement("input");
-      input.type = "file";
-      input.accept = ".zip";
-
-      input.onchange = (e) => {
-        const file = (e.target as HTMLInputElement).files?.[0];
-        if (file) {
-          loadPipeline(file).then((res) => {
-            this.setPipeline(res);
-          });
-        }
-      };
-
-      input.click();
-    },
-    saveToServer() {
-      savePipeline(this.pipeline).then((res) => {
-        uploadProject(
-          `untitled_${Math.floor(Math.random() * 1000000)}`,
-          "Untitled Project",
-          res
-        );
-      });
-    },
   },
 });
 </script>
@@ -120,19 +89,6 @@ export default defineComponent({
               save</v-tooltip
             >
           </canvas>
-        </v-col>
-        <v-col sm="4">
-          <v-list>
-            <v-list-item @click="saveToFile">
-              Save Pipeline to File
-            </v-list-item>
-            <v-list-item @click="loadFromFile">
-              Load Pipeline from File
-            </v-list-item>
-            <v-list-item @click="saveToServer">
-              Save Pipeline to Server
-            </v-list-item>
-          </v-list>
         </v-col>
       </v-row>
     </v-container>
