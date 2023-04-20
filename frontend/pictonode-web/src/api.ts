@@ -55,3 +55,48 @@ export function loadPipeline(zip: File): Promise<any[]> {
     (response) => response.data
   );
 }
+
+export type SavedProject = {
+  id: number;
+  name: string;
+  description: string;
+};
+
+export function listSavedProjects(username: string): Promise<SavedProject[]> {
+  return API.get(`/saved_projects/${username}`, { responseType: "json" }).then(
+    (response) => response.data
+  );
+}
+
+export function getProjectZip(id: number): Promise<File> {
+  return API.get(`/project_zip/${id}`, { responseType: "blob" }).then(
+    (response) => response.data
+  );
+}
+
+export function uploadProject(
+  name: string,
+  description: string,
+  file: File
+): Promise<number> {
+  const formData = new FormData();
+  formData.append("name", name);
+  formData.append("description", description);
+  formData.append("file", file);
+
+  // Response will be JSON with number field "id"
+  return API.post("/upload_project", formData, { responseType: "json" }).then(
+    (response) => response.data.id
+  );
+}
+
+export function reuploadProject(id: number, file: File): Promise<boolean> {
+  const formData = new FormData();
+  formData.append("id", id.toString());
+  formData.append("file", file);
+
+  // Response will be JSON with number field "id"
+  return API.post("/reupload_project", formData, { responseType: "json" }).then(
+    (response) => response.data
+  );
+}
