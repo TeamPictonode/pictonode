@@ -90,14 +90,14 @@ export default defineComponent({
       input.click();
     },
     saveToServer() {
-      savePipeline(this.pipeline).then(res => {
+      savePipeline(this.pipeline).then((res) => {
         uploadProject(
           `untitled_${Math.floor(Math.random() * 1000000)}`,
           "Untitled Project",
           res
-        )
-      })
-    }
+        );
+      });
+    },
   },
 });
 </script>
