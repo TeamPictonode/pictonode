@@ -3,6 +3,9 @@
     <RenderedView :img="img" :pipeline="pipeline" :setPipeline="setPipeline" />
   </div>
   <div class="b">
+    <v-btn rounded="pill" color="#474545" @click="saveToFile" style="color: white">Save to File</v-btn>
+    <v-btn rounded="pill" color="#474545" @click="saveToServer" style="color: white">Save to Server</v-btn>
+    <v-btn rounded="pill" color="#474545" @click="loadFromFile" style="color: white">Load from File</v-btn>
     <baklava-editor :plugin="viewPlugin" />
   </div>
 </template>
@@ -26,6 +29,8 @@ import InputNode from "../components/nodes/NodeData/InputNode.vue";
 import getPipeline, { installPipeline } from "../components/nodes/getPipeline";
 import { processPipeline } from "../api";
 import ValueTracker from "../components/nodes/ValueTracker";
+import { savePipeline, loadPipeline, uploadProject } from "../api";
+import * as download from "downloadjs";
 
 import RenderedView from "./RenderedView.vue";
 
@@ -172,6 +177,37 @@ export default defineComponent({
             }
           };
         });
+    },
+    saveToFile() {
+      savePipeline(this.pipeline).then((res) => {
+        download(res, "pipeline.zip", "application/zip");
+      });
+    },
+    loadFromFile() {
+      // Open a file dialog.
+      const input = document.createElement("input");
+      input.type = "file";
+      input.accept = ".zip";
+
+      input.onchange = (e) => {
+        const file = (e.target as HTMLInputElement).files?.[0];
+        if (file) {
+          loadPipeline(file).then((res) => {
+            this.setPipeline(res);
+          });
+        }
+      };
+
+      input.click();
+    },
+    saveToServer() {
+      savePipeline(this.pipeline).then((res) => {
+        uploadProject(
+          `untitled_${Math.floor(Math.random() * 1000000)}`,
+          "Untitled Project",
+          res
+        );
+      });
     },
   },
 });
