@@ -7,7 +7,7 @@
 <script lang="ts">
 import { defineComponent } from "vue";
 import * as download from "downloadjs";
-import { savePipeline, loadPipeline } from "../api";
+import { savePipeline, loadPipeline, uploadProject } from "../api";
 
 function update(canvas: HTMLCanvasElement, img: HTMLCanvasElement | undefined) {
   const ctx = canvas.getContext("2d");
@@ -89,6 +89,15 @@ export default defineComponent({
 
       input.click();
     },
+    saveToServer() {
+      savePipeline(this.pipeline).then(res => {
+        uploadProject(
+          `untitled_${Math.floor(Math.random() * 1000000)}`,
+          "Untitled Project",
+          res
+        )
+      })
+    }
   },
 });
 </script>
@@ -119,6 +128,9 @@ export default defineComponent({
             </v-list-item>
             <v-list-item @click="loadFromFile">
               Load Pipeline from File
+            </v-list-item>
+            <v-list-item @click="saveToServer">
+              Save Pipeline to Server
             </v-list-item>
           </v-list>
         </v-col>
