@@ -1,6 +1,6 @@
 <template>
   <div>
-    <RenderedView :img="img" />
+    <RenderedView :img="img" :pipeline="pipeline" />
   </div>
   <div class="b">
     <baklava-editor :plugin="viewPlugin" />
@@ -37,6 +37,12 @@ export default defineComponent({
     viewPlugin: new ViewPlugin() as ViewPlugin,
     engine: new Engine(true) as Engine,
   }),
+  computed: {
+    pipeline() {
+      // @ts-ignore
+      return getPipeline(this.editor);
+    },
+  },
   created() {
     this.editor.use(this.viewPlugin);
     this.editor.use(new OptionPlugin());

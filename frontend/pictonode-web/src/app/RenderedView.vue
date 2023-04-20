@@ -7,6 +7,7 @@
 <script lang="ts">
 import { defineComponent } from "vue";
 import * as download from "downloadjs";
+import { savePipeline } from "../api";
 
 function update(canvas: HTMLCanvasElement, img: HTMLCanvasElement | undefined) {
   const ctx = canvas.getContext("2d");
@@ -43,7 +44,7 @@ function update(canvas: HTMLCanvasElement, img: HTMLCanvasElement | undefined) {
 }
 
 export default defineComponent({
-  props: ["img"],
+  props: ["img", "pipeline"],
   mounted() {
     // @ts-ignore
     update(this.$refs.inner, this.img);
@@ -66,24 +67,42 @@ export default defineComponent({
         }
       }, "image/png");
     },
+    saveToFile() {
+      savePipeline(this.pipeline).then(res => {
+        download(res, "pipeline.zip", "application/zip");
+      })
+    },
   },
 });
 </script>
 
 <template>
   <div class="rendered-view">
-    <canvas
-      id="imgview"
-      ref="inner"
-      width="400"
-      height="400"
-      margin-right="30rem"
-      @click="save"
-    >
-      <v-tooltip activator="parent" location="top"
-        >Try Uploading an Image to the Image input, click to save</v-tooltip
-      >
-    </canvas>
+    <v-container>
+      <v-row no-gutters>
+        <v-col sm="8">
+          <canvas
+            id="imgview"
+            ref="inner"
+            width="400"
+            height="400"
+            margin-right="30rem"
+            @click="save"
+          >
+            <v-tooltip activator="parent" location="top"
+              >Try Uploading an Image to the Image input, click to save</v-tooltip
+            >
+          </canvas>
+        </v-col>
+        <v-col sm="4">
+          <v-list>
+            <v-list-item @click="saveToFile">
+              Save Pipeline to File
+            </v-list-item>
+          </v-list>
+        </v-col>
+      </v-row>
+    </v-container>
   </div>
 </template>
 
