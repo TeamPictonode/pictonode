@@ -13,6 +13,7 @@ import sys
 import threading
 import os
 import json
+import zipfile
 
 # autopep8 off
 import gi
@@ -130,9 +131,14 @@ class PluginWindow(Gtk.Window):
         open_graph_item.connect("activate", self.open_graph)
         file_menu.append(open_graph_item)
 
-        save_graph_item = Gtk.MenuItem("Export Node Graph")
+        save_graph_item = Gtk.MenuItem("Save Graph as")
         file_menu.append(save_graph_item)
         save_graph_item.connect("activate", self.save_graph)
+
+        # menu itme for saving picto projects
+        save_project_item = Gtk.MenuItem("Save Project as")
+        file_menu.append(save_project_item)
+        save_project_item.connect("activate", self.save_project)
 
         login_item = Gtk.MenuItem("Login")
         about_item = Gtk.MenuItem("About")
@@ -413,10 +419,7 @@ class PluginWindow(Gtk.Window):
                 print("updating ImgSrcNode")
                 node.set_layers(self.layers)
 
-
     def save_graph(self, widget=None):
-
-        # TODO: add json with attributes for each node
 
         save_dialog = Gtk.FileChooserDialog(
             "Save Node Graph",
@@ -427,7 +430,7 @@ class PluginWindow(Gtk.Window):
              Gtk.STOCK_SAVE,
              Gtk.ResponseType.OK))
 
-        # require .xml file types
+        # require .json file types
         file_type_filter = Gtk.FileFilter()
         file_type_filter.set_name(".JSON files")
         file_type_filter.add_pattern("*.JSON")
@@ -448,7 +451,49 @@ class PluginWindow(Gtk.Window):
             # credit geeksforgeeks
             with open(fn, "w") as outfile:
                 json.dump(dictionary, outfile, indent=2)
-            
+
+            save_dialog.destroy()
+            return None
+
+        # close the dialog
+        save_dialog.destroy()
+
+    def save_project(self, widget=None):
+
+        ''' This saves a pictnode project as a .picto which is secretly a .zip file '''
+
+        save_dialog = Gtk.FileChooserDialog(
+            "Save Pictonode Project",
+            self,
+            Gtk.FileChooserAction.SAVE,
+            (Gtk.STOCK_CANCEL,
+             Gtk.ResponseType.CANCEL,
+             Gtk.STOCK_SAVE,
+             Gtk.ResponseType.OK))
+
+        # require .zip file types
+        file_type_filter = Gtk.FileFilter()
+        file_type_filter.set_name(".zip files")
+        file_type_filter.add_pattern("*.zip")
+
+        save_dialog.add_filter(file_type_filter)
+
+        # run the window
+        response = save_dialog.run()
+
+        # if ok response, that means a file was chosen, save the project as
+        # that file
+        if response == Gtk.ResponseType.OK:
+
+            fn = save_dialog.get_filename()[:]
+
+            dictionary = serialize_nodes(self.node_view)
+
+            pipeline_file = json.dumps(dictionary, indent=2)
+
+            with zipfile.ZipFile(fn, 'w') as myzip:
+                myzip.writestr('pipeline.json', pipeline_file.encode('utf-8'))
+
             save_dialog.destroy()
             return None
 
