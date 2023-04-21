@@ -102,6 +102,7 @@ class PictonodeManager(metaclass=SingletonConstruction):
 
         self.toolbar = ProjectToolbar()
         self.main_window = window.PluginWindow()
+        self.main_window.load_graph(self.settings_ini["SETTINGS"]["STARTUP"])
 
         self.image_displays = {}
         self.image_names = {}
@@ -126,6 +127,11 @@ class PictonodeManager(metaclass=SingletonConstruction):
         theme_name = "Adwaita"
         settings = Gtk.Settings.get_default()
         settings.set_property("gtk-theme-name", theme_name)
+    
+    @threadsafe
+    def set_startup_graph(self, filepath):
+        self.settings_ini["SETTINGS"]["STARTUP"] = filepath
+        self.__save_settings_ini()
 
     def __update(self):
         try:
@@ -237,7 +243,7 @@ class PictonodeManager(metaclass=SingletonConstruction):
         with open(self.settings_ini_path, "w") as ini:
             if default:
                 default = configparser.SafeConfigParser()
-                default["SETTINGS"] = {}
+                default["SETTINGS"] = {"STARTUP":""}
                 default.write(ini)
             else:
                 self.settings_ini.write(ini)
