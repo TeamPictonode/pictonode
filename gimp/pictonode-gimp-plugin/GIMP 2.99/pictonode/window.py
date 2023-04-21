@@ -9,6 +9,7 @@ from json_interpreter import *
 from login_window import LoginBox
 from about import AboutDialog
 
+import datetime
 import sys
 import threading
 import os
@@ -85,6 +86,7 @@ class PluginWindow(Gtk.Window):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
+        self.temp_target_file = ""
         self.set_border_width(20)
         self.set_title("Pictonode")
 
@@ -232,6 +234,7 @@ class PluginWindow(Gtk.Window):
 
         if os.path.isfile(filepath):
             with open(filepath) as f:
+                self.temp_target_file = os.path.splitext(os.path.basename(filepath))[0]
                 json_string = json.load(f)
 
                 try:
@@ -241,6 +244,8 @@ class PluginWindow(Gtk.Window):
 
                 self.node_view.show_all()
                 self.set_layers(self.layers)
+        else:
+            self.temp_target_file = timestamp = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
             
         return None
     
@@ -498,6 +503,7 @@ class PluginWindow(Gtk.Window):
                 json.dump(dictionary, outfile, indent=2)
             
             PictonodeManager().set_startup_graph(fn)
+            self.temp_target_file = os.path.splitext(os.path.basename(fn))[0]
 
             save_dialog.destroy()
             return None
@@ -507,7 +513,8 @@ class PluginWindow(Gtk.Window):
     
     def save_temp(self):
         from manager import PictonodeManager
-        temp = os.path.realpath(os.path.dirname(os.path.abspath(__file__)) + "/cache/temp.json")
+        basename = self.temp_target_file
+        temp = os.path.realpath(os.path.dirname(os.path.abspath(__file__)) + f"/cache/{basename}-temp.json")
         dictionary = serialize_nodes(self.node_view)
         with open(temp, "w") as outfile:
                 json.dump(dictionary, outfile, indent=2)
@@ -555,8 +562,9 @@ class PluginWindow(Gtk.Window):
                 json_interpreter(self.node_view, self, json_string=json_string)
             except Exception as E:
                 print(E)
-                
+
             PictonodeManager().set_startup_graph(fn)
+            self.temp_target_file = os.path.splitext(os.path.basename(fn))[0]
             self.node_view.show_all()
             self.set_layers(self.layers)
 
