@@ -243,7 +243,6 @@ class PluginWindow(Gtk.Window):
             sub_item4 = Gtk.MenuItem(label="Bright/Contrast")
             sub_item5 = Gtk.MenuItem(label="Blur Node")
             sub_item6 = Gtk.MenuItem(label="Composite Node")
-            sub_item7 = Gtk.MenuItem(label="Crop Node")
 
             # connect menu items here
             sub_item1.connect("activate", self.add_image_src_node)
@@ -252,7 +251,6 @@ class PluginWindow(Gtk.Window):
             sub_item4.connect("activate", self.add_bright_cont_node)
             sub_item5.connect("activate", self.add_image_blur_node)
             sub_item6.connect("activate", self.add_image_comp_node)
-            sub_item7.connect("activate", self.add_image_crop_node)
 
             # disable output node option if one already exists
             if self.has_output_node:
@@ -266,7 +264,6 @@ class PluginWindow(Gtk.Window):
             submenu.append(sub_item4)
             submenu.append(sub_item5)
             submenu.append(sub_item6)
-            submenu.append(sub_item7)
 
             # add submenu to menu item
             submenu_item.set_submenu(submenu)
@@ -388,19 +385,6 @@ class PluginWindow(Gtk.Window):
 
         # create new node and add it to the NodeView widget
         new_node = cn.BlurNode(self)
-        self.node_view.add(new_node)
-
-        # grab cursor position and move node to it
-        position = self.get_cursor_pos()
-        new_node.set_property("x", position[0])
-        new_node.set_property("y", position[1])
-        self.node_view.show_all()
-
-    def add_image_crop_node(self, widget=None):
-        ''' Adds a crop node at the current cursor position '''
-
-        # create new node and add it to the NodeView widget
-        new_node = cn.CropNode(self)
         self.node_view.add(new_node)
 
         # grab cursor position and move node to it
