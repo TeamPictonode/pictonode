@@ -9,6 +9,7 @@ from json_interpreter import *
 from login_window import LoginBox
 from about import AboutDialog
 
+import datetime
 import sys
 import threading
 import os
@@ -43,6 +44,10 @@ from gi.repository import Gdk  # noqa
 
 gi.require_version('GdkPixbuf', '2.0')
 from gi.repository import GdkPixbuf  # noqa
+
+gi.require_version("GLib", "2.0")
+from gi.repository import GLib # noqa
+
 # autopep8 on
 
 # found at https://stackoverflow.com/a/32861765
@@ -82,7 +87,7 @@ class PluginWindow(Gtk.Window):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-
+        self.temp_target_file = ""
         self.set_border_width(20)
         self.set_title("Pictonode")
 
@@ -114,17 +119,22 @@ class PluginWindow(Gtk.Window):
 
         # create menus on the bar
         file_menu = Gtk.Menu.new()
+        settings_menu = Gtk.Menu.new()
         about_menu = Gtk.Menu.new()
 
         # TODO: about_menu = Gtk.Menu.new()
 
         # add menu items to file menu
         file_menu_item = Gtk.MenuItem("File")
+        settings_menu_item = Gtk.MenuItem("Settings")
         about_menu_item = Gtk.MenuItem("About")
 
         file_menu_item.set_submenu(file_menu)
+        settings_menu_item.set_submenu(settings_menu)
         about_menu_item.set_submenu(about_menu)
+
         menu_bar.append(file_menu_item)
+        menu_bar.append(settings_menu_item)
         menu_bar.append(about_menu_item)
 
         open_graph_item = Gtk.MenuItem("Open Node Graph")
@@ -139,6 +149,10 @@ class PluginWindow(Gtk.Window):
         save_project_item = Gtk.MenuItem("Save Project as")
         file_menu.append(save_project_item)
         save_project_item.connect("activate", self.save_project)
+        
+        clear_startup_graph_item = Gtk.MenuItem("Clear Startup Graph")
+        clear_startup_graph_item.connect("activate", self.clear_startup_graph)
+        settings_menu.append(clear_startup_graph_item)
 
         login_item = Gtk.MenuItem("Login")
         about_item = Gtk.MenuItem("About")
@@ -214,11 +228,37 @@ class PluginWindow(Gtk.Window):
         self.connect("destroy", self.do_quit)
 
         # set window size and show plugin window
-        self.set_default_size((screen_width // .75), (screen_height // .75))
+        self.set_default_size((screen_width * .75), (screen_height * .75))
 
     def do_quit(self, widget=None, data=None):
         Gtk.main_quit()
 
+    def load_graph(self, filepath):
+        for node in self.node_view.get_children():
+            # On the last reference of the node widget, destroy is called by Gtk safely
+            self.node_view.remove(node)
+
+        if os.path.isfile(filepath):
+            with open(filepath) as f:
+                self.temp_target_file = os.path.splitext(os.path.basename(filepath))[0]
+                json_string = json.load(f)
+
+                try:
+                    json_interpreter(self.node_view, self, json_string=json_string)
+                except Exception as E:
+                    print(E)
+
+                self.node_view.show_all()
+                self.set_layers(self.layers)
+        else:
+            self.temp_target_file = timestamp = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
+            
+        return None
+    
+    def clear_startup_graph(self, widget=None):
+        from manager import PictonodeManager
+        PictonodeManager().set_startup_graph("")
+    
     def login(self, widget=None):
         # create login overlay
         login_box = LoginBox(orientation=Gtk.Orientation.VERTICAL)
@@ -280,6 +320,8 @@ class PluginWindow(Gtk.Window):
             # make menu popup
             menu.show_all()
             menu.popup(None, None, None, None, event.button, event.time)
+        
+        GLib.timeout_add(1000, self.save_temp)
 
     def on_scroll(self, widget, event):
         ''' Scroll event for zooming on image '''
@@ -332,6 +374,8 @@ class PluginWindow(Gtk.Window):
         position = self.get_cursor_pos()
         new_node.set_property("x", position[0])
         new_node.set_property("y", position[1])
+
+        
         self.node_view.show_all()
 
     def add_image_out_node(self, widget=None):
@@ -345,6 +389,8 @@ class PluginWindow(Gtk.Window):
         position = self.get_cursor_pos()
         new_node.set_property("x", position[0])
         new_node.set_property("y", position[1])
+
+        
         self.node_view.show_all()
 
     def add_image_invert_node(self, widget=None):
@@ -358,6 +404,8 @@ class PluginWindow(Gtk.Window):
         position = self.get_cursor_pos()
         new_node.set_property("x", position[0])
         new_node.set_property("y", position[1])
+
+
         self.node_view.show_all()
 
     def add_image_comp_node(self, widget=None):
@@ -371,6 +419,8 @@ class PluginWindow(Gtk.Window):
         position = self.get_cursor_pos()
         new_node.set_property("x", position[0])
         new_node.set_property("y", position[1])
+
+
         self.node_view.show_all()
 
     def add_bright_cont_node(self, widget=None):
@@ -384,6 +434,8 @@ class PluginWindow(Gtk.Window):
         position = self.get_cursor_pos()
         new_node.set_property("x", position[0])
         new_node.set_property("y", position[1])
+
+
         self.node_view.show_all()
 
     def add_image_blur_node(self, widget=None):
@@ -397,6 +449,8 @@ class PluginWindow(Gtk.Window):
         position = self.get_cursor_pos()
         new_node.set_property("x", position[0])
         new_node.set_property("y", position[1])
+
+
         self.node_view.show_all()
 
     def get_cursor_pos(self) -> list:
@@ -443,7 +497,7 @@ class PluginWindow(Gtk.Window):
         # if ok response, that means a file was chosen, save the node graph as
         # that file
         if response == Gtk.ResponseType.OK:
-
+            from manager import PictonodeManager
             fn = save_dialog.get_filename()[:]
 
             dictionary = serialize_nodes(self.node_view)
@@ -451,6 +505,9 @@ class PluginWindow(Gtk.Window):
             # credit geeksforgeeks
             with open(fn, "w") as outfile:
                 json.dump(dictionary, outfile, indent=2)
+                
+            PictonodeManager().set_startup_graph(fn)
+            self.temp_target_file = os.path.splitext(os.path.basename(fn))[0]
 
             save_dialog.destroy()
             return None
@@ -499,6 +556,17 @@ class PluginWindow(Gtk.Window):
 
         # close the dialog
         save_dialog.destroy()
+    
+    def save_temp(self):
+        from manager import PictonodeManager
+        basename = self.temp_target_file
+        temp = os.path.realpath(os.path.dirname(os.path.abspath(__file__)) + f"/cache/{basename}-temp.json")
+        dictionary = serialize_nodes(self.node_view)
+        with open(temp, "w") as outfile:
+                json.dump(dictionary, outfile, indent=2)
+        
+        PictonodeManager().set_startup_graph(temp)
+        return False
 
     def open_graph(self, widget=None):
 
@@ -525,7 +593,7 @@ class PluginWindow(Gtk.Window):
         # if ok response, that means a file was chosen, load that file
         # then call the json interpreter to build the graph
         if response == Gtk.ResponseType.OK:
-
+            from manager import PictonodeManager
             fn = open_dialog.get_filename()[:]
             
             # delete current node_view nodes
@@ -541,6 +609,8 @@ class PluginWindow(Gtk.Window):
             except Exception as E:
                 print(E)
 
+            PictonodeManager().set_startup_graph(fn)
+            self.temp_target_file = os.path.splitext(os.path.basename(fn))[0]
             self.node_view.show_all()
             self.set_layers(self.layers)
 

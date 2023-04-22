@@ -6,6 +6,8 @@
 
 <script lang="ts">
 import { defineComponent } from "vue";
+import * as download from "downloadjs";
+import { savePipeline, loadPipeline, uploadProject } from "../api";
 
 function update(canvas: HTMLCanvasElement, img: HTMLCanvasElement | undefined) {
   const ctx = canvas.getContext("2d");
@@ -42,7 +44,7 @@ function update(canvas: HTMLCanvasElement, img: HTMLCanvasElement | undefined) {
 }
 
 export default defineComponent({
-  props: ["img"],
+  props: ["img", "pipeline", "setPipeline"],
   mounted() {
     // @ts-ignore
     update(this.$refs.inner, this.img);
@@ -53,22 +55,43 @@ export default defineComponent({
       update(this.$refs.inner, this.img);
     },
   },
+  methods: {
+    save() {
+      // @ts-ignore
+      const inner: HTMLCanvasElement = this.$refs.inner;
+
+      // Save to blob.
+      inner.toBlob((blob) => {
+        if (blob) {
+          download(blob, "rendered.png", "image/png");
+        }
+      }, "image/png");
+    },
+  },
 });
 </script>
 
 <template>
   <div class="rendered-view">
-    <canvas
-      id="imgview"
-      ref="inner"
-      width="400"
-      height="400"
-      margin-right="30rem"
-    >
-      <v-tooltip activator="parent" location="top"
-        >Try Uploading an Image to the Image input</v-tooltip
-      >
-    </canvas>
+    <v-container>
+      <v-row no-gutters>
+        <v-col sm="8">
+          <canvas
+            id="imgview"
+            ref="inner"
+            width="400"
+            height="400"
+            margin-right="30rem"
+            @click="save"
+          >
+            <v-tooltip activator="parent" location="top"
+              >Try Uploading an Image to the Image input, click to
+              save</v-tooltip
+            >
+          </canvas>
+        </v-col>
+      </v-row>
+    </v-container>
   </div>
 </template>
 
