@@ -331,7 +331,7 @@ def create_app(test_config=None):
         # - zip
         name = request.form["name"]
         description = request.form["description"]
-        zip = request.files["zip"]
+        zip = request.files["file"]
 
         # Make sure the user is logged in
         if "user_id" not in session:
@@ -368,7 +368,7 @@ def create_app(test_config=None):
     def project_upload_existing(id):
         # Request contains:
         # - ZIP file
-        zip = request.files["zip"]
+        zip = request.files["file"]
 
         # Make sure the user is logged in
         if "user_id" not in session:
