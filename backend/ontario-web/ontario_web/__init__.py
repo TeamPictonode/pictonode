@@ -413,4 +413,29 @@ def create_app(test_config=None):
 
         return realUsers
 
+    # Get the currently logged in user.
+    @app.route("/api/getusername", methods=["GET"])
+    def getusername():
+        if "user_id" not in session:
+            return {"error": "Not logged in."}, 401
+
+        d = db.get_db()
+        cursor = d.cursor()
+        try:
+            cursor.execute(
+                """
+                SELECT username
+                FROM users
+                WHERE id = %s
+                """,
+                (session["user_id"],),
+            )
+            username = cursor.fetchone()[0]
+        except psycopg2.OperationalError:
+            return {"error": "Error getting username."}, 500
+        finally:
+            cursor.close()
+
+        return {"username": username}
+
     return app
