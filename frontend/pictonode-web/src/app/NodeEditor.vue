@@ -34,6 +34,7 @@ import { Editor } from "@baklavajs/core";
 import { OptionPlugin } from "@baklavajs/plugin-options-vue3";
 import { Engine } from "@baklavajs/plugin-engine";
 import { defineComponent } from "vue";
+import { setForceUpdate } from "../forceUpdate";
 
 import {
   ImageNode,
@@ -99,6 +100,7 @@ export default defineComponent({
     );
 
     this.engine.calculate();
+    setForceUpdate(this.onUpdate);
   },
   methods: {
     addNodeWithCoordinates(nodeType: any, x: any, y: any) {
