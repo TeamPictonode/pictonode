@@ -1107,3 +1107,614 @@ class BrightContNode(CustomNode):
             self.process_input()
         else:
             print("Error!!!")
+
+class DropshadowNode(CustomNode):
+    __gtype_name__ = 'DropShadow'
+
+    def __init__(self, node_window, *args, **kwds) -> None:
+        super().__init__(*args, **kwds)
+
+        self.node_window = node_window
+        self.buffer_id = str(uuid.uuid1())
+        self.buffer = None
+        self.layer = None
+
+        # default operation arguments
+        self.x_offset: float = 20.0
+        self.y_offset: float = 20.0
+        self.blur_radius: float = 10.0
+        self.size: float = 0.0
+
+        # initialize our image context for the gegl nodes
+        self.image_context = ontario.ImageContext()
+        self.image_builder = ontario.ImageBuilder(self.image_context)
+
+        self.set_label("Dropshadow")
+
+        # add argument fields
+        self.label1 = Gtk.Label(label="x offest")
+        self.label2 = Gtk.Label(label="y offset")
+        self.label3 = Gtk.Label(label="blur radius")
+        self.label4 = Gtk.Label(label="size")
+
+        self.entry1 = Gtk.Entry()
+        self.entry2 = Gtk.Entry()
+        self.entry3 = Gtk.Entry()
+        self.entry4 = Gtk.Entry()
+
+        self.entry1.set_text(str(self.x_offset))
+        self.entry2.set_text(str(self.y_offset))
+        self.entry3.set_text(str(self.blur_radius))
+        self.entry4.set_text(str(self.size))
+
+        self.entry1.connect("activate", self.entry_change, 1, self.x_offset, 1000000.0, -1000000.0)
+        self.entry2.connect("activate", self.entry_change, 2, self.y_offset, 1000000.0, -1000000.0)
+        self.entry3.connect("activate", self.entry_change, 3, self.blur_radius, 1000000.0, 0.0)
+        self.entry4.connect("activate", self.entry_change, 4, self.size, 100.0, -100.0)
+
+        self.item_add(self.label1, GtkNodes.NodeSocketIO.DISABLE)
+        self.item_add(self.entry1, GtkNodes.NodeSocketIO.DISABLE)
+        self.item_add(self.label2, GtkNodes.NodeSocketIO.DISABLE)
+        self.item_add(self.entry2, GtkNodes.NodeSocketIO.DISABLE)
+        self.item_add(self.label3, GtkNodes.NodeSocketIO.DISABLE)
+        self.item_add(self.entry3, GtkNodes.NodeSocketIO.DISABLE)
+        self.item_add(self.label4, GtkNodes.NodeSocketIO.DISABLE)
+        self.item_add(self.entry4, GtkNodes.NodeSocketIO.DISABLE)
+
+        # create node input socket
+        label: Gtk.Label = Gtk.Label.new("Image")
+        label.set_xalign(0.0)
+        self.node_socket_input = self.item_add(
+            label, GtkNodes.NodeSocketIO.SINK)
+        self.node_socket_input.connect(
+            "socket_incoming", self.node_socket_incoming)
+        self.node_socket_input.connect(
+            "socket_disconnect", self.node_socket_disconnect)
+
+        # create node output socket
+        label: Gtk.Label = Gtk.Label.new("Image")
+        label.set_xalign(1.0)
+        self.node_socket_output = self.item_add(
+            label, GtkNodes.NodeSocketIO.SOURCE)
+        self.node_socket_output.connect(
+            "socket_connect", self.node_socket_connect)
+
+    def get_values(self):
+
+        ''' Returns dictionary of current state of custom values for the node '''
+
+        custom_values = {"x_offset": self.x_offset,
+                         "y_offset": self.y_offset,
+                         "blur_radius": self.blur_radius,
+                         "size": self.size}
+
+        return custom_values
+
+    def set_values(self, values: dict):
+
+        ''' Sets custom node defaults from dictionary '''
+        self.x_offset = values.get('x_offset')
+        self.y_offset = values.get('y_offset')
+        self.blur_radius = values.get('blur_radius')
+        self.size = values.get('size')
+
+        # set entry text for each entry box
+        self.entry1.set_text(str(self.x_offset))
+        self.entry2.set_text(str(self.y_offset))
+        self.entry3.set_text(str(self.blur_radius))
+        self.entry4.set_text(str(self.size))
+
+    def process_input(self):
+        if self.incoming_buffer:
+            # set internal copy of buffer
+            self.buffer = self.incoming_buffer.dup()
+
+            # use ontario backend for image processing
+            self.image_builder.load_from_buffer(self.buffer)
+            self.image_builder.dropshadow(x=self.x_offset, y=self.y_offset, radius=self.blur_radius, size=self.size, buffer=self.buffer)
+            self.image_builder.save_to_buffer(self.buffer)
+            self.image_builder.process()
+
+        # update buffer saved in map and resend reference
+        self.value_update()
+
+    def process_ouput(self):
+        '''
+        Updates buffer reference in map
+        '''
+
+        print("Buffer: ", self.buffer)
+        self.node_window.buffer_map[self.buffer_id] = [self.buffer, self.layer]
+
+        if self.buffer:
+            return True
+        return False
+
+    def entry_change(self, entry, entry_id, default, max, min):
+        '''
+        Checks entry input, updates values, and processes buffer
+        '''
+
+        self.grab_focus()
+        # let sanitize our inputs
+        try:
+            value = float(entry.get_text())
+            entry.set_text(str(value))
+            if value < min:
+                entry.set_text(str(min))
+                value = min
+            elif value > max:
+                entry.set_text(str(max))
+                value = 1.0
+        except ValueError:
+            entry.set_text(str(default))
+            value = default
+
+        # set new value for variable associated with entry
+        if entry_id == 1:
+            self.x_offset = value
+        elif entry_id == 2:
+            self.y_offset = value
+        elif entry_id == 3:
+            self.blur_radius = value
+        elif entry_id == 4:
+            self.size = value
+
+        self.process_input()
+
+    def value_update(self):
+        '''
+        Processes image and sends out updated buffer reference
+        '''
+
+        did_process = self.process_ouput()
+
+        if not did_process:
+            print("Error: could not process dropshadow")
+
+        self.node_socket_output.write(bytes(self.buffer_id, 'utf8'))
+
+    def node_socket_disconnect(self, socket, sink):
+        '''
+        Processes socket disconnect and updates output accordingly
+        '''
+
+        # reset buffer reference information
+        self.incoming_buffer_id = None
+        self.incoming_buffer = None
+        self.buffer = None
+        self.layer = None
+        self.process_input()
+
+    def node_socket_connect(self, sink, source):
+        '''
+        Sends buffer reference upon initial socket connection
+        '''
+
+        self.value_update()
+
+    def node_socket_incoming(self, socket, payload):
+        '''
+        Updates node internal state upon update from socket.
+        '''
+
+        # reset buffer reference information
+        self.incoming_buffer_id = None
+        self.incoming_buffer = None
+        self.buffer = None
+        self.layer = None
+
+        # set new buffer information
+        if payload:
+            self.image_context.reset_context()
+            self.incoming_buffer_id = payload.decode('utf-8')
+            print("Buffer ID incoming: ", self.incoming_buffer_id)
+
+            self.incoming_buffer = self.node_window.buffer_map.get(
+                self.incoming_buffer_id)[0]
+
+            self.layer = self.node_window.buffer_map.get(
+                self.incoming_buffer_id)[1]
+
+            print("Buffer Incoming: ", self.incoming_buffer)
+
+            self.process_input()
+        else:
+            print("Error!!!")
+
+
+class WaterpixelNode(CustomNode):
+    __gtype_name__ = 'Waterpixel'
+
+    def __init__(self, node_window, *args, **kwds) -> None:
+        super().__init__(*args, **kwds)
+
+        self.node_window = node_window
+        self.buffer_id = str(uuid.uuid1())
+        self.buffer = None
+        self.layer = None
+
+        # default operation arguments
+        self.size: int = 32
+        self.smoothness: float = 1.0
+        self.regularization: int = 0
+
+        # initialize our image context for the gegl nodes
+        self.image_context = ontario.ImageContext()
+        self.image_builder = ontario.ImageBuilder(self.image_context)
+
+        self.set_label("Waterpixels")
+
+        # add argument fields
+        self.label1 = Gtk.Label(label="Superpixels size")
+        self.label2 = Gtk.Label(label="Gradient smoothness")
+        self.label3 = Gtk.Label(label="Spatial regularization")
+
+        self.entry1 = Gtk.Entry()
+        self.entry2 = Gtk.Entry()
+        self.entry3 = Gtk.Entry()
+
+        self.entry1.set_text(str(self.size))
+        self.entry2.set_text(str(self.smoothness))
+        self.entry3.set_text(str(self.regularization))
+
+        self.entry1.connect("activate", self.entry_change, 1, self.size, 1000000, 8)
+        self.entry2.connect("activate", self.entry_change, 2, self.smoothness, 1000.0, 0)
+        self.entry3.connect("activate", self.entry_change, 3, self.regularization, 50, 0)
+
+        self.item_add(self.label1, GtkNodes.NodeSocketIO.DISABLE)
+        self.item_add(self.entry1, GtkNodes.NodeSocketIO.DISABLE)
+        self.item_add(self.label2, GtkNodes.NodeSocketIO.DISABLE)
+        self.item_add(self.entry2, GtkNodes.NodeSocketIO.DISABLE)
+        self.item_add(self.label3, GtkNodes.NodeSocketIO.DISABLE)
+        self.item_add(self.entry3, GtkNodes.NodeSocketIO.DISABLE)
+
+        # create node input socket
+        label: Gtk.Label = Gtk.Label.new("Image")
+        label.set_xalign(0.0)
+        self.node_socket_input = self.item_add(
+            label, GtkNodes.NodeSocketIO.SINK)
+        self.node_socket_input.connect(
+            "socket_incoming", self.node_socket_incoming)
+        self.node_socket_input.connect(
+            "socket_disconnect", self.node_socket_disconnect)
+
+        # create node output socket
+        label: Gtk.Label = Gtk.Label.new("Image")
+        label.set_xalign(1.0)
+        self.node_socket_output = self.item_add(
+            label, GtkNodes.NodeSocketIO.SOURCE)
+        self.node_socket_output.connect(
+            "socket_connect", self.node_socket_connect)
+
+    def get_values(self):
+
+        ''' Returns dictionary of current state of custom values for the node '''
+
+        custom_values = {"size": self.size,
+                         "smoothness": self.smoothness,
+                         "regularization": self.regularization}
+
+        return custom_values
+
+    def set_values(self, values: dict):
+
+        ''' Sets custom node defaults from dictionary '''
+        self.size = values.get('size')
+        self.smoothness = values.get('smoothness')
+        self.regularization = values.get('regularization')
+
+        # set entry text for each entry box
+        self.entry1.set_text(str(self.size))
+        self.entry2.set_text(str(self.smoothness))
+        self.entry3.set_text(str(self.regularization))
+
+    def process_input(self):
+        if self.incoming_buffer:
+            # set internal copy of buffer
+            self.buffer = self.incoming_buffer.dup()
+
+            # use ontario backend for image processing
+            self.image_builder.load_from_buffer(self.buffer)
+            self.image_builder.waterpixels(self.size, self.smoothness, self.regularization)
+            self.image_builder.save_to_buffer(self.buffer)
+            self.image_builder.process()
+
+        # update buffer saved in map and resend reference
+        self.value_update()
+
+    def process_ouput(self):
+        '''
+        Updates buffer reference in map
+        '''
+
+        print("Buffer: ", self.buffer)
+        self.node_window.buffer_map[self.buffer_id] = [self.buffer, self.layer]
+
+        if self.buffer:
+            return True
+        return False
+
+    def entry_change(self, entry, entry_id, default, max, min):
+        '''
+        Checks entry input, updates values, and processes buffer
+        '''
+
+        self.grab_focus()
+        # let sanitize our inputs
+        try:
+            value = float(entry.get_text())
+            entry.set_text(str(value))
+            if value < min:
+                entry.set_text(str(min))
+                value = min
+            elif value > max:
+                entry.set_text(str(max))
+                value = 1.0
+        except ValueError:
+            entry.set_text(str(default))
+            value = default
+
+        # set new value for variable associated with entry
+        if entry_id == 1:
+            self.size = value
+        elif entry_id == 2:
+            self.smoothness = value
+        elif entry_id == 3:
+            self.regularization = value
+
+
+        self.process_input()
+
+    def value_update(self):
+        '''
+        Processes image and sends out updated buffer reference
+        '''
+
+        did_process = self.process_ouput()
+
+        if not did_process:
+            print("Error: could not process dropshadow")
+
+        self.node_socket_output.write(bytes(self.buffer_id, 'utf8'))
+
+    def node_socket_disconnect(self, socket, sink):
+        '''
+        Processes socket disconnect and updates output accordingly
+        '''
+
+        # reset buffer reference information
+        self.incoming_buffer_id = None
+        self.incoming_buffer = None
+        self.buffer = None
+        self.layer = None
+        self.process_input()
+
+    def node_socket_connect(self, sink, source):
+        '''
+        Sends buffer reference upon initial socket connection
+        '''
+
+        self.value_update()
+
+    def node_socket_incoming(self, socket, payload):
+        '''
+        Updates node internal state upon update from socket.
+        '''
+
+        # reset buffer reference information
+        self.incoming_buffer_id = None
+        self.incoming_buffer = None
+        self.buffer = None
+        self.layer = None
+
+        # set new buffer information
+        if payload:
+            self.image_context.reset_context()
+            self.incoming_buffer_id = payload.decode('utf-8')
+            print("Buffer ID incoming: ", self.incoming_buffer_id)
+
+            self.incoming_buffer = self.node_window.buffer_map.get(
+                self.incoming_buffer_id)[0]
+
+            self.layer = self.node_window.buffer_map.get(
+                self.incoming_buffer_id)[1]
+
+            print("Buffer Incoming: ", self.incoming_buffer)
+
+            self.process_input()
+        else:
+            print("Error!!!")
+
+class TileGlassNode(CustomNode):
+    __gtype_name__ = 'TileGlass'
+
+    def __init__(self, node_window, *args, **kwds) -> None:
+        super().__init__(*args, **kwds)
+
+        self.node_window = node_window
+        self.buffer_id = str(uuid.uuid1())
+        self.buffer = None
+        self.layer = None
+
+        # default operation arguments
+        self.width: int = 25
+        self.height: int = 25
+
+        # initialize our image context for the gegl nodes
+        self.image_context = ontario.ImageContext()
+        self.image_builder = ontario.ImageBuilder(self.image_context)
+
+        self.set_label("Tile Glass")
+
+        # add argument fields
+        self.label1 = Gtk.Label(label="Tile Width")
+        self.label2 = Gtk.Label(label="Tile Height")
+
+        self.entry1 = Gtk.Entry()
+        self.entry2 = Gtk.Entry()
+
+        self.entry1.set_text(str(self.width))
+        self.entry2.set_text(str(self.height))
+
+        self.entry1.connect("activate", self.entry_change, 1, self.width, 500, 5)
+        self.entry2.connect("activate", self.entry_change, 2, self.height, 500, 5)
+
+        self.item_add(self.label1, GtkNodes.NodeSocketIO.DISABLE)
+        self.item_add(self.entry1, GtkNodes.NodeSocketIO.DISABLE)
+        self.item_add(self.label2, GtkNodes.NodeSocketIO.DISABLE)
+        self.item_add(self.entry2, GtkNodes.NodeSocketIO.DISABLE)
+
+        # create node input socket
+        label: Gtk.Label = Gtk.Label.new("Image")
+        label.set_xalign(0.0)
+        self.node_socket_input = self.item_add(
+            label, GtkNodes.NodeSocketIO.SINK)
+        self.node_socket_input.connect(
+            "socket_incoming", self.node_socket_incoming)
+        self.node_socket_input.connect(
+            "socket_disconnect", self.node_socket_disconnect)
+
+        # create node output socket
+        label: Gtk.Label = Gtk.Label.new("Image")
+        label.set_xalign(1.0)
+        self.node_socket_output = self.item_add(
+            label, GtkNodes.NodeSocketIO.SOURCE)
+        self.node_socket_output.connect(
+            "socket_connect", self.node_socket_connect)
+
+    def get_values(self):
+
+        ''' Returns dictionary of current state of custom values for the node '''
+
+        custom_values = {"width": self.width,
+                         "height": self.height,}
+
+        return custom_values
+
+    def set_values(self, values: dict):
+
+        ''' Sets custom node defaults from dictionary '''
+        self.width = values.get('width')
+        self.height = values.get('height')
+
+        # set entry text for each entry box
+        self.entry1.set_text(str(self.width))
+        self.entry2.set_text(str(self.height))
+
+    def process_input(self):
+        if self.incoming_buffer:
+            # set internal copy of buffer
+            self.buffer = self.incoming_buffer.dup()
+
+            # use ontario backend for image processing
+            self.image_builder.load_from_buffer(self.buffer)
+            self.image_builder.tileglass(self.width, self.height)
+            self.image_builder.save_to_buffer(self.buffer)
+            self.image_builder.process()
+
+        # update buffer saved in map and resend reference
+        self.value_update()
+
+    def process_ouput(self):
+        '''
+        Updates buffer reference in map
+        '''
+
+        print("Buffer: ", self.buffer)
+        self.node_window.buffer_map[self.buffer_id] = [self.buffer, self.layer]
+
+        if self.buffer:
+            return True
+        return False
+
+    def entry_change(self, entry, entry_id, default, max, min):
+        '''
+        Checks entry input, updates values, and processes buffer
+        '''
+
+        self.grab_focus()
+        # let sanitize our inputs
+        try:
+            value = float(entry.get_text())
+            entry.set_text(str(value))
+            if value < min:
+                entry.set_text(str(min))
+                value = min
+            elif value > max:
+                entry.set_text(str(max))
+                value = 1.0
+        except ValueError:
+            entry.set_text(str(default))
+            value = default
+
+        # set new value for variable associated with entry
+        if entry_id == 1:
+            self.size = value
+        elif entry_id == 2:
+            self.smoothness = value
+        elif entry_id == 3:
+            self.regularization = value
+
+
+        self.process_input()
+
+    def value_update(self):
+        '''
+        Processes image and sends out updated buffer reference
+        '''
+
+        did_process = self.process_ouput()
+
+        if not did_process:
+            print("Error: could not process dropshadow")
+
+        self.node_socket_output.write(bytes(self.buffer_id, 'utf8'))
+
+    def node_socket_disconnect(self, socket, sink):
+        '''
+        Processes socket disconnect and updates output accordingly
+        '''
+
+        # reset buffer reference information
+        self.incoming_buffer_id = None
+        self.incoming_buffer = None
+        self.buffer = None
+        self.layer = None
+        self.process_input()
+
+    def node_socket_connect(self, sink, source):
+        '''
+        Sends buffer reference upon initial socket connection
+        '''
+
+        self.value_update()
+
+    def node_socket_incoming(self, socket, payload):
+        '''
+        Updates node internal state upon update from socket.
+        '''
+
+        # reset buffer reference information
+        self.incoming_buffer_id = None
+        self.incoming_buffer = None
+        self.buffer = None
+        self.layer = None
+
+        # set new buffer information
+        if payload:
+            self.image_context.reset_context()
+            self.incoming_buffer_id = payload.decode('utf-8')
+            print("Buffer ID incoming: ", self.incoming_buffer_id)
+
+            self.incoming_buffer = self.node_window.buffer_map.get(
+                self.incoming_buffer_id)[0]
+
+            self.layer = self.node_window.buffer_map.get(
+                self.incoming_buffer_id)[1]
+
+            print("Buffer Incoming: ", self.incoming_buffer)
+
+            self.process_input()
+        else:
+            print("Error!!!")

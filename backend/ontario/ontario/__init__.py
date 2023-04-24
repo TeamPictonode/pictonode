@@ -175,7 +175,7 @@ class ImageBuilder:
         Translates an image.
         """
 
-        # create child node invert
+        # create child node translate
         node = self.__parent.create_child("gegl:translate")
         node.set_property("x", x)
         node.set_property("y", y)
@@ -201,7 +201,25 @@ class ImageBuilder:
         # Connect the last node to the save node.
         self.__nodes[-1].link(node)
 
+        # add new node to node list
         self.__nodes.append(node)
+        return self
+    
+    def dropshadow(self, x: float, y: float, radius: float, size: float, buffer) -> "ImageBuilder":
+        """
+        Crops an image.
+        """
+
+        node = self.__parent.create_child("gegl:dropshadow")
+        node.set_property("x", x)
+        node.set_property("y", y)
+        node.set_property("radius", radius)
+        node.set_property("grow-radius", size)
+
+        # Connect the last node to the save node.
+        self.__nodes[-1].link(node)
+        self.__nodes.append(node)
+
         return self
 
     def flip(self, horizontal: bool, vertical: bool) -> "ImageBuilder":
@@ -337,6 +355,37 @@ class ImageBuilder:
         node = self.__parent.create_child("gegl:gaussian-blur")
         node.set_property("std-dev-x", x)
         node.set_property("std-dev-y", y)
+
+        # Connect the last node to the save node.
+        self.__nodes[-1].link(node)
+
+        self.__nodes.append(node)
+        return self
+
+    def waterpixels(self, size: int, smoothness: float, regularization: int) -> "ImageBuilder":
+        """
+        Apply waterpixel effect to image
+        """
+
+        node = self.__parent.create_child("gegl:waterpixels")
+        node.set_property("size", size)
+        node.set_property("smoothness", smoothness)
+        node.set_property("regularization", regularization)
+
+        # Connect the last node to the save node.
+        self.__nodes[-1].link(node)
+
+        self.__nodes.append(node)
+        return self
+    
+    def tileglass(self, width: int, height: int) -> "ImageBuilder":
+        """
+        Apply tile glass effect to image
+        """
+
+        node = self.__parent.create_child("gegl:tile-glass")
+        node.set_property("width", width)
+        node.set_property("height", height)
 
         # Connect the last node to the save node.
         self.__nodes[-1].link(node)
