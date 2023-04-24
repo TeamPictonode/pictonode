@@ -4,6 +4,27 @@
   This file in its entirety was written by John Nunley and Grace Meredith.
 -->
 
+<script>
+import { defineComponent } from "vue";
+import { getUsername, listSavedProjects } from "../api";
+
+export default defineComponent({
+  data: () => ({
+    savedProjects: [],
+  }),
+
+  mounted() {
+    getUsername().then(async (name) => {
+      if ("error" in name) {
+        this.savedProjects = [];
+      } else {
+        this.savedProjects = await listSavedProjects(name["username"]);
+      }
+    });
+  },
+});
+</script>
+
 <template>
   <div class="home-items">
     <div id="homepage">
@@ -30,6 +51,11 @@
               Create a new Project
             </v-btn>
           </router-link>
+        </v-list-item>
+        <v-list-item v-for="project in savedProjects" :key="project.id">
+          <v-btn rounded="pill" size="large" color="#696969">
+            {{ project.name }}
+          </v-btn>
         </v-list-item>
       </v-list>
     </div>

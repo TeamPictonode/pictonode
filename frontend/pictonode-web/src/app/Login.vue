@@ -8,12 +8,14 @@
 import { defineComponent } from "vue";
 import { ref } from "vue";
 import { useStore } from "vuex";
+import { checkLogin } from "../api";
 import store from "../store";
 
 export default defineComponent({
   data: () => ({
     username: ref(null as string | null),
     password: ref(null as string | null),
+    failed: false,
   }),
   setup() {
     const store = useStore();
@@ -21,12 +23,18 @@ export default defineComponent({
   name: "Login",
   methods: {
     async login() {
-      const user: JSON = <JSON>(<unknown>{
+      const result = await checkLogin({
         username: `${this.username}`,
         password: `${this.password}`,
       });
 
-      await store.dispatch("login", user);
+      // result is a JSON object that contains "error" if it errored out
+      if ("error" in result) {
+        this.failed = true;
+        return;
+      }
+
+      //await store.dispatch("login", user);
       this.$router.push("/");
     },
   },
@@ -37,6 +45,9 @@ export default defineComponent({
   <v-card class="mx-auto" max-width="300" id="login" tile>
     <v-card-title class="text-center">Login</v-card-title>
     <v-card-text>
+      <div v-if="failed" class="text-center">
+        <p>Failed to log in.</p>
+      </div>
       <v-form>
         <v-text-field label="Username" solo v-model="username" aria-required />
         <v-text-field
