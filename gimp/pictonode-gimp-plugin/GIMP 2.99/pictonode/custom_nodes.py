@@ -3,6 +3,8 @@
 import os
 import uuid
 import ontario
+import threading
+import time
 
 # autopep8 off
 import gi
@@ -35,6 +37,9 @@ from gi.repository import Gdk  # noqa
 
 gi.require_version('GdkPixbuf', '2.0')
 from gi.repository import GdkPixbuf  # noqa
+
+gi.require_version("GLib", "2.0")
+from gi.repository import GLib # noqa
 # autopep8 on
 
 # node classes based on examples from img.py in the gtknodes project
@@ -253,18 +258,26 @@ class OutputNode(CustomNode):
         dialog.destroy()
 
     def update_display(self):
+        def ask_update_display_task():
+            self.node_window.display_output()
+            return False
+
         if self.incoming_buffer:
             # update image displayed
             self.image_builder.load_from_buffer(self.incoming_buffer)
             self.image_builder.save_to_file("/tmp/gimp/temp.png")
             self.image_builder.process()
 
-            self.node_window.display_output()
+            GLib.idle_add(ask_update_display_task)
             self.image_context.reset_context()
+            
         else:
             # delete image displayed
-            os.remove("/tmp/gimp/temp.png")
-            self.node_window.display_output()
+            try:
+                os.remove("/tmp/gimp/temp.png")
+                GLib.idle_add(ask_update_display_task)
+            except OSError:
+                pass
 
     def process(self):
         if self.incoming_buffer and self.filename:
@@ -298,6 +311,7 @@ class OutputNode(CustomNode):
         self.incoming_buffer = self.node_window.buffer_map.get(
             self.incoming_buffer_id)[0]
         print("Output Incoming: ", self.incoming_buffer)
+
         self.update_display()
 
         print("Output buffer: ", self.incoming_buffer)
@@ -1345,6 +1359,11 @@ class WaterpixelNode(CustomNode):
 
         self.set_label("Waterpixels")
 
+        # busy box
+        self.busy_box = None
+
+        self.dot_count = 4
+
         # add argument fields
         self.label1 = Gtk.Label(label="Superpixels size")
         self.label2 = Gtk.Label(label="Gradient smoothness")
@@ -1410,18 +1429,67 @@ class WaterpixelNode(CustomNode):
         self.entry3.set_text(str(self.regularization))
 
     def process_input(self):
-        if self.incoming_buffer:
-            # set internal copy of buffer
-            self.buffer = self.incoming_buffer.dup()
 
-            # use ontario backend for image processing
-            self.image_builder.load_from_buffer(self.buffer)
-            self.image_builder.waterpixels(self.size, self.smoothness, self.regularization)
-            self.image_builder.save_to_buffer(self.buffer)
-            self.image_builder.process()
+        def increment_spinner():
+            next_dot_count = (self.dot_count + 1) % 4
+            self.busy_box.set_message(f"Processing{next_dot_count*'.'}")
+            self.dot_count = next_dot_count
+            GLib.timeout_add(500, increment_spinner)
+            return False
+
+        def add_spinner():
+            # add progress spinner while rendering
+            if not self.busy_box:
+                self.busy_box = GimpUi.BusyBox()
+                self.busy_box.set_message("Processing...")
+                self.item_add(self.busy_box, GtkNodes.NodeSocketIO.DISABLE)
+                self.busy_box.show()
+                GLib.timeout_add(500, increment_spinner)
+            return False
+
+        def remove_spinner():
+            # remove spinner on render complete
+            self.busy_box.destroy()
+            self.busy_box = None
+            return False
+
+        GLib.idle_add(add_spinner)
+        # set internal copy of buffer
+        self.buffer = self.incoming_buffer.dup()
+
+        # use ontario backend for image processing
+        self.image_builder.load_from_buffer(self.buffer)
+        self.image_builder.waterpixels(self.size, self.smoothness, self.regularization)
+        self.image_builder.save_to_buffer(self.buffer)
+        self.image_builder.process()
 
         # update buffer saved in map and resend reference
         self.value_update()
+        GLib.idle_add(remove_spinner)
+
+    def process_handler(self):
+        if self.incoming_buffer:
+            # process image manip on new thread
+            process_thread = threading.Thread(target=self.process_input)
+            process_thread.start()
+        else:
+            # update buffer saved in map and resend reference
+            self.value_update()
+
+    def show_loading_window(self):
+        dialog = Gtk.Dialog(title="Processing...")
+        dialog.set_default_size(300, 75)
+
+        loading_spinner = Gtk.Spinner()
+        loading_spinner.start()
+
+        dialog.add(loading_spinner)
+
+        dialog.run()
+        return dialog
+
+    def close_loading(self, window):
+        window.destroy()
 
     def process_ouput(self):
         '''
@@ -1464,7 +1532,7 @@ class WaterpixelNode(CustomNode):
             self.regularization = value
 
 
-        self.process_input()
+        self.process_handler()
 
     def value_update(self):
         '''
@@ -1474,7 +1542,7 @@ class WaterpixelNode(CustomNode):
         did_process = self.process_ouput()
 
         if not did_process:
-            print("Error: could not process dropshadow")
+            print("Error: could not process waterpixel")
 
         self.node_socket_output.write(bytes(self.buffer_id, 'utf8'))
 
@@ -1488,7 +1556,7 @@ class WaterpixelNode(CustomNode):
         self.incoming_buffer = None
         self.buffer = None
         self.layer = None
-        self.process_input()
+        self.process_handler()
 
     def node_socket_connect(self, sink, source):
         '''
@@ -1522,7 +1590,7 @@ class WaterpixelNode(CustomNode):
 
             print("Buffer Incoming: ", self.incoming_buffer)
 
-            self.process_input()
+            self.process_handler()
         else:
             print("Error!!!")
 
@@ -1546,6 +1614,10 @@ class TileGlassNode(CustomNode):
         self.image_builder = ontario.ImageBuilder(self.image_context)
 
         self.set_label("Tile Glass")
+
+        # loading spinner
+        self.busy_box = None
+        self.dot_count = 4
 
         # add argument fields
         self.label1 = Gtk.Label(label="Tile Width")
@@ -1603,18 +1675,55 @@ class TileGlassNode(CustomNode):
         self.entry2.set_text(str(self.height))
 
     def process_input(self):
-        if self.incoming_buffer:
-            # set internal copy of buffer
-            self.buffer = self.incoming_buffer.dup()
 
-            # use ontario backend for image processing
-            self.image_builder.load_from_buffer(self.buffer)
-            self.image_builder.tileglass(self.width, self.height)
-            self.image_builder.save_to_buffer(self.buffer)
-            self.image_builder.process()
+        def increment_spinner():
+            next_dot_count = (self.dot_count + 1) % 4
+            self.busy_box.set_message(f"Processing{next_dot_count*'.'}")
+            self.dot_count = next_dot_count
+            GLib.timeout_add(500, increment_spinner)
+            return False
+
+        def add_spinner():
+            # add progress spinner while rendering
+            if not self.busy_box:
+                self.busy_box = GimpUi.BusyBox()
+                self.busy_box.set_message("Processing...")
+                self.item_add(self.busy_box, GtkNodes.NodeSocketIO.DISABLE)
+                self.busy_box.show()
+                GLib.timeout_add(500, increment_spinner)
+            return False
+
+        def remove_spinner():
+            # remove spinner on render complete
+            self.busy_box.destroy()
+            self.busy_box = None
+            return False
+
+        GLib.idle_add(add_spinner)
+        # set internal copy of buffer
+        self.buffer = self.incoming_buffer.dup()
+
+        # use ontario backend for image processing
+        self.image_builder.load_from_buffer(self.buffer)
+        self.image_builder.tileglass(self.width, self.height)
+        self.image_builder.save_to_buffer(self.buffer)
+        self.image_builder.process()
 
         # update buffer saved in map and resend reference
         self.value_update()
+        GLib.idle_add(remove_spinner)
+
+    def process_handler(self):
+        if self.incoming_buffer:
+            # process image manip on new thread
+            process_thread = threading.Thread(target=self.process_input)
+            process_thread.start()
+        else:
+            # update buffer saved in map and resend reference
+            self.value_update()
+
+    def close_loading(self, window):
+        window.destroy()
 
     def process_ouput(self):
         '''
@@ -1656,8 +1765,7 @@ class TileGlassNode(CustomNode):
         elif entry_id == 3:
             self.regularization = value
 
-
-        self.process_input()
+        self.process_handler()
 
     def value_update(self):
         '''
@@ -1667,7 +1775,7 @@ class TileGlassNode(CustomNode):
         did_process = self.process_ouput()
 
         if not did_process:
-            print("Error: could not process dropshadow")
+            print("Error: could not process tile-glass")
 
         self.node_socket_output.write(bytes(self.buffer_id, 'utf8'))
 
@@ -1681,7 +1789,7 @@ class TileGlassNode(CustomNode):
         self.incoming_buffer = None
         self.buffer = None
         self.layer = None
-        self.process_input()
+        self.process_handler()
 
     def node_socket_connect(self, sink, source):
         '''
@@ -1715,6 +1823,6 @@ class TileGlassNode(CustomNode):
 
             print("Buffer Incoming: ", self.incoming_buffer)
 
-            self.process_input()
+            self.process_handler()
         else:
             print("Error!!!")

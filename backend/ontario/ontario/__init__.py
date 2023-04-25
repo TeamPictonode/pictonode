@@ -384,8 +384,8 @@ class ImageBuilder:
         """
 
         node = self.__parent.create_child("gegl:tile-glass")
-        node.set_property("width", width)
-        node.set_property("height", height)
+        node.set_property("tile-width", width)
+        node.set_property("tile-height", height)
 
         # Connect the last node to the save node.
         self.__nodes[-1].link(node)
