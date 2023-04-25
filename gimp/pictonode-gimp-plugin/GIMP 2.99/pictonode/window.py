@@ -289,6 +289,9 @@ class PluginWindow(Gtk.Window):
             sub_item4 = Gtk.MenuItem(label="Bright/Contrast")
             sub_item5 = Gtk.MenuItem(label="Blur Node")
             sub_item6 = Gtk.MenuItem(label="Composite Node")
+            sub_item7 = Gtk.MenuItem(label="Dropshadow Node")
+            sub_item8 = Gtk.MenuItem(label="Waterpixels Node")
+            sub_item9 = Gtk.MenuItem(label="Tile Glass Node")
 
             # connect menu items here
             sub_item1.connect("activate", self.add_image_src_node)
@@ -297,6 +300,9 @@ class PluginWindow(Gtk.Window):
             sub_item4.connect("activate", self.add_bright_cont_node)
             sub_item5.connect("activate", self.add_image_blur_node)
             sub_item6.connect("activate", self.add_image_comp_node)
+            sub_item7.connect("activate", self.add_dropshadow_node)
+            sub_item8.connect("activate", self.add_waterpixels_node)
+            sub_item9.connect("activate", self.add_tileglass_node)
 
             # disable output node option if one already exists
             if self.has_output_node:
@@ -310,6 +316,9 @@ class PluginWindow(Gtk.Window):
             submenu.append(sub_item4)
             submenu.append(sub_item5)
             submenu.append(sub_item6)
+            submenu.append(sub_item7)
+            submenu.append(sub_item8)
+            submenu.append(sub_item9)
 
             # add submenu to menu item
             submenu_item.set_submenu(submenu)
@@ -320,8 +329,8 @@ class PluginWindow(Gtk.Window):
             # make menu popup
             menu.show_all()
             menu.popup(None, None, None, None, event.button, event.time)
-        
-        GLib.timeout_add(1000, self.save_temp)
+
+        GLib.idle_add(self.save_temp)
 
     def on_scroll(self, widget, event):
         ''' Scroll event for zooming on image '''
@@ -375,7 +384,6 @@ class PluginWindow(Gtk.Window):
         new_node.set_property("x", position[0])
         new_node.set_property("y", position[1])
 
-        
         self.node_view.show_all()
 
     def add_image_out_node(self, widget=None):
@@ -390,7 +398,6 @@ class PluginWindow(Gtk.Window):
         new_node.set_property("x", position[0])
         new_node.set_property("y", position[1])
 
-        
         self.node_view.show_all()
 
     def add_image_invert_node(self, widget=None):
@@ -405,6 +412,33 @@ class PluginWindow(Gtk.Window):
         new_node.set_property("x", position[0])
         new_node.set_property("y", position[1])
 
+        self.node_view.show_all()
+
+    def add_waterpixels_node(self, widget=None):
+        ''' Adds an waterpixels node at the current cursor position '''
+
+        # create new node and add it to the NodeView widget
+        new_node = cn.WaterpixelNode(self)
+        self.node_view.add(new_node)
+
+        # grab cursor position and move node to it
+        position = self.get_cursor_pos()
+        new_node.set_property("x", position[0])
+        new_node.set_property("y", position[1])
+
+        self.node_view.show_all()
+
+    def add_tileglass_node(self, widget=None):
+        ''' Adds an tile glass node at the current cursor position '''
+
+        # create new node and add it to the NodeView widget
+        new_node = cn.TileGlassNode(self)
+        self.node_view.add(new_node)
+
+        # grab cursor position and move node to it
+        position = self.get_cursor_pos()
+        new_node.set_property("x", position[0])
+        new_node.set_property("y", position[1])
 
         self.node_view.show_all()
 
@@ -420,7 +454,6 @@ class PluginWindow(Gtk.Window):
         new_node.set_property("x", position[0])
         new_node.set_property("y", position[1])
 
-
         self.node_view.show_all()
 
     def add_bright_cont_node(self, widget=None):
@@ -434,7 +467,6 @@ class PluginWindow(Gtk.Window):
         position = self.get_cursor_pos()
         new_node.set_property("x", position[0])
         new_node.set_property("y", position[1])
-
 
         self.node_view.show_all()
 
@@ -450,6 +482,37 @@ class PluginWindow(Gtk.Window):
         new_node.set_property("x", position[0])
         new_node.set_property("y", position[1])
 
+        self.node_view.show_all()
+
+    def add_dropshadow_node(self, widget=None):
+        ''' Adds a dropshadow node at the current cursor position '''
+
+        # create new node and add it to the NodeView widget
+        new_node = cn.DropshadowNode(self)
+        self.node_view.add(new_node)
+
+        # grab cursor position and move node to it
+        position = self.get_cursor_pos()
+        new_node.set_property("x", position[0])
+        new_node.set_property("y", position[1])
+
+        self.node_view.show_all()
+
+    def __add_node(self, widget, node_object):
+        '''Add node at current cursor position'''
+
+        if not node_object:
+            return None
+
+        # create new node and add it to the NodeView widget
+        new_node = node_object
+        print(new_node)
+        self.node_view.add(new_node)
+
+        # grab cursor position and move node to it
+        position = self.get_cursor_pos()
+        new_node.set_property("x", position[0])
+        new_node.set_property("y", position[1])
 
         self.node_view.show_all()
 

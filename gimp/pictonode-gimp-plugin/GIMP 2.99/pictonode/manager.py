@@ -81,6 +81,9 @@ def threadsafe(fn):
 
 class PictonodeManager(metaclass=SingletonConstruction):
     def init(self, procedure, run_mode, image, n_drawables, drawables, args, run_data):
+        GObject.threads_init()
+        Gdk.threads_init()
+
         self.procedure = procedure
         self.run_mode = run_mode
         self.image = image
