@@ -206,6 +206,7 @@ class PluginWindow(Gtk.Window):
         image_frame.add(self.image_scrolled)
 
         self.node_view: GtkNodes.NodeView = GtkNodes.NodeView()
+        cn.g_NodeView = self.node_view
         scrolled_window.add(self.node_view)
 
         # create context menu in node view

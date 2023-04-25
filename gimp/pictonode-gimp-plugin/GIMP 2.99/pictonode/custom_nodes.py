@@ -47,6 +47,7 @@ from gi.repository import GLib # noqa
 # First, define generic custom node type using GtkNodes.Node as a base type
 # implement gegl node operations using ontario backend
 
+g_NodeView = None
 
 class CustomNode(GtkNodes.Node):
 
@@ -71,7 +72,8 @@ class CustomNode(GtkNodes.Node):
         dialog.destroy()
 
         if response == Gtk.ResponseType.OK:
-            self.destroy()
+            global g_NodeView
+            g_NodeView.remove(self)
 
     def get_values(self):
         return {}
