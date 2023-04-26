@@ -641,15 +641,11 @@ class PluginWindow(Gtk.Window):
             if self.save_semaphore.acquire():
                 if self.serialization != new_serialization:
                     self.serialization = new_serialization
-                    temp = os.path.realpath(os.path.dirname(os.path.abspath(__file__)) + f"/cache/{basename.replace('-temp','')}-temp.json")
-                    temp_log = os.path.realpath(os.path.dirname(os.path.abspath(__file__)) + f"/cache/{basename.replace('-temp-log','')}-temp-log.json")
+                    temp = os.path.realpath(os.path.dirname(os.path.abspath(__file__)) + f"/cache/{basename.replace('-temp', '')}-temp.json")
+                    
                     
                     with open(temp, "w") as outfile:
                         json.dump(self.serialization, outfile, indent=2)
-
-                    with open(temp_log, "a") as outfile_log:
-                        outfile_log.write(f"\n\n{80*'='}\n\n")
-                        json.dump(self.serialization, outfile_log, indent=2)
 
                     print(f"{GLib.get_current_time()} - saved")
                     self.save_semaphore.release()
