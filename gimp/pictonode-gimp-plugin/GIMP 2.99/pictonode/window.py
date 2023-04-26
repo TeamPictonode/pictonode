@@ -641,15 +641,14 @@ class PluginWindow(Gtk.Window):
             if self.save_semaphore.acquire():
                 if self.serialization != new_serialization:
                     self.serialization = new_serialization
-                    temp = os.path.realpath(os.path.dirname(os.path.abspath(__file__)) + f"/cache/{basename.replace('-temp', )}-temp.json")
-                    
+                    temp = os.path.realpath(os.path.dirname(os.path.abspath(__file__)) + f"/cache/{basename.replace('-temp', '')}-temp.json")
                     
                     with open(temp, "w") as outfile:
                         json.dump(self.serialization, outfile, indent=2)
 
                     print(f"{GLib.get_current_time()} - saved")
-                    self.save_semaphore.release()
                     PictonodeManager().set_startup_graph(temp)
+                    self.save_semaphore.release()
                 else:
                     print(f"{GLib.get_current_time()} - not saved (cached)")
         else:

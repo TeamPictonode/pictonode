@@ -1466,10 +1466,13 @@ class WaterpixelNode(CustomNode):
     def process_input(self):
 
         def increment_spinner():
-            next_dot_count = (self.dot_count + 1) % 4
-            self.busy_box.set_message(f"Processing{next_dot_count*'.'}")
-            self.dot_count = next_dot_count
-            GLib.timeout_add(500, increment_spinner)
+            try:
+                next_dot_count = (self.dot_count + 1) % 4
+                self.busy_box.set_message(f"Processing{next_dot_count*'.'}")
+                self.dot_count = next_dot_count
+                GLib.timeout_add(500, increment_spinner)
+            except:
+                pass
             return False
 
         def add_spinner():
@@ -1712,10 +1715,13 @@ class TileGlassNode(CustomNode):
     def process_input(self):
 
         def increment_spinner():
-            next_dot_count = (self.dot_count + 1) % 4
-            self.busy_box.set_message(f"Processing{next_dot_count*'.'}")
-            self.dot_count = next_dot_count
-            GLib.timeout_add(500, increment_spinner)
+            try:
+                next_dot_count = (self.dot_count + 1) % 4
+                self.busy_box.set_message(f"Processing{next_dot_count*'.'}")
+                self.dot_count = next_dot_count
+                GLib.timeout_add(500, increment_spinner)
+            except:
+                pass
             return False
 
         def add_spinner():
