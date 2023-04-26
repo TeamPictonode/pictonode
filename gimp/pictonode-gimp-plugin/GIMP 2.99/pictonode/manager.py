@@ -126,6 +126,10 @@ class PictonodeManager(metaclass=SingletonConstruction):
 
         Gtk.main()
 
+    @threadsafe
+    def notify_quit(self):
+        Gtk.main_quit()
+
     def set_gtk_theme(theme_name="Adwaita"):
         theme_name = "Adwaita"
         settings = Gtk.Settings.get_default()
