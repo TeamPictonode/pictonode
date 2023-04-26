@@ -1,7 +1,7 @@
 // GNU AGPL v3 License
 // Written by Grace Meredith, modified by John Nunley
 
-import { NodeBuilder } from "@baklavajs/core";
+import { NodeBuilder, Node } from "@baklavajs/core";
 
 export const ImageNode = new NodeBuilder("ImgSrc")
   .setName("Input Image")
@@ -42,3 +42,18 @@ export const GaussBlur = new NodeBuilder("GaussBlur")
   .addOption("Y", "NumberOption", 0)
   .addOutputInterface("Result", { index: 0 })
   .build();
+
+export const NODES: Record<string, () => Node> = {
+  // @ts-ignore
+  ImgSrc: ImageNode,
+  // @ts-ignore
+  ImgOut: RenderedNode,
+  // @ts-ignore
+  Invert: InvertNode,
+  // @ts-ignore
+  CompOver: CompositeNode,
+  // @ts-ignore
+  BrightCont: BriCon,
+  // @ts-ignore
+  GaussBlur: GaussBlur,
+};

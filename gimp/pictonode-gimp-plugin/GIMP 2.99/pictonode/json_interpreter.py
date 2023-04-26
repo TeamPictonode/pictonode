@@ -26,7 +26,10 @@ def json_interpreter(node_view, window, **kwargs):
     instantiation_dict = {'ImgSrc': cn.ImgSrcNode, 'ImgOut': cn.OutputNode,
                           'Invert': cn.InvertNode, 'GaussBlur': cn.BlurNode,
                           'BrightCont': cn.BrightContNode,
-                          'CompOver': cn.CompositeNode}
+                          'CompOver': cn.CompositeNode,
+                          'DropShadow': cn.DropshadowNode,
+                          'Waterpixel': cn.WaterpixelNode,
+                          'TileGlass': cn.TileGlassNode}
 
     nodes_loaded = {}
 

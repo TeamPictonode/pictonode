@@ -47,7 +47,7 @@ def test_store_projects(client):
             data=dict(
                 name="Test Pipeline",
                 description="A test pipeline",
-                zip=(open(target_path, 'rb'), target_path)
+                file=(open(target_path, 'rb'), target_path)
             )
         )
         assert response.status_code == 200

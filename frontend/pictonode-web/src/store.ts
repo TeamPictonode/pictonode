@@ -11,7 +11,7 @@ const store = createStore({
 
   getters: {
     user(state) {
-      return state.user;
+      return state.user; // user = $store.getters.user to call in either a computed or method in vue
     },
   },
 
@@ -42,7 +42,7 @@ const store = createStore({
     async login(context, { user }) {
       checkLogin(user)
         .then(() => {
-          context.commit("SET_USER", Response);
+          context.commit("SET_USER", user.username);
           context.commit("SET_LOGGED_IN", true);
         })
         .catch((error) => {

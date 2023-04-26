@@ -1,6 +1,6 @@
 <template>
   <div>
-    <RenderedView :img="img" />
+    <RenderedView :img="img" :pipeline="pipeline" :setPipeline="setPipeline" />
   </div>
   <div class="b">
       <v-btn
@@ -10,6 +10,27 @@
               style="color: white"
               >Prettify</v-btn
             >
+    <v-btn
+      rounded="pill"
+      color="#474545"
+      @click="saveToFile"
+      style="color: white"
+      >Save to File</v-btn
+    >
+    <v-btn
+      rounded="pill"
+      color="#474545"
+      @click="saveToServer"
+      style="color: white"
+      >Save to Server</v-btn
+    >
+    <v-btn
+      rounded="pill"
+      color="#474545"
+      @click="loadFromFile"
+      style="color: white"
+      >Load from File</v-btn
+    >
     <baklava-editor :plugin="viewPlugin" />
   </div>
 </template>
@@ -20,6 +41,7 @@ import { Editor } from "@baklavajs/core";
 import { OptionPlugin } from "@baklavajs/plugin-options-vue3";
 import { Engine } from "@baklavajs/plugin-engine";
 import { defineComponent } from "vue";
+import { setForceUpdate } from "../forceUpdate";
 
 import {
   ImageNode,
@@ -30,9 +52,11 @@ import {
   GaussBlur,
 } from "../components/nodes/BaklavaNodes";
 import InputNode from "../components/nodes/NodeData/InputNode.vue";
-import getPipeline from "../components/nodes/getPipeline";
+import getPipeline, { installPipeline } from "../components/nodes/getPipeline";
 import { processPipeline } from "../api";
 import ValueTracker from "../components/nodes/ValueTracker";
+import { savePipeline, loadPipeline, uploadProject } from "../api";
+import * as download from "downloadjs";
 
 import RenderedView from "./RenderedView.vue";
 
@@ -44,6 +68,12 @@ export default defineComponent({
     viewPlugin: new ViewPlugin() as ViewPlugin,
     engine: new Engine(true) as Engine,
   }),
+  computed: {
+    pipeline() {
+      // @ts-ignore
+      return getPipeline(this.editor);
+    },
+  },
   created() {
     this.editor.use(this.viewPlugin);
     this.editor.use(new OptionPlugin());
@@ -77,6 +107,7 @@ export default defineComponent({
     );
 
     this.engine.calculate();
+    setForceUpdate(this.onUpdate);
   },
   methods: {
     addNodeWithCoordinates(nodeType: any, x: any, y: any) {
@@ -86,34 +117,12 @@ export default defineComponent({
       n.position.y = y;
       return n;
     },
+    
 
-    prettify() {
-     //position does exist you liar
-     var nodes = this.editor.nodes
-     var sortedNodes = []
-     var i, j, temp;
-     var swapped;
-
-     for(i=0; i < nodes.length; i++) {
-      swapped = false;
-      for (j = 0; j < nodes.length - i - 1; j++) {
-        if (nodes[j].position.x > nodes[j + 1].position.x)
-                {
-                    // swap arr[j] and arr[j+1]
-                    temp = nodes[j];
-                    sortedNodes[j] = nodes[j + 1];
-                    sortedNodes[j + 1] = temp;
-                    swapped = true;
-                }
-        else {
-          sortedNodes[j] = nodes[j]
-        }
-      }
-      if (swapped == false) {
-        break;
-      }
-     }
-
+    setPipeline(pipeline: any) {
+      // @ts-ignore
+      installPipeline(this.editor, pipeline);
+      this.onUpdate();
     },
 
     onUpdate() {
@@ -197,6 +206,64 @@ export default defineComponent({
           };
         });
     },
+    saveToFile() {
+      savePipeline(this.pipeline).then((res) => {
+        download(res, "pipeline.zip", "application/zip");
+      });
+    },
+    loadFromFile() {
+      // Open a file dialog.
+      const input = document.createElement("input");
+      input.type = "file";
+      input.accept = ".zip";
+
+      input.onchange = (e) => {
+        const file = (e.target as HTMLInputElement).files?.[0];
+        if (file) {
+          loadPipeline(file).then((res) => {
+            this.setPipeline(res);
+          });
+        }
+      };
+
+      input.click();
+    },
+    saveToServer() {
+      savePipeline(this.pipeline).then((res) => {
+        uploadProject(
+          `untitled_${Math.floor(Math.random() * 1000000)}`,
+          "Untitled Project",
+          res
+        );
+      });
+    },
+
+    prettify() {
+     //position does exist you liar
+     var nodes = this.editor.nodes
+     var sortedNodes = []
+     var i, j, temp;
+     var swapped;
+
+     for(i=0; i < nodes.length; i++) {
+      swapped = false;
+      for (j = 0; j < nodes.length - i - 1; j++) {
+        if (nodes[j].position.x > nodes[j + 1].position.x)
+                {
+                    // swap arr[j] and arr[j+1]
+                    temp = nodes[j];
+                    sortedNodes[j] = nodes[j + 1];
+                    sortedNodes[j + 1] = temp;
+                    swapped = true;
+                }
+        else {
+          sortedNodes[j] = nodes[j]
+        }
+      }
+      if (swapped == false) {
+        break;
+      }
+     }}
   },
 });
 

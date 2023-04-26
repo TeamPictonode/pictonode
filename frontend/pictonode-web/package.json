@@ -21,7 +21,8 @@
     "libnode": "file:../../libraries/libnode",
     "vue": "^3.2.45",
     "vue-router": "^4.1.6",
-    "vuetify": "^3.0.1"
+    "vuetify": "^3.0.1",
+    "vuex": "^4.1.0"
   },
   "devDependencies": {
     "@types/axios": "^0.14.0",

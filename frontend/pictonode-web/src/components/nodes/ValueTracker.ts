@@ -1,6 +1,8 @@
 // GNU AGPL v3 License
 // Written by John Nunley
 
+import { forceUpdate } from "../../forceUpdate";
+
 export enum TrackedValueType {
   SrcImage,
   // TODO: Generalize to colors, paths, etc.
@@ -44,6 +46,7 @@ export default class ValueTracker {
     }
 
     this.values.push(value);
+    forceUpdate();
   }
 
   public get_value(node_id: string): Record<string, any> {

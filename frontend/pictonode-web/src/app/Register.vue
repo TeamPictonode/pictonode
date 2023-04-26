@@ -8,6 +8,7 @@
 import { defineComponent } from "vue";
 import { useStore } from "vuex";
 import { ref } from "vue";
+import { setRegister } from "../api";
 import store from "../store";
 
 export default defineComponent({
@@ -27,12 +28,18 @@ export default defineComponent({
   name: "Register",
   methods: {
     async register() {
-      const user: JSON = <JSON>(<unknown>{
+      const result = await setRegister({
         username: `${this.username}`,
         realname: `${this.fullName}`,
         password: `${this.password}`,
       });
-      await store.dispatch("register", user);
+      if ("error" in result) {
+        this.error = true;
+        this.errorMessage = result["error"];
+        return;
+      }
+
+      //await store.dispatch("register", user);
       this.$router.push("/login");
     },
 
