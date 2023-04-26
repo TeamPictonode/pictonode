@@ -641,7 +641,7 @@ class PluginWindow(Gtk.Window):
             if self.save_semaphore.acquire():
                 if self.serialization != new_serialization:
                     self.serialization = new_serialization
-                    temp = os.path.realpath(os.path.dirname(os.path.abspath(__file__)) + f"/cache/{basename.replace('-temp', '')}-temp.json")
+                    temp = os.path.realpath(os.path.dirname(os.path.abspath(__file__)) + f"/cache/{basename.replace('-temp', )}-temp.json")
                     
                     
                     with open(temp, "w") as outfile:
@@ -721,4 +721,7 @@ class PluginWindow(Gtk.Window):
         self.image.set_from_file("/tmp/gimp/temp.png")
         self.pixbuf = self.image.get_pixbuf()
 
-        self.__draw_zoomed_image()
+        try:
+            self.__draw_zoomed_image()
+        except:
+            pass
