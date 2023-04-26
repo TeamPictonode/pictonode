@@ -66,7 +66,11 @@ class ProjectToolbar(Gtk.Window):
         self.iconview.connect("selection-changed", self.icon_clicked)
         self.init = True
 
-        self.connect("destroy", Gtk.main_quit)
+        def do_quit(_):
+            from manager import PictonodeManager
+            PictonodeManager().notify_quit()
+
+        self.connect("destroy", do_quit)
 
     def icon_clicked(self, widget: Gtk.IconView):
         if self.mode != "Debug":

@@ -206,6 +206,7 @@ class PluginWindow(Gtk.Window):
         image_frame.add(self.image_scrolled)
 
         self.node_view: GtkNodes.NodeView = GtkNodes.NodeView()
+        cn.g_NodeView = self.node_view
         scrolled_window.add(self.node_view)
 
         # create context menu in node view
@@ -225,13 +226,20 @@ class PluginWindow(Gtk.Window):
 
         self.overlay.add(full_view)
 
-        self.connect("destroy", self.do_quit)
 
         # set window size and show plugin window
         self.set_default_size((screen_width * .75), (screen_height * .75))
 
-    def do_quit(self, widget=None, data=None):
-        Gtk.main_quit()
+        self.save_semaphore = threading.Semaphore()
+        self.serialization = None
+        cn.g_Window = self
+
+        def do_quit(_):
+            from manager import PictonodeManager
+            PictonodeManager().notify_quit()
+
+        self.connect("destroy", do_quit)
+
 
     def load_graph(self, filepath):
         for node in self.node_view.get_children():
@@ -330,7 +338,9 @@ class PluginWindow(Gtk.Window):
             menu.show_all()
             menu.popup(None, None, None, None, event.button, event.time)
 
-        GLib.idle_add(self.save_temp)
+        x = threading.Thread(target=self.save_temp)
+        x.start()
+        #GLib.idle_add(self.save_temp)
 
     def on_scroll(self, widget, event):
         ''' Scroll event for zooming on image '''
@@ -622,14 +632,27 @@ class PluginWindow(Gtk.Window):
     
     def save_temp(self):
         from manager import PictonodeManager
-        basename = self.temp_target_file
-        temp = os.path.realpath(os.path.dirname(os.path.abspath(__file__)) + f"/cache/{basename}-temp.json")
-        dictionary = serialize_nodes(self.node_view)
-        with open(temp, "w") as outfile:
-                json.dump(dictionary, outfile, indent=2)
         
-        PictonodeManager().set_startup_graph(temp)
-        return False
+        basename = self.temp_target_file
+        new_serialization = serialize_nodes(self.node_view)
+
+        #check lock check go brrrrr
+        if self.serialization != new_serialization:
+            if self.save_semaphore.acquire():
+                if self.serialization != new_serialization:
+                    self.serialization = new_serialization
+                    temp = os.path.realpath(os.path.dirname(os.path.abspath(__file__)) + f"/cache/{basename.replace('-temp', '')}-temp.json")
+                    
+                    with open(temp, "w") as outfile:
+                        json.dump(self.serialization, outfile, indent=2)
+
+                    print(f"{GLib.get_current_time()} - saved")
+                    PictonodeManager().set_startup_graph(temp)
+                    self.save_semaphore.release()
+                else:
+                    print(f"{GLib.get_current_time()} - not saved (cached)")
+        else:
+            print(f"{GLib.get_current_time()} - not saved (cached)")
 
     def open_graph(self, widget=None):
 
@@ -697,4 +720,7 @@ class PluginWindow(Gtk.Window):
         self.image.set_from_file("/tmp/gimp/temp.png")
         self.pixbuf = self.image.get_pixbuf()
 
-        self.__draw_zoomed_image()
+        try:
+            self.__draw_zoomed_image()
+        except:
+            pass
