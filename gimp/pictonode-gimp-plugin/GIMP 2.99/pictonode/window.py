@@ -226,16 +226,20 @@ class PluginWindow(Gtk.Window):
 
         self.overlay.add(full_view)
 
-        self.connect("destroy", self.do_quit)
 
         # set window size and show plugin window
         self.set_default_size((screen_width * .75), (screen_height * .75))
 
         self.save_semaphore = threading.Semaphore()
         self.serialization = None
+        cn.g_Window = self
 
-    def do_quit(self, widget=None, data=None):
-        Gtk.main_quit()
+        def do_quit(_):
+            from manager import PictonodeManager
+            PictonodeManager().notify_quit()
+
+        self.connect("destroy", do_quit)
+
 
     def load_graph(self, filepath):
         for node in self.node_view.get_children():
@@ -637,16 +641,23 @@ class PluginWindow(Gtk.Window):
             if self.save_semaphore.acquire():
                 if self.serialization != new_serialization:
                     self.serialization = new_serialization
-                    temp = os.path.realpath(os.path.dirname(os.path.abspath(__file__)) + f"/cache/{basename}-temp.json")
+                    temp = os.path.realpath(os.path.dirname(os.path.abspath(__file__)) + f"/cache/{basename.replace('-temp','')}-temp.json")
+                    temp_log = os.path.realpath(os.path.dirname(os.path.abspath(__file__)) + f"/cache/{basename.replace('-temp-log','')}-temp-log.json")
+                    
                     with open(temp, "w") as outfile:
-                            json.dump(self.serialization, outfile, indent=2)
-                    print("saved")
+                        json.dump(self.serialization, outfile, indent=2)
+
+                    with open(temp_log, "a") as outfile_log:
+                        outfile_log.write(f"\n\n{80*'='}\n\n")
+                        json.dump(self.serialization, outfile_log, indent=2)
+
+                    print(f"{GLib.get_current_time()} - saved")
                     self.save_semaphore.release()
                     PictonodeManager().set_startup_graph(temp)
                 else:
-                    print("cached - not saved")
+                    print(f"{GLib.get_current_time()} - not saved (cached)")
         else:
-            print("cached - not saved")
+            print(f"{GLib.get_current_time()} - not saved (cached)")
 
     def open_graph(self, widget=None):
 

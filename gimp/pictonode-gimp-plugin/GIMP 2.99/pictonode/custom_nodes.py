@@ -48,6 +48,7 @@ from gi.repository import GLib # noqa
 # implement gegl node operations using ontario backend
 
 g_NodeView = None
+g_Window = None
 
 class CustomNode(GtkNodes.Node):
 
@@ -56,6 +57,16 @@ class CustomNode(GtkNodes.Node):
 
         self.set_can_focus(True)
         self.connect("node_func_clicked", self.remove)
+
+        def save_temp(_):
+            global g_NodeView
+            global g_Window
+            x = threading.Thread(target=g_Window.save_temp)
+            x.start()
+
+        self.connect("realize", save_temp)
+        #self.connect("socket", save_temp)
+        #self.connect("destroy", save_temp)
 
     def set_values(self, values: dict):
         '''Virtual Method to be overriden by custom nodes'''
@@ -69,11 +80,21 @@ class CustomNode(GtkNodes.Node):
         dialog.set_default_size(75, 50)
 
         response = dialog.run()
-        dialog.destroy()
+        
 
         if response == Gtk.ResponseType.OK:
+            def save_temp():
+                global g_NodeView
+                global g_Window
+                x = threading.Thread(target=g_Window.save_temp)
+                x.start()
+            
             global g_NodeView
             g_NodeView.remove(self)
+            save_temp()
+
+        
+        dialog.destroy()
 
     def get_values(self):
         return {}
@@ -158,7 +179,6 @@ class ImgSrcNode(CustomNode):
         print("Buffer: ", self.buffer)
         self.node_window.buffer_map[self.buffer_id] = [self.buffer,
                                                        self.layer]
-
         if self.buffer:
             return True
         return False
@@ -201,10 +221,13 @@ class OutputNode(CustomNode):
         # create node output socket
         label: Gtk.Label = Gtk.Label.new("Image")
         label.set_xalign(0.0)
+
         self.node_socket_input = self.item_add(
             label, GtkNodes.NodeSocketIO.SINK)
+        
         self.node_socket_input.connect(
             "socket_incoming", self.node_socket_incoming)
+        
         self.node_socket_input.connect(
             "socket_disconnect", self.node_socket_disconnect)
 
@@ -229,8 +252,8 @@ class OutputNode(CustomNode):
             self.filename = fn
             self.process()
 
-        # close the window on "cancel"
         dialog.destroy()
+        # close the window on "cancel"
 
     def remove(self, node):
         # have to override output remove to deal with button lock and display update
@@ -254,8 +277,16 @@ class OutputNode(CustomNode):
             if os.path.exists("/tmp/gimp/temp.png"):
                 os.remove("/tmp/gimp/temp.png")
                 self.node_window.display_output()
+            
+            def save_temp():
+                global g_NodeView
+                global g_Window
+                x = threading.Thread(target=g_Window.save_temp)
+                x.start()
 
-            self.destroy()
+            global g_NodeView
+            g_NodeView.remove(self)
+            save_temp()
 
         dialog.destroy()
 
@@ -369,6 +400,8 @@ class InvertNode(CustomNode):
             self.image_builder.invert()
             self.image_builder.save_to_buffer(self.buffer)
             self.image_builder.process()
+        
+
 
         # update buffer saved in map and resend reference
         self.value_update()
