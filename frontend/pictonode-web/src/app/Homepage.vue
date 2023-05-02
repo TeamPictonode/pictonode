@@ -52,18 +52,20 @@ export default defineComponent({
             </v-btn>
           </router-link>
         </v-list-item>
-        <v-list-item v-for="project in savedProjects" :key="project.id">
-          <router-link
-            class="text-body-1"
-            :to="'/editor/' + project.id"
-            tag="v-btn"
-            style="color: white"
-          >
-            <v-btn rounded="pill" size="large" color="#696969">
-              {{ project.name }}
-            </v-btn>
-          </router-link>
-        </v-list-item>
+        <div class="scrollbox">
+            <router-link
+              class="text-body-1"
+              :to="'/editor/' + project.id"
+              tag="v-btn"
+              style="color: white"
+            >
+          <v-list-item v-for="project in savedProjects" :key="project.id">
+                <v-btn rounded="pill" size="large" color="#696969">
+                  {{ project.name }}
+                </v-btn>
+          </v-list-item>
+            </router-link>
+        </div>
       </v-list>
     </div>
   </div>
@@ -107,5 +109,15 @@ export default defineComponent({
 .pictonode-logo {
   width: auto;
   height: 250px;
+}
+
+.scrollbox {
+  overflow-y: scroll;
+  height: 50%;
+  width: 300px;
+  border: 1px solid #474545;
+  border-radius: 5px;
+  padding: 5px;
+  margin-bottom: 10px;
 }
 </style>
