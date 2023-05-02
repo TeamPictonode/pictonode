@@ -300,6 +300,7 @@ class PluginWindow(Gtk.Window):
             sub_item7 = Gtk.MenuItem(label="Dropshadow Node")
             sub_item8 = Gtk.MenuItem(label="Waterpixels Node")
             sub_item9 = Gtk.MenuItem(label="Tile Glass Node")
+            sub_item10 = Gtk.MenuItem(label="Text Node")
 
             # connect menu items here
             sub_item1.connect("activate", self.add_image_src_node)
@@ -311,6 +312,7 @@ class PluginWindow(Gtk.Window):
             sub_item7.connect("activate", self.add_dropshadow_node)
             sub_item8.connect("activate", self.add_waterpixels_node)
             sub_item9.connect("activate", self.add_tileglass_node)
+            sub_item10.connect("activate", self.add_textsrc_node)
 
             # disable output node option if one already exists
             if self.has_output_node:
@@ -327,6 +329,7 @@ class PluginWindow(Gtk.Window):
             submenu.append(sub_item7)
             submenu.append(sub_item8)
             submenu.append(sub_item9)
+            submenu.append(sub_item10)
 
             # add submenu to menu item
             submenu_item.set_submenu(submenu)
@@ -340,6 +343,7 @@ class PluginWindow(Gtk.Window):
 
         x = threading.Thread(target=self.save_temp)
         x.start()
+        self.__reset_expand()
         #GLib.idle_add(self.save_temp)
 
     def on_scroll(self, widget, event):
@@ -372,6 +376,17 @@ class PluginWindow(Gtk.Window):
                                               GdkPixbuf.InterpType.BILINEAR)
 
         self.image.set_from_pixbuf(new_pixbuf)
+
+    def __reset_expand(self):
+        '''fix for visual bug when adding node'''
+
+        for child in self.node_view.get_children():
+            if child.get_expanded():
+                child.set_expanded(False)
+                child.set_expanded(True)
+            else:
+                child.set_expanded(True)
+                child.set_expanded(False)
 
     def output_node_lock(self, has_out_node: bool):
         ''' User should only ever be allowed one output node at any time '''
@@ -507,6 +522,20 @@ class PluginWindow(Gtk.Window):
         new_node.set_property("y", position[1])
 
         self.node_view.show_all()
+    
+    def add_textsrc_node(self, widget=None):
+        ''' Adds a text source node at the current cursor position '''
+
+        # create new node and add it to the NodeView widget
+        new_node = cn.TextSrcNode(self)
+        self.node_view.add(new_node)
+
+        # grab cursor position and move node to it
+        position = self.get_cursor_pos()
+        new_node.set_property("x", position[0])
+        new_node.set_property("y", position[1])
+
+        self.node_view.show_all()
 
     def __add_node(self, widget, node_object):
         '''Add node at current cursor position'''
@@ -525,6 +554,7 @@ class PluginWindow(Gtk.Window):
         new_node.set_property("y", position[1])
 
         self.node_view.show_all()
+        self.__reset_expand()
 
     def get_cursor_pos(self) -> list:
         pointer = self.node_view.get_display().get_default_seat().get_pointer()
@@ -653,6 +683,8 @@ class PluginWindow(Gtk.Window):
                     print(f"{GLib.get_current_time()} - not saved (cached)")
         else:
             print(f"{GLib.get_current_time()} - not saved (cached)")
+        
+        self.__reset_expand()
 
     def open_graph(self, widget=None):
 
@@ -703,6 +735,7 @@ class PluginWindow(Gtk.Window):
             open_dialog.destroy()
             f.close()
             
+            self.__reset_expand()
             return None
 
         # close the dialog
