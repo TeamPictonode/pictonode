@@ -51,8 +51,10 @@ export default function getPipeline(editor: Editor): SerializedPipeline {
       template: node.type,
       values,
       metadata: {
-        x: 0,
-        y: 0,
+        // @ts-ignore
+        x: node.position.x,
+        // @ts-ignore
+        y: node.position.y,
       },
     };
 
@@ -109,7 +111,6 @@ export function installPipeline(
         node_id: newNode.id,
       });
     }
-
     if (node.template === "BrightCont") {
       newNode.options.get("Brightness")!.value = node.values.brightness;
       newNode.options.get("Contrast")!.value = node.values.contrast;
@@ -117,6 +118,11 @@ export function installPipeline(
       newNode.options.get("X")!.value = node.values.std_dev_x;
       newNode.options.get("Y")!.value = node.values.std_dev_y;
     }
+    
+    // @ts-ignore
+    newNode.position.x = node.metadata.x;
+    // @ts-ignore
+    newNode.position.y = node.metadata.y;
   }
 
   // Add links.
