@@ -60,12 +60,16 @@ export default defineComponent({
     editor: new Editor() as Editor,
     viewPlugin: new ViewPlugin() as ViewPlugin,
     engine: new Engine(true) as Engine,
+    lastOptions: {},
   }),
   computed: {
     pipeline() {
       // @ts-ignore
       return getPipeline(this.editor);
     },
+  },
+  mounted() {
+    this.compareOptions();
   },
   created() {
     this.editor.use(this.viewPlugin);
@@ -109,6 +113,30 @@ export default defineComponent({
       n.position.x = x;
       n.position.y = y;
       return n;
+    },
+
+    getOptions() {
+      const options: Record<string, any> = {};
+      for (const node of this.editor.nodes) {
+        if (node.options) {
+          const specs: Record<string, any> = {};
+          for (const [name, option] of node.options) {
+            specs[name] = option.value;
+          }
+          options[node.id] = specs;
+        }
+      }
+      return options;
+    },
+
+    compareOptions() {
+      const options = this.getOptions();
+      if (JSON.stringify(options) !== JSON.stringify(this.lastOptions)) {
+        this.lastOptions = options;
+        this.onUpdate();
+      }
+
+      setTimeout(() => this.compareOptions(), 2000);
     },
 
     setPipeline(pipeline: any) {

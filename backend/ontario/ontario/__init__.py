@@ -204,7 +204,7 @@ class ImageBuilder:
         # add new node to node list
         self.__nodes.append(node)
         return self
-    
+
     def dropshadow(self, x: float, y: float, radius: float, size: float, buffer) -> "ImageBuilder":
         """
         Crops an image.
@@ -377,7 +377,7 @@ class ImageBuilder:
 
         self.__nodes.append(node)
         return self
-    
+
     def tileglass(self, width: int, height: int) -> "ImageBuilder":
         """
         Apply tile glass effect to image
