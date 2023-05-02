@@ -401,7 +401,7 @@ class ImageBuilder:
              wrap_width: int,
              wrap_height: int,
              alignment: int,
-             vert_alignment: int) -> "ImageBuilder":
+             vert_alignment: int):
         """
         Produce text pixel buffer
         """
