@@ -42,8 +42,10 @@ export default function getPipeline(editor: Editor): SerializedPipeline {
       template: node.type,
       values: ValueTracker.get_instance().get_value(node.id),
       metadata: {
-        x: 0,
-        y: 0,
+        // @ts-ignore
+        x: node.position.x,
+        // @ts-ignore
+        y: node.position.y,
       },
     };
 
@@ -100,6 +102,11 @@ export function installPipeline(
         node_id: newNode.id,
       });
     }
+
+    // @ts-ignore
+    newNode.position.x = node.metadata.x;
+    // @ts-ignore
+    newNode.position.y = node.metadata.y;
   }
 
   // Add links.

@@ -19,12 +19,14 @@ export type TrackedValue = {
 
 export default class ValueTracker {
   private values: TrackedValue[];
+  private ids: Map<string, [number, number]>;
 
   // Singleton.
   private static instance: ValueTracker;
 
   private constructor() {
     this.values = [];
+    this.ids = new Map();
   }
 
   public static get_instance(): ValueTracker {
@@ -62,5 +64,17 @@ export default class ValueTracker {
     });
 
     return result;
+  }
+
+  public get_xy(node_id: string): [number, number] {
+    const data = this.ids.get(node_id);
+    if (data) {
+      return data;
+    }
+    return [0, 0];
+  }
+
+  public set_xy(node_id: string, x: number, y: number): void {
+    this.ids.set(node_id, [x, y]);
   }
 }
