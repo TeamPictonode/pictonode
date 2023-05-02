@@ -438,4 +438,10 @@ def create_app(test_config=None):
 
         return {"username": username}
 
+    # Sign out
+    @app.route("/api/signout", methods=["POST"])
+    def signout():
+        session.pop("user_id", None)
+        return {"success": True}
+
     return app

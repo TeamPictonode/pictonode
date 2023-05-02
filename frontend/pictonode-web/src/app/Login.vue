@@ -36,6 +36,9 @@ export default defineComponent({
 
       //await store.dispatch("login", user);
       this.$router.push("/");
+
+      // Reload the window to reload the topbar
+      window.location.reload();
     },
   },
 });

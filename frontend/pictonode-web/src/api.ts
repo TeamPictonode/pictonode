@@ -110,8 +110,20 @@ export function reuploadProject(id: number, file: File): Promise<boolean> {
   }).then((response) => response.data);
 }
 
-export function getUsername(): Promise<string> {
+type GetUsername =
+  | {
+      error: string;
+    }
+  | {
+      username: string;
+    };
+
+export function getUsername(): Promise<GetUsername> {
   return API.get("/getusername", { responseType: "json" }).then(
     (response) => response.data
   );
+}
+
+export function signout(): Promise<void> {
+  return API.post("/signout", { responseType: "json" }).then((response) => {});
 }
