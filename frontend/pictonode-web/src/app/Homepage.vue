@@ -53,9 +53,16 @@ export default defineComponent({
           </router-link>
         </v-list-item>
         <v-list-item v-for="project in savedProjects" :key="project.id">
-          <v-btn rounded="pill" size="large" color="#696969">
-            {{ project.name }}
-          </v-btn>
+          <router-link
+            class="text-body-1"
+            :to="'/editor/' + project.id"
+            tag="v-btn"
+            style="color: white"
+          >
+            <v-btn rounded="pill" size="large" color="#696969">
+              {{ project.name }}
+            </v-btn>
+          </router-link>
         </v-list-item>
       </v-list>
     </div>
