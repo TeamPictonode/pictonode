@@ -36,11 +36,20 @@ export default function getPipeline(editor: Editor): SerializedPipeline {
     // Take the integer part of node.id to get the id of the node.
     // This is because node.id is a string of the form "node_<id>".
     const node_id = getNodeId(node);
+    const values = ValueTracker.get_instance().get_value(node.id);
+
+    if (node.type === "BrightCont") {
+      values["brightness"] = node.options.get("Brightness")?.value;
+      values["contrast"] = node.options.get("Contrast")?.value;
+    } else if (node.type === "GaussBlur") {
+      values["std_dev_x"] = node.options.get("X")?.value;
+      values["std_dev_y"] = node.options.get("Y")?.value;
+    }
 
     const result: SerializedNode = {
       id: node_id,
       template: node.type,
-      values: ValueTracker.get_instance().get_value(node.id),
+      values,
       metadata: {
         // @ts-ignore
         x: node.position.x,
@@ -101,6 +110,13 @@ export function installPipeline(
         image: node.values.image,
         node_id: newNode.id,
       });
+    }
+    if (node.template === "BrightCont") {
+      newNode.options.get("Brightness")!.value = node.values.brightness;
+      newNode.options.get("Contrast")!.value = node.values.contrast;
+    } else if (node.template === "GaussBlur") {
+      newNode.options.get("X")!.value = node.values.std_dev_x;
+      newNode.options.get("Y")!.value = node.values.std_dev_y;
     }
 
     // @ts-ignore

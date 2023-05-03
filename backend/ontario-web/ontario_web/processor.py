@@ -139,10 +139,15 @@ def make_template_table(
     )
     table.addTemplate("Invert", invertNode)
 
+    def brightContrast(args, meta):
+        return [load(args[0], meta).brightness_contrast(
+            args[1].getValue(),
+            args[2].getValue()
+        )]
+
     # Adjust brightness/contrast
     brightContNode = nodes.NodeTemplate(
-        lambda args, meta: [
-            load(args[0], meta).brightness_contrast(args[1], args[2])],
+        brightContrast,
         [
             nodes.LinkTemplate(None, None, None),
             nodes.LinkTemplate(None, None, "brightness"),
@@ -153,6 +158,8 @@ def make_template_table(
         ],
         None
     )
+    brightContNode.insertNamedInput("brightness", 1)
+    brightContNode.insertNamedInput("contrast", 2)
     table.addTemplate("BrightCont", brightContNode)
 
     guassBlur = nodes.NodeTemplate(
@@ -168,6 +175,8 @@ def make_template_table(
         ],
         None
     )
+    guassBlur.insertNamedInput("std_dev_x", 1)
+    guassBlur.insertNamedInput("std_dev_y", 2)
     table.addTemplate("GaussBlur", guassBlur)
 
     return table
