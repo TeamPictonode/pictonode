@@ -118,7 +118,7 @@ export function installPipeline(
       newNode.options.get("X")!.value = node.values.std_dev_x;
       newNode.options.get("Y")!.value = node.values.std_dev_y;
     }
-    
+
     // @ts-ignore
     newNode.position.x = node.metadata.x;
     // @ts-ignore

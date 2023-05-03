@@ -74,9 +74,6 @@ export default defineComponent({
       return getPipeline(this.editor);
     },
   },
-  mounted() {
-    this.compareOptions();
-  },
   created() {
     this.editor.use(this.viewPlugin);
     this.editor.use(new OptionPlugin());
@@ -113,6 +110,8 @@ export default defineComponent({
     setForceUpdate(this.onUpdate);
   },
   mounted() {
+    this.compareOptions();
+
     const fetchThisPipeline = this.$route.params.pipelineId;
     let pipeId = undefined;
     if (fetchThisPipeline) {
