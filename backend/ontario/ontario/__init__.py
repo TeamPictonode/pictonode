@@ -204,7 +204,7 @@ class ImageBuilder:
         # add new node to node list
         self.__nodes.append(node)
         return self
-    
+
     def dropshadow(self, x: float, y: float, radius: float, size: float, buffer) -> "ImageBuilder":
         """
         Crops an image.
@@ -377,7 +377,7 @@ class ImageBuilder:
 
         self.__nodes.append(node)
         return self
-    
+
     def tileglass(self, width: int, height: int) -> "ImageBuilder":
         """
         Apply tile glass effect to image
@@ -392,32 +392,6 @@ class ImageBuilder:
 
         self.__nodes.append(node)
         return self
-
-    def text(self,
-             string: str,
-             font: str,
-             size: float,
-             color: tuple,
-             wrap_width: int,
-             wrap_height: int,
-             alignment: int,
-             vert_alignment: int):
-        """
-        Produce text pixel buffer
-        """
-
-        node = self.__parent.create_child("gegl:text")
-        node.set_property("string", string)
-        node.set_property("font", font)
-        node.set_property("size", size)
-        node.set_property("color", Gegl.Color.new(color))
-        node.set_property("wrap_width", wrap_width)
-        node.set_property("wrap_height", wrap_height)
-        node.set_property("alignment", alignment)
-        node.set_property("vert_alignment", vert_alignment)
-
-        self.__nodes.append(node)
-        return node.get_property("width"), node.get_property("height")
 
     def perspective_transform(
             self,

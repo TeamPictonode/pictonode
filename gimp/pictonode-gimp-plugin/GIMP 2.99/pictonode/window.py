@@ -309,7 +309,6 @@ class PluginWindow(Gtk.Window):
             sub_item7 = Gtk.MenuItem(label="Dropshadow Node")
             sub_item8 = Gtk.MenuItem(label="Waterpixels Node")
             sub_item9 = Gtk.MenuItem(label="Tile Glass Node")
-            sub_item10 = Gtk.MenuItem(label="Text Node")
 
             # connect menu items here
             sub_item1.connect("activate", self.add_image_src_node)
@@ -321,7 +320,6 @@ class PluginWindow(Gtk.Window):
             sub_item7.connect("activate", self.add_dropshadow_node)
             sub_item8.connect("activate", self.add_waterpixels_node)
             sub_item9.connect("activate", self.add_tileglass_node)
-            sub_item10.connect("activate", self.add_textsrc_node)
 
             # disable output node option if one already exists
             if self.has_output_node:
@@ -338,7 +336,6 @@ class PluginWindow(Gtk.Window):
             submenu.append(sub_item7)
             submenu.append(sub_item8)
             submenu.append(sub_item9)
-            submenu.append(sub_item10)
 
             # add submenu to menu item
             submenu_item.set_submenu(submenu)
@@ -397,6 +394,7 @@ class PluginWindow(Gtk.Window):
                 child.set_expanded(False)
 
         return False
+
 
     def output_node_lock(self, has_out_node: bool):
         ''' User should only ever be allowed one output node at any time '''
@@ -565,6 +563,7 @@ class PluginWindow(Gtk.Window):
 
         # create new node and add it to the NodeView widget
         new_node = cn.TextSrcNode(self)
+
         self.node_view.add(new_node)
 
         # grab cursor position and move node to it
@@ -572,8 +571,10 @@ class PluginWindow(Gtk.Window):
         new_node.set_property("x", position[0])
         new_node.set_property("y", position[1])
 
+
         if self.is_from_context_menu:
             GLib.idle_add(self.__reset_expand)
+
 
         self.node_view.show_all()
 
@@ -758,8 +759,10 @@ class PluginWindow(Gtk.Window):
             open_dialog.destroy()
             f.close()
             
+
             GLib.idle_add(self.__reset_expand)
             self.node_view.show_all()
+
             return None
 
         # close the dialog

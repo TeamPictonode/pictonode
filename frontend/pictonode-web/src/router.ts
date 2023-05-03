@@ -16,6 +16,7 @@ const ROUTES = [
   { path: "/register", component: Register },
   { path: "/about", component: Aboutpage },
   { path: "/editor", component: NodeEditor },
+  { path: "/editor/:pipelineId", component: NodeEditor },
   { path: "/Tutorial", component: Tutorial },
 ];
 

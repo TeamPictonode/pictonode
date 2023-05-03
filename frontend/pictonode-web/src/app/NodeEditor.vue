@@ -48,7 +48,12 @@ import InputNode from "../components/nodes/NodeData/InputNode.vue";
 import getPipeline, { installPipeline } from "../components/nodes/getPipeline";
 import { processPipeline } from "../api";
 import ValueTracker from "../components/nodes/ValueTracker";
-import { savePipeline, loadPipeline, uploadProject } from "../api";
+import {
+  savePipeline,
+  loadPipeline,
+  uploadProject,
+  getProjectZip,
+} from "../api";
 import * as download from "downloadjs";
 
 import RenderedView from "./RenderedView.vue";
@@ -60,6 +65,7 @@ export default defineComponent({
     editor: new Editor() as Editor,
     viewPlugin: new ViewPlugin() as ViewPlugin,
     engine: new Engine(true) as Engine,
+    pipelineId: undefined as number | undefined,
   }),
   computed: {
     pipeline() {
@@ -101,6 +107,19 @@ export default defineComponent({
 
     this.engine.calculate();
     setForceUpdate(this.onUpdate);
+  },
+  mounted() {
+    const fetchThisPipeline = this.$route.params.pipelineId;
+    let pipeId = undefined;
+    if (fetchThisPipeline) {
+      pipeId = parseInt(fetchThisPipeline as string);
+    }
+    if (pipeId !== undefined && !isNaN(pipeId)) {
+      getProjectZip(pipeId)
+        .then((f) => loadPipeline(f))
+        .then((p) => this.setPipeline(p));
+      this.pipelineId = pipeId;
+    }
   },
   methods: {
     addNodeWithCoordinates(nodeType: any, x: any, y: any) {

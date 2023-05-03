@@ -40,9 +40,6 @@ from gi.repository import GdkPixbuf  # noqa
 
 gi.require_version("GLib", "2.0")
 from gi.repository import GLib # noqa
-
-gi.require_version('Gegl', '0.4')
-from gi.repository import Gegl  # noqa
 # autopep8 on
 
 # node classes based on examples from img.py in the gtknodes project
@@ -180,7 +177,8 @@ class ImgSrcNode(CustomNode):
         self.image_builder = ontario.ImageBuilder(self.image_context)
 
         print("Buffer: ", self.buffer)
-        self.node_window.buffer_map[self.buffer_id] = [self.buffer]
+        self.node_window.buffer_map[self.buffer_id] = [self.buffer,
+                                                       self.layer]
         if self.buffer:
             return True
         return False
@@ -367,6 +365,7 @@ class InvertNode(CustomNode):
         self.node_window = node_window
         self.buffer_id = str(uuid.uuid1())
         self.buffer = None
+        self.layer = None
 
         # initialize our image context for the gegl nodes
         self.image_context = ontario.ImageContext()
@@ -413,7 +412,7 @@ class InvertNode(CustomNode):
         '''
 
         print("Buffer: ", self.buffer)
-        self.node_window.buffer_map[self.buffer_id] = [self.buffer]
+        self.node_window.buffer_map[self.buffer_id] = [self.buffer, self.layer]
 
         if self.buffer:
             return True
@@ -440,6 +439,7 @@ class InvertNode(CustomNode):
         self.incoming_buffer_id = None
         self.incoming_buffer = None
         self.buffer = None
+        self.layer = None
         self.process_input()
 
     def node_socket_connect(self, sink, source):
@@ -458,6 +458,7 @@ class InvertNode(CustomNode):
         self.incoming_buffer_id = None
         self.incoming_buffer = None
         self.buffer = None
+        self.layer = None
 
         # set new buffer information
         if payload:
@@ -467,6 +468,9 @@ class InvertNode(CustomNode):
 
             self.incoming_buffer = self.node_window.buffer_map.get(
                 self.incoming_buffer_id)[0]
+
+            self.layer = self.node_window.buffer_map.get(
+                self.incoming_buffer_id)[1]
 
             print("Invert Incoming: ", self.incoming_buffer)
 
@@ -484,14 +488,15 @@ class CompositeNode(CustomNode):
         self.node_window = node_window
         self.buffer_id = str(uuid.uuid1())
 
-        # buffer initialized for both images
+        # buffer and layers initialized for both images
         self.incoming_buffer1_id = None
         self.incoming_buffer1 = None
         self.incoming_buffer2_id = None
         self.incoming_buffer2 = None
 
-        # initialize output buffer
+        # initialize output buffer and layer
         self.buffer = None
+        self.layer = None
 
         # default operation arguments
         self.x: float = 0.0
@@ -671,7 +676,7 @@ class CompositeNode(CustomNode):
         '''
 
         print("Buffer: ", self.buffer)
-        self.node_window.buffer_map[self.buffer_id] = [self.buffer]
+        self.node_window.buffer_map[self.buffer_id] = [self.buffer, self.layer]
 
         if self.buffer:
             return True
@@ -703,6 +708,7 @@ class CompositeNode(CustomNode):
             self.incoming_buffer2 = None
 
         self.buffer = None
+        self.layer = None
         self.process_input()
 
     def node_socket_connect(self, sink, source):
@@ -726,6 +732,7 @@ class CompositeNode(CustomNode):
             self.incoming_buffer2 = None
 
         self.buffer = None
+        self.layer = None
 
         # set new buffer information
         if payload:
@@ -740,6 +747,9 @@ class CompositeNode(CustomNode):
                 print("Buffer ID 2 incoming: ", self.incoming_buffer2_id)
                 self.incoming_buffer2 = self.node_window.buffer_map.get(
                     self.incoming_buffer2_id)[0]
+
+            self.layer = self.node_window.buffer_map.get(
+                self.incoming_buffer1_id)[1]
 
             print("Comp Incoming 1: ", self.incoming_buffer1)
             print("Comp Incoming 2: ", self.incoming_buffer2)
@@ -758,6 +768,7 @@ class BlurNode(CustomNode):
         self.node_window = node_window
         self.buffer_id = str(uuid.uuid1())
         self.buffer = None
+        self.layer = None
 
         # default operation arguments
         self.std_dev_x: float = 1.5
@@ -844,7 +855,7 @@ class BlurNode(CustomNode):
         '''
 
         print("Buffer: ", self.buffer)
-        self.node_window.buffer_map[self.buffer_id] = [self.buffer]
+        self.node_window.buffer_map[self.buffer_id] = [self.buffer, self.layer]
 
         if self.buffer:
             return True
@@ -901,6 +912,7 @@ class BlurNode(CustomNode):
         self.incoming_buffer_id = None
         self.incoming_buffer = None
         self.buffer = None
+        self.layer = None
         self.process_input()
 
     def node_socket_connect(self, sink, source):
@@ -919,6 +931,7 @@ class BlurNode(CustomNode):
         self.incoming_buffer_id = None
         self.incoming_buffer = None
         self.buffer = None
+        self.layer = None
 
         # set new buffer information
         if payload:
@@ -928,6 +941,9 @@ class BlurNode(CustomNode):
 
             self.incoming_buffer = self.node_window.buffer_map.get(
                 self.incoming_buffer_id)[0]
+
+            self.layer = self.node_window.buffer_map.get(
+                self.incoming_buffer_id)[1]
 
             print("Invert Incoming: ", self.incoming_buffer)
 
@@ -945,6 +961,7 @@ class BrightContNode(CustomNode):
         self.node_window = node_window
         self.buffer_id = str(uuid.uuid1())
         self.buffer = None
+        self.layer = None
 
         # default operation arguments
         self.brightness: float = 0.0
@@ -1031,7 +1048,7 @@ class BrightContNode(CustomNode):
         '''
 
         print("Buffer: ", self.buffer)
-        self.node_window.buffer_map[self.buffer_id] = [self.buffer]
+        self.node_window.buffer_map[self.buffer_id] = [self.buffer, self.layer]
 
         if self.buffer:
             return True
@@ -1101,6 +1118,7 @@ class BrightContNode(CustomNode):
         self.incoming_buffer_id = None
         self.incoming_buffer = None
         self.buffer = None
+        self.layer = None
         self.process_input()
 
     def node_socket_connect(self, sink, source):
@@ -1119,6 +1137,7 @@ class BrightContNode(CustomNode):
         self.incoming_buffer_id = None
         self.incoming_buffer = None
         self.buffer = None
+        self.layer = None
 
         # set new buffer information
         if payload:
@@ -1129,12 +1148,14 @@ class BrightContNode(CustomNode):
             self.incoming_buffer = self.node_window.buffer_map.get(
                 self.incoming_buffer_id)[0]
 
+            self.layer = self.node_window.buffer_map.get(
+                self.incoming_buffer_id)[1]
+
             print("Invert Incoming: ", self.incoming_buffer)
 
             self.process_input()
         else:
             print("Error!!!")
-
 
 class DropshadowNode(CustomNode):
     __gtype_name__ = 'DropShadow'
@@ -1145,6 +1166,7 @@ class DropshadowNode(CustomNode):
         self.node_window = node_window
         self.buffer_id = str(uuid.uuid1())
         self.buffer = None
+        self.layer = None
 
         # default operation arguments
         self.x_offset: float = 20.0
@@ -1251,7 +1273,7 @@ class DropshadowNode(CustomNode):
         '''
 
         print("Buffer: ", self.buffer)
-        self.node_window.buffer_map[self.buffer_id] = [self.buffer]
+        self.node_window.buffer_map[self.buffer_id] = [self.buffer, self.layer]
 
         if self.buffer:
             return True
@@ -1310,6 +1332,7 @@ class DropshadowNode(CustomNode):
         self.incoming_buffer_id = None
         self.incoming_buffer = None
         self.buffer = None
+        self.layer = None
         self.process_input()
 
     def node_socket_connect(self, sink, source):
@@ -1328,6 +1351,7 @@ class DropshadowNode(CustomNode):
         self.incoming_buffer_id = None
         self.incoming_buffer = None
         self.buffer = None
+        self.layer = None
 
         # set new buffer information
         if payload:
@@ -1337,6 +1361,9 @@ class DropshadowNode(CustomNode):
 
             self.incoming_buffer = self.node_window.buffer_map.get(
                 self.incoming_buffer_id)[0]
+
+            self.layer = self.node_window.buffer_map.get(
+                self.incoming_buffer_id)[1]
 
             print("Buffer Incoming: ", self.incoming_buffer)
 
@@ -1354,6 +1381,7 @@ class WaterpixelNode(CustomNode):
         self.node_window = node_window
         self.buffer_id = str(uuid.uuid1())
         self.buffer = None
+        self.layer = None
 
         # default operation arguments
         self.size: int = 32
@@ -1507,7 +1535,7 @@ class WaterpixelNode(CustomNode):
         '''
 
         print("Buffer: ", self.buffer)
-        self.node_window.buffer_map[self.buffer_id] = [self.buffer]
+        self.node_window.buffer_map[self.buffer_id] = [self.buffer, self.layer]
 
         if self.buffer:
             return True
@@ -1565,6 +1593,7 @@ class WaterpixelNode(CustomNode):
         self.incoming_buffer_id = None
         self.incoming_buffer = None
         self.buffer = None
+        self.layer = None
         self.process_handler()
 
     def node_socket_connect(self, sink, source):
@@ -1583,6 +1612,7 @@ class WaterpixelNode(CustomNode):
         self.incoming_buffer_id = None
         self.incoming_buffer = None
         self.buffer = None
+        self.layer = None
 
         # set new buffer information
         if payload:
@@ -1593,12 +1623,14 @@ class WaterpixelNode(CustomNode):
             self.incoming_buffer = self.node_window.buffer_map.get(
                 self.incoming_buffer_id)[0]
 
+            self.layer = self.node_window.buffer_map.get(
+                self.incoming_buffer_id)[1]
+
             print("Buffer Incoming: ", self.incoming_buffer)
 
             self.process_handler()
         else:
             print("Error!!!")
-
 
 class TileGlassNode(CustomNode):
     __gtype_name__ = 'TileGlass'
@@ -1609,6 +1641,7 @@ class TileGlassNode(CustomNode):
         self.node_window = node_window
         self.buffer_id = str(uuid.uuid1())
         self.buffer = None
+        self.layer = None
 
         # default operation arguments
         self.width: int = 25
@@ -1739,7 +1772,7 @@ class TileGlassNode(CustomNode):
         '''
 
         print("Buffer: ", self.buffer)
-        self.node_window.buffer_map[self.buffer_id] = [self.buffer]
+        self.node_window.buffer_map[self.buffer_id] = [self.buffer, self.layer]
 
         if self.buffer:
             return True
@@ -1767,9 +1800,11 @@ class TileGlassNode(CustomNode):
 
         # set new value for variable associated with entry
         if entry_id == 1:
-            self.width = value
+            self.size = value
         elif entry_id == 2:
-            self.height = value
+            self.smoothness = value
+        elif entry_id == 3:
+            self.regularization = value
 
         self.process_handler()
 
@@ -1794,6 +1829,7 @@ class TileGlassNode(CustomNode):
         self.incoming_buffer_id = None
         self.incoming_buffer = None
         self.buffer = None
+        self.layer = None
         self.process_handler()
 
     def node_socket_connect(self, sink, source):
@@ -1812,6 +1848,7 @@ class TileGlassNode(CustomNode):
         self.incoming_buffer_id = None
         self.incoming_buffer = None
         self.buffer = None
+        self.layer = None
 
         # set new buffer information
         if payload:
@@ -1822,12 +1859,14 @@ class TileGlassNode(CustomNode):
             self.incoming_buffer = self.node_window.buffer_map.get(
                 self.incoming_buffer_id)[0]
 
+            self.layer = self.node_window.buffer_map.get(
+                self.incoming_buffer_id)[1]
+
             print("Buffer Incoming: ", self.incoming_buffer)
 
             self.process_handler()
         else:
             print("Error!!!")
-
 
 class TextSrcNode(CustomNode):
     __gtype_name__ = 'TextSrc'

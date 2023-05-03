@@ -9,33 +9,34 @@ import { profile } from "console";
 import { defineComponent } from "vue";
 import { useStore } from "vuex";
 import { ref } from "vue";
-import store from "../store";
+import { getUsername, signout } from "../api";
 
 export default defineComponent({
   name: "Topbar",
   data: () => ({
-    drawer: false,
-    group: null,
+    username: "",
     loggedIn: false,
   }),
-
-  setup() {
-    const store = useStore();
-  },
-  watch: {
-    group() {
-      this.drawer = false;
-    },
-  },
-  computed: {
-    user() {
-      return store.getters.user;
-    },
+  mounted() {
+    getUsername()
+      .then((username) => {
+        if ("username" in username) {
+          this.username = username.username;
+          this.loggedIn = true;
+        }
+      })
+      .catch((err) => {
+        this.loggedIn = false;
+      });
   },
   methods: {
-    async signout() {
-      await store.dispatch("logOut");
-      this.$router.push("/login");
+    signout() {
+      signout().then(() => {
+        this.reload();
+      });
+    },
+    reload() {
+      window.location.reload();
     },
   },
 });
@@ -74,7 +75,7 @@ export default defineComponent({
           </v-btn>
         </template>
 
-        <v-list v-if="user.loggedIn">
+        <v-list v-if="loggedIn">
           <v-list-item>
             <v-btn rounded="pill" color="#474545" style="color: white"
               >Account</v-btn
