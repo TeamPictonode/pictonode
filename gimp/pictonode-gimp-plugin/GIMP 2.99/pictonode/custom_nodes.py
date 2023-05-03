@@ -1867,3 +1867,164 @@ class TileGlassNode(CustomNode):
             self.process_handler()
         else:
             print("Error!!!")
+
+class TextSrcNode(CustomNode):
+    __gtype_name__ = 'TextSrc'
+
+    def __init__(self, node_window, *args, **kwds) -> None:
+        super().__init__(*args, **kwds)
+
+        self.node_window = node_window
+
+        self.text = "lorem ipsum"
+        self.size = 10.0
+        self.font = "Sans Regular"
+        self.color = "rgba(0.000, 0.000, 0.000, 1.000)"
+        self.buffer_id = str(uuid.uuid1())
+        self.buffer = None
+
+        # initialize our image context for the gegl nodes
+        self.image_context = ontario.ImageContext()
+        self.image_builder = ontario.ImageBuilder(self.image_context)
+
+        self.set_label("Text Source")
+
+        self.empty = Gtk.Label(" ")
+        self.text_label = Gtk.Label("Text:")
+        self.text_entry = Gtk.Entry()
+        self.text_entry.set_text(self.text)
+        self.font_label = Gtk.Label("Font:")
+        self.font_chooser = Gtk.FontButton()
+        self.color_label = Gtk.Label("Color Chooser:")
+        self.color_chooser = Gtk.ColorButton()
+
+        # connect widgets to update functions
+        self.text_entry.connect("activate", self.text_change)
+        self.font_chooser.connect("font-set", self.font_change)
+        self.color_chooser.connect("color-set", self.color_change)
+
+        # add gtk widgets to node widget
+        self.item_add(self.empty, GtkNodes.NodeSocketIO.DISABLE)
+
+        self.item_add(self.text_label, GtkNodes.NodeSocketIO.DISABLE)
+        self.item_add(self.text_entry, GtkNodes.NodeSocketIO.DISABLE)
+
+        self.item_add(self.font_label, GtkNodes.NodeSocketIO.DISABLE)
+        self.item_add(self.font_chooser, GtkNodes.NodeSocketIO.DISABLE)
+
+        self.item_add(self.color_label, GtkNodes.NodeSocketIO.DISABLE)
+        self.item_add(self.color_chooser, GtkNodes.NodeSocketIO.DISABLE)
+
+        # create node output socket
+        label: Gtk.Label = Gtk.Label.new("Image")
+        label.set_xalign(1.0)
+        self.node_socket_output = self.item_add(
+            label, GtkNodes.NodeSocketIO.SOURCE)
+        self.node_socket_output.connect(
+            "socket_connect", self.node_socket_connect)
+        
+    def get_values(self):
+
+        ''' Returns dictionary of current state of custom values for the node '''
+
+        custom_values = {"text": self.text,
+                         "size": self.size,
+                         "font": self.font,
+                         "color": self.color}
+
+        return custom_values
+
+    def set_values(self, values: dict):
+
+        ''' Sets custom node defaults from dictionary '''
+        self.text = values.get('text')
+        self.size = values.get('size')
+        self.font = values.get('font')
+        self.color = values.get('color')
+
+        # parse color from string so GDK can read it
+        rgba_obj = Gdk.RGBA()
+        rgba_obj.parse(self.color)
+        rgba_obj.red = rgba_obj.red * 255
+        rgba_obj.green = rgba_obj.green * 255
+        rgba_obj.blue = rgba_obj.blue * 255
+
+        # set values displayed
+        self.text_entry.set_text(self.text)
+        self.font_chooser.set_font_name(self.font)
+        self.color_chooser.set_rgba(rgba_obj)
+
+    def text_change(self, entry):
+        self.grab_focus()
+        self.text = self.text_entry.get_text() 
+        
+        self.value_update()
+
+    def font_change(self, font_button):
+        self.grab_focus()
+        self.font = self.font_chooser.get_font()
+        self.size = float(self.font_chooser.get_font_size() / 1024)
+        
+        self.value_update()
+
+    def color_change(self, font_button):
+        self.grab_focus()
+        self.color = self.color_chooser.get_rgba()
+        self.color = self.convert_color(self.color)
+        print(self.color)
+        
+        self.value_update()
+
+    def convert_color(self, color):
+        try:
+            new_color = f"rgba({color.red},{color.green},{color.blue},{color.alpha})"
+            print(new_color)
+        except:
+            new_color = color
+        return new_color
+
+    def process(self):
+
+        # use ontario backend for image processing
+        width, height = self.image_builder.text(self.text, self.font, self.size, self.color, -1, -1, 0, 0)
+
+        print(width)
+        print(height)
+
+        # lol what? height is a broken property in gegl, use font size instead
+        self.buffer = Gegl.Buffer.new("RGBA float", 0, 0, (width + (width * 0.2)), (height + (height * 0.2)))
+
+        self.image_builder.save_to_buffer(self.buffer)
+        self.image_builder.process()
+    
+    def value_update(self):
+        '''
+        Processes image and sends out updated buffer reference
+        '''
+
+        # generate the text in the buffer
+        self.process()
+
+        # save the buffer in a shared buffer map
+        did_process = self.process_ouput()
+
+        if not did_process:
+            print("Error: could not process text")
+
+        self.node_socket_output.write(bytes(self.buffer_id, 'utf8'))
+    
+    def process_ouput(self):
+        '''
+        Updates buffer reference in map
+        '''
+
+        self.node_window.buffer_map[self.buffer_id] = [self.buffer]
+
+        if self.buffer:
+            return True
+        return False
+
+    def node_socket_connect(self, sink, source):
+        did_process = self.value_update()
+        if did_process:
+            self.node_socket_output.write(bytes(self.buffer_id, 'utf8'))

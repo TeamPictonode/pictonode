@@ -95,6 +95,9 @@ class PluginWindow(Gtk.Window):
         self.overlay = Gtk.Overlay()
         self.add(self.overlay)
 
+        # bool for adding nodes in context menu 
+        self.is_from_context_menu = True
+
         # variables used for image zooming
         self.pixbuf = None
         self.width_mult = 1
@@ -251,22 +254,28 @@ class PluginWindow(Gtk.Window):
                 self.temp_target_file = os.path.splitext(os.path.basename(filepath))[0]
                 json_string = json.load(f)
 
+                self.is_from_context_menu = False
+
                 try:
                     json_interpreter(self.node_view, self, json_string=json_string)
                 except Exception as E:
                     print(E)
+                
+                self.is_from_context_menu = True
 
-                self.node_view.show_all()
                 self.set_layers(self.layers)
+                
+                GLib.idle_add(self.__reset_expand)
+                self.node_view.show_all()
         else:
             self.temp_target_file = timestamp = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
-            
+
         return None
-    
+
     def clear_startup_graph(self, widget=None):
         from manager import PictonodeManager
         PictonodeManager().set_startup_graph("")
-    
+
     def login(self, widget=None):
         # create login overlay
         login_box = LoginBox(orientation=Gtk.Orientation.VERTICAL)
@@ -373,6 +382,20 @@ class PluginWindow(Gtk.Window):
 
         self.image.set_from_pixbuf(new_pixbuf)
 
+    def __reset_expand(self):
+        '''fix for visual bug when adding node'''
+
+        for child in self.node_view.get_children():
+            if child.get_expanded():
+                child.set_expanded(False)
+                child.set_expanded(True)
+            elif not child.get_expanded():
+                child.set_expanded(True)
+                child.set_expanded(False)
+
+        return False
+
+
     def output_node_lock(self, has_out_node: bool):
         ''' User should only ever be allowed one output node at any time '''
 
@@ -394,6 +417,9 @@ class PluginWindow(Gtk.Window):
         new_node.set_property("x", position[0])
         new_node.set_property("y", position[1])
 
+        if self.is_from_context_menu: 
+            GLib.idle_add(self.__reset_expand)
+
         self.node_view.show_all()
 
     def add_image_out_node(self, widget=None):
@@ -407,6 +433,9 @@ class PluginWindow(Gtk.Window):
         position = self.get_cursor_pos()
         new_node.set_property("x", position[0])
         new_node.set_property("y", position[1])
+
+        if self.is_from_context_menu: 
+            GLib.idle_add(self.__reset_expand)
 
         self.node_view.show_all()
 
@@ -422,6 +451,9 @@ class PluginWindow(Gtk.Window):
         new_node.set_property("x", position[0])
         new_node.set_property("y", position[1])
 
+        if self.is_from_context_menu: 
+            GLib.idle_add(self.__reset_expand)
+
         self.node_view.show_all()
 
     def add_waterpixels_node(self, widget=None):
@@ -435,6 +467,9 @@ class PluginWindow(Gtk.Window):
         position = self.get_cursor_pos()
         new_node.set_property("x", position[0])
         new_node.set_property("y", position[1])
+
+        if self.is_from_context_menu: 
+            GLib.idle_add(self.__reset_expand)
 
         self.node_view.show_all()
 
@@ -450,6 +485,9 @@ class PluginWindow(Gtk.Window):
         new_node.set_property("x", position[0])
         new_node.set_property("y", position[1])
 
+        if self.is_from_context_menu: 
+            GLib.idle_add(self.__reset_expand)
+
         self.node_view.show_all()
 
     def add_image_comp_node(self, widget=None):
@@ -463,6 +501,9 @@ class PluginWindow(Gtk.Window):
         position = self.get_cursor_pos()
         new_node.set_property("x", position[0])
         new_node.set_property("y", position[1])
+
+        if self.is_from_context_menu: 
+            GLib.idle_add(self.__reset_expand)
 
         self.node_view.show_all()
 
@@ -478,6 +519,9 @@ class PluginWindow(Gtk.Window):
         new_node.set_property("x", position[0])
         new_node.set_property("y", position[1])
 
+        if self.is_from_context_menu:
+            GLib.idle_add(self.__reset_expand)
+
         self.node_view.show_all()
 
     def add_image_blur_node(self, widget=None):
@@ -491,6 +535,9 @@ class PluginWindow(Gtk.Window):
         position = self.get_cursor_pos()
         new_node.set_property("x", position[0])
         new_node.set_property("y", position[1])
+
+        if self.is_from_context_menu:
+            GLib.idle_add(self.__reset_expand)
 
         self.node_view.show_all()
 
@@ -506,23 +553,28 @@ class PluginWindow(Gtk.Window):
         new_node.set_property("x", position[0])
         new_node.set_property("y", position[1])
 
+        if self.is_from_context_menu:
+            GLib.idle_add(self.__reset_expand)
+
         self.node_view.show_all()
-
-    def __add_node(self, widget, node_object):
-        '''Add node at current cursor position'''
-
-        if not node_object:
-            return None
+    
+    def add_textsrc_node(self, widget=None):
+        ''' Adds a text source node at the current cursor position '''
 
         # create new node and add it to the NodeView widget
-        new_node = node_object
-        print(new_node)
+        new_node = cn.TextSrcNode(self)
+
         self.node_view.add(new_node)
 
         # grab cursor position and move node to it
         position = self.get_cursor_pos()
         new_node.set_property("x", position[0])
         new_node.set_property("y", position[1])
+
+
+        if self.is_from_context_menu:
+            GLib.idle_add(self.__reset_expand)
+
 
         self.node_view.show_all()
 
@@ -629,20 +681,20 @@ class PluginWindow(Gtk.Window):
 
         # close the dialog
         save_dialog.destroy()
-    
+
     def save_temp(self):
         from manager import PictonodeManager
-        
+
         basename = self.temp_target_file
         new_serialization = serialize_nodes(self.node_view)
 
-        #check lock check go brrrrr
+        # check lock check go brrrrr
         if self.serialization != new_serialization:
             if self.save_semaphore.acquire():
                 if self.serialization != new_serialization:
                     self.serialization = new_serialization
                     temp = os.path.realpath(os.path.dirname(os.path.abspath(__file__)) + f"/cache/{basename.replace('-temp', '')}-temp.json")
-                    
+
                     with open(temp, "w") as outfile:
                         json.dump(self.serialization, outfile, indent=2)
 
@@ -690,19 +742,27 @@ class PluginWindow(Gtk.Window):
             f = open(fn)
             json_string = json.load(f)
 
+            self.is_from_context_menu = False
+            
             try:
                 json_interpreter(self.node_view, self, json_string=json_string)
             except Exception as E:
                 print(E)
+            
+            self.is_from_context_menu = True
 
             PictonodeManager().set_startup_graph(fn)
             self.temp_target_file = os.path.splitext(os.path.basename(fn))[0]
-            self.node_view.show_all()
+
             self.set_layers(self.layers)
 
             open_dialog.destroy()
             f.close()
             
+
+            GLib.idle_add(self.__reset_expand)
+            self.node_view.show_all()
+
             return None
 
         # close the dialog
