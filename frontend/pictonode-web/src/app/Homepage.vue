@@ -53,18 +53,20 @@ export default defineComponent({
           </router-link>
         </v-list-item>
         <div class="scrollbox">
-            <router-link
-              class="text-body-1"
-              :to="'/editor/' + project.id"
-              tag="v-btn"
-              style="color: white"
-            >
-          <v-list-item v-for="project in savedProjects" :key="project.id">
-                <v-btn rounded="pill" size="large" color="#696969">
-                  {{ project.name }}
-                </v-btn>
-          </v-list-item>
-            </router-link>
+          <router-link
+            v-for="project in savedProjects"
+            :key="project.id"
+            class="text-body-1"
+            :to="'/editor/' + project.id"
+            tag="v-btn"
+            style="color: white"
+          >
+            <v-list-item>
+              <v-btn rounded="pill" size="large" color="#696969">
+                {{ project.name }}
+              </v-btn>
+            </v-list-item>
+          </router-link>
         </div>
       </v-list>
     </div>
