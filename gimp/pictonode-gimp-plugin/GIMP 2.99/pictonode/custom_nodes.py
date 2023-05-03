@@ -1949,8 +1949,11 @@ class TextSrcNode(CustomNode):
         # use ontario backend for image processing
         width, height = self.image_builder.text(self.text, self.font, self.size, self.color, -1, -1, 0, 0)
 
+        print(width)
+        print(height)
+
         # lol what? height is a broken property in gegl, use font size instead
-        self.buffer = Gegl.Buffer.new("RGBA float", 0, 0, (width + (width * 0.2)), (self.size + (self.size * 0.2)))
+        self.buffer = Gegl.Buffer.new("RGBA float", 0, 0, (width + (width * 0.2)), (height + (height * 0.2)))
 
         self.image_builder.save_to_buffer(self.buffer)
         self.image_builder.process()
