@@ -40,6 +40,15 @@ from gi.repository import GdkPixbuf  # noqa
 
 gi.require_version("GLib", "2.0")
 from gi.repository import GLib # noqa
+
+gi.require_version('Gimp', '3.0')
+from gi.repository import Gimp  # noqa
+
+gi.require_version("GObject", "2.0")
+from gi.repository import GObject # noqa
+
+gi.require_version('Gegl', '0.4')
+from gi.repository import Gegl  # noqa
 # autopep8 on
 
 # node classes based on examples from img.py in the gtknodes project
@@ -1868,6 +1877,7 @@ class TileGlassNode(CustomNode):
         else:
             print("Error!!!")
 
+
 class TextSrcNode(CustomNode):
     __gtype_name__ = 'TextSrc'
 
@@ -1922,7 +1932,7 @@ class TextSrcNode(CustomNode):
             label, GtkNodes.NodeSocketIO.SOURCE)
         self.node_socket_output.connect(
             "socket_connect", self.node_socket_connect)
-        
+
     def get_values(self):
 
         ''' Returns dictionary of current state of custom values for the node '''
@@ -1957,14 +1967,14 @@ class TextSrcNode(CustomNode):
     def text_change(self, entry):
         self.grab_focus()
         self.text = self.text_entry.get_text() 
-        
+
         self.value_update()
 
     def font_change(self, font_button):
         self.grab_focus()
         self.font = self.font_chooser.get_font()
         self.size = float(self.font_chooser.get_font_size() / 1024)
-        
+
         self.value_update()
 
     def color_change(self, font_button):
@@ -1972,7 +1982,7 @@ class TextSrcNode(CustomNode):
         self.color = self.color_chooser.get_rgba()
         self.color = self.convert_color(self.color)
         print(self.color)
-        
+
         self.value_update()
 
     def convert_color(self, color):
@@ -1986,17 +1996,23 @@ class TextSrcNode(CustomNode):
     def process(self):
 
         # use ontario backend for image processing
-        width, height = self.image_builder.text(self.text, self.font, self.size, self.color, -1, -1, 0, 0)
+        self.image_builder.text(self.text, self.font, self.size, self.color, -1, -1, 0, 0)
 
-        print(width)
-        print(height)
+        extent = Gimp.get_pdb().run_procedure("gimp-text-get-extents-fontname",
+                                              [GObject.Value(GObject.TYPE_STRING, self.text),
+                                               GObject.Value(GObject.TYPE_DOUBLE, self.size),
+                                               GObject.Value(Gimp.SizeType, Gimp.SizeType.PIXELS),
+                                               GObject.Value(GObject.TYPE_STRING, self.font)])
+
+        width = extent.index(1)
+        height = extent.index(2)
 
         # lol what? height is a broken property in gegl, use font size instead
         self.buffer = Gegl.Buffer.new("RGBA float", 0, 0, (width + (width * 0.2)), (height + (height * 0.2)))
 
         self.image_builder.save_to_buffer(self.buffer)
         self.image_builder.process()
-    
+
     def value_update(self):
         '''
         Processes image and sends out updated buffer reference
@@ -2012,7 +2028,7 @@ class TextSrcNode(CustomNode):
             print("Error: could not process text")
 
         self.node_socket_output.write(bytes(self.buffer_id, 'utf8'))
-    
+
     def process_ouput(self):
         '''
         Updates buffer reference in map
