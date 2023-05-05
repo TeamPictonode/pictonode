@@ -29,7 +29,8 @@ def json_interpreter(node_view, window, **kwargs):
                           'CompOver': cn.CompositeNode,
                           'DropShadow': cn.DropshadowNode,
                           'Waterpixel': cn.WaterpixelNode,
-                          'TileGlass': cn.TileGlassNode}
+                          'TileGlass': cn.TileGlassNode,
+                          'TextSrc': cn.TextSrcNode}
 
     nodes_loaded = {}
 

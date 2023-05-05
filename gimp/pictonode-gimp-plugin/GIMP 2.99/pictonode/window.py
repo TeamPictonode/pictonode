@@ -309,6 +309,7 @@ class PluginWindow(Gtk.Window):
             sub_item7 = Gtk.MenuItem(label="Dropshadow Node")
             sub_item8 = Gtk.MenuItem(label="Waterpixels Node")
             sub_item9 = Gtk.MenuItem(label="Tile Glass Node")
+            sub_item10 = Gtk.MenuItem(label="Text Node")
 
             # connect menu items here
             sub_item1.connect("activate", self.add_image_src_node)
@@ -320,6 +321,7 @@ class PluginWindow(Gtk.Window):
             sub_item7.connect("activate", self.add_dropshadow_node)
             sub_item8.connect("activate", self.add_waterpixels_node)
             sub_item9.connect("activate", self.add_tileglass_node)
+            sub_item10.connect("activate", self.add_textsrc_node)
 
             # disable output node option if one already exists
             if self.has_output_node:
@@ -336,6 +338,7 @@ class PluginWindow(Gtk.Window):
             submenu.append(sub_item7)
             submenu.append(sub_item8)
             submenu.append(sub_item9)
+            submenu.append(sub_item10)
 
             # add submenu to menu item
             submenu_item.set_submenu(submenu)
