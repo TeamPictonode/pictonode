@@ -259,11 +259,11 @@ export default defineComponent({
         else {
           sortedNodes[j] = nodes[j]
         }
-      }
+      
       if (swapped == false) {
         break;
       }
-     }}
+     }}}
   },
 });
 
